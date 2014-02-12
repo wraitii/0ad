@@ -1,27 +1,11 @@
-# Excluded to make the git repo smaller (those are present in SVN)
-binaries/system/ActorEditor.exe
-binaries/system/AtlasUI.dll
-binaries/system/Collada.dll
-binaries/system/pyrogenesis.exe
-binaries/system/pyrogenesis.pdb
+# Excluded because annoying and unecessary
+binaries/system/
+build/
 
 # Build files
 *.so
 *.so.*
 *.a
-binaries/system/ActorEditor
-binaries/system/pyrogenesis
-binaries/system/test
-binaries/system/ActorEditor_dbg
-binaries/system/pyrogenesis_dbg
-binaries/system/test_dbg
-
-build/workspaces/gcc/
-build/workspaces/codeblocks/
-build/premake/premake4/bin/release/premake4
-build/premake/premake4/build/gmake.unix/obj/
-build/premake/.gccmachine.tmp
-build/premake/.gccver.tmp
 
 # Exclude test .cpp files (generated during the build)
 test_*.cpp
@@ -36,16 +20,8 @@ __pycache__/
 *.o
 *.lo
 *.la
-libraries/source/fcollada/src/output/
-libraries/source/spidermonkey/.already-built
-libraries/source/spidermonkey/include-unix/
-libraries/source/spidermonkey/js-1.8.5/
-libraries/source/enet/src/.deps/
-libraries/source/enet/src/.libs/
-libraries/source/enet/src/Makefile
-libraries/source/enet/src/autom4te.cache/
-libraries/source/enet/src/config.log
-libraries/source/enet/src/config.status
-libraries/source/enet/src/libenet.pc
-libraries/source/enet/src/libtool
-libraries/source/nvtt/src/build/
+libraries/
+libraries/osx/build-osx-libs.sh
+libraries/osx/build-osx-libs.sh
+
+build/workspaces/build-osx-bundle.sh
