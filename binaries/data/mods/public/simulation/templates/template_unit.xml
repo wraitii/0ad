@@ -112,7 +112,6 @@
       <DecayTime>0.2</DecayTime>
     </Run>
     <PassabilityClass>default</PassabilityClass>
-    <CostClass>default</CostClass>
   </UnitMotion>
   <Vision>
     <Range>10</Range>
