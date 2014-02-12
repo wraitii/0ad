@@ -24,7 +24,6 @@ GuiInterface.prototype.Init = function()
 	this.renamedEntities = [];
 	this.timeNotificationID = 1;
 	this.timeNotifications = [];
-	this.entsRallyPointsDisplayed = [];
 };
 
 /*
@@ -117,10 +116,6 @@ GuiInterface.prototype.GetSimulationState = function(player)
 	var cmpTimer = Engine.QueryInterface(SYSTEM_ENTITY, IID_Timer);
 	ret.timeElapsed = cmpTimer.GetTime();
 
-	// and the game type
-	var cmpEndGameManager = Engine.QueryInterface(SYSTEM_ENTITY, IID_EndGameManager);
-	ret.gameType = cmpEndGameManager.GetGameType();
-
 	return ret;
 };
 
@@ -170,29 +165,8 @@ GuiInterface.prototype.GetEntityState = function(player, ent)
 
 	var ret = {
 		"id": ent,
-		"template": template,
-
-		"alertRaiser": null,
-		"buildEntities": null,
-		"identity": null,
-		"fogging": null,
-		"foundation": null,
-		"garrisonHolder": null,
-		"gate": null,
-		"guard": null,
-		"pack": null,
-		"player": -1,
-		"position": null,
-		"production": null,
-		"rallyPoint": null,
-		"rotation": null,
-		"trader": null,
-		"unitAI": null,
-		"visibility": null,
+		"template": template
 	};
-
-	// Used for several components
-	var cmpMirage = Engine.QueryInterface(ent, IID_Mirage);
 
 	var cmpIdentity = Engine.QueryInterface(ent, IID_Identity);
 	if (cmpIdentity)
@@ -200,7 +174,6 @@ GuiInterface.prototype.GetEntityState = function(player, ent)
 		ret.identity = {
 			"rank": cmpIdentity.GetRank(),
 			"classes": cmpIdentity.GetClassesList(),
-			"visibleClasses": cmpIdentity.GetVisibleClassesList(),
 			"selectionGroupName": cmpIdentity.GetSelectionGroupName()
 		};
 	}
@@ -219,12 +192,6 @@ GuiInterface.prototype.GetEntityState = function(player, ent)
 		ret.maxHitpoints = cmpHealth.GetMaxHitpoints();
 		ret.needsRepair = cmpHealth.IsRepairable() && (cmpHealth.GetHitpoints() < cmpHealth.GetMaxHitpoints());
 		ret.needsHeal = !cmpHealth.IsUnhealable();
-	}
-	if (cmpMirage && cmpMirage.Health())
-	{
-		ret.hitpoints = cmpMirage.GetHitpoints();
-		ret.maxHitpoints = cmpMirage.GetMaxHitpoints();
-		ret.needsRepair = cmpMirage.NeedsRepair();
 	}
 
 	var cmpBuilder = Engine.QueryInterface(ent, IID_Builder);
@@ -261,27 +228,12 @@ GuiInterface.prototype.GetEntityState = function(player, ent)
 		};
 	}
 
-	var cmpFogging = Engine.QueryInterface(ent, IID_Fogging);
-	if (cmpFogging)
-	{
-		if (cmpFogging.IsMiraged(player))
-			ret.fogging = {"mirage": cmpFogging.GetMirage(player)};
-		else
-			ret.fogging = {"mirage": null};
-	}
-
 	var cmpFoundation = Engine.QueryInterface(ent, IID_Foundation);
 	if (cmpFoundation)
 	{
 		ret.foundation = {
 			"progress": cmpFoundation.GetBuildPercentage(),
 			"numBuilders": cmpFoundation.GetNumBuilders()
-		};
-	}
-	if (cmpMirage && cmpMirage.Foundation())
-	{
-		ret.foundation = {
-			"progress": cmpMirage.GetBuildPercentage()
 		};
 	}
 
@@ -302,7 +254,7 @@ GuiInterface.prototype.GetEntityState = function(player, ent)
 	{
 		ret.garrisonHolder = {
 			"entities": cmpGarrisonHolder.GetEntities(),
-			"allowedClasses": cmpGarrisonHolder.GetAllowedClasses(),
+			"allowedClasses": cmpGarrisonHolder.GetAllowedClassesList(),
 			"capacity": cmpGarrisonHolder.GetCapacity(),
 			"garrisonedEntitiesCount": cmpGarrisonHolder.GetGarrisonedEntitiesCount()
 		};
@@ -317,10 +269,9 @@ GuiInterface.prototype.GetEntityState = function(player, ent)
 			"hasWorkOrders": cmpUnitAI.HasWorkOrders(),
 			"canGuard": cmpUnitAI.CanGuard(),
 			"isGuarding": cmpUnitAI.IsGuardOf(),
-			"possibleStances": cmpUnitAI.GetPossibleStances(),
 		};
 		// Add some information needed for ungarrisoning
-		if (cmpUnitAI.IsGarrisoned() && ret.player !== undefined)
+		if (cmpUnitAI.isGarrisoned && ret.player !== undefined)
 			ret.template = "p" + ret.player + "&" + ret.template;
 	}
 
@@ -361,25 +312,7 @@ GuiInterface.prototype.GetEntityState = function(player, ent)
  */
 GuiInterface.prototype.GetExtendedEntityState = function(player, ent)
 {
-	var ret = {
-		"armour": null,
-		"attack": null,
-		"barterMarket": null,
-		"buildingAI": null,
-		"healer": null,
-		"mirage": null,
-		"obstruction": null,
-		"turretParent":null,
-		"promotion": null,
-		"resourceCarrying": null,
-		"resourceDropsite": null,
-		"resourceGatherRates": null,
-		"resourceSupply": null,
-	};
-
-	var cmpMirage = Engine.QueryInterface(ent, IID_Mirage);
-	if (cmpMirage)
-		ret.mirage = true;
+	var ret = {};
 
 	var cmpIdentity = Engine.QueryInterface(ent, IID_Identity);
 
@@ -432,12 +365,6 @@ GuiInterface.prototype.GetExtendedEntityState = function(player, ent)
 		ret.armour = cmpArmour.GetArmourStrengths();
 	}
 
-	var cmpAuras = Engine.QueryInterface(ent, IID_Auras)
-	if (cmpAuras)
-	{
-		ret.auras = cmpAuras.GetDescriptions();
-	}
-
 	var cmpBuildingAI = Engine.QueryInterface(ent, IID_BuildingAI);
 	if (cmpBuildingAI)
 	{
@@ -458,10 +385,6 @@ GuiInterface.prototype.GetExtendedEntityState = function(player, ent)
 		};
 	}
 
-	var cmpPosition = Engine.QueryInterface(ent, IID_Position);
-	if (cmpPosition && cmpPosition.GetTurretParent() != INVALID_ENTITY)
-		ret.turretParent = cmpPosition.GetTurretParent();
-
 	var cmpResourceSupply = Engine.QueryInterface(ent, IID_ResourceSupply);
 	if (cmpResourceSupply)
 	{
@@ -472,16 +395,7 @@ GuiInterface.prototype.GetExtendedEntityState = function(player, ent)
 			"type": cmpResourceSupply.GetType(),
 			"killBeforeGather": cmpResourceSupply.GetKillBeforeGather(),
 			"maxGatherers": cmpResourceSupply.GetMaxGatherers(),
-			"gatherers": cmpResourceSupply.GetGatherers()
-		};
-	}
-	if (cmpMirage && cmpMirage.ResourceSupply())
-	{
-		ret.resourceSupply = {
-			"max": cmpMirage.GetMaxAmount(),
-			"amount": cmpMirage.GetAmount(),
-			"type": cmpMirage.GetType(),
-			"isInfinite": cmpMirage.IsInfinite()
+			"gatherers": cmpResourceSupply.GetGatherers(player)
 		};
 	}
 
@@ -580,15 +494,7 @@ GuiInterface.prototype.GetTemplateData = function(player, extendedName)
 			};
 		}
 	}
-
-	if (template.Auras)
-	{
-		ret.auras = {};
-		for each (var aura in template.Auras)
-			if (aura.AuraName)
-				ret.auras[aura.AuraName] = aura.AuraDescription || null;
-	}
-
+	
 	if (template.BuildRestrictions)
 	{
 		// required properties
@@ -692,9 +598,8 @@ GuiInterface.prototype.GetTemplateData = function(player, extendedName)
 		};
 		ret.icon = template.Identity.Icon;
 		ret.tooltip =  template.Identity.Tooltip;
-		ret.gateConversionTooltip =  template.Identity.GateConversionTooltip;
 		ret.requiredTechnology = template.Identity.RequiredTechnology;
-		ret.visibleIdentityClasses = GetVisibleIdentityClasses(template.Identity);
+		ret.identityClassesString = GetTemplateIdentityClassesString(template);
 	}
 
 	if (template.UnitMotion)
@@ -759,10 +664,7 @@ GuiInterface.prototype.GetTechnologyData = function(player, name)
 		"specific": specific,
 		"generic": template.genericName,
 	};
-	if (template.icon)
-		ret.icon = "technologies/" + template.icon;
-	else
-		ret.icon = null;
+	ret.icon = "technologies/" + template.icon;
 	ret.cost = {
 		"food": template.cost ? (+template.cost.food) : 0,
 		"wood": template.cost ? (+template.cost.wood) : 0,
@@ -777,9 +679,6 @@ GuiInterface.prototype.GetTechnologyData = function(player, name)
 	else
 		ret.requirementsTooltip = "";
 	
-	if (template.requirements.class)
-		ret.classRequirements = {"class": template.requirements.class, "number": template.requirements.number};
-	
 	ret.description = template.description;
 	
 	return ret;
@@ -787,9 +686,6 @@ GuiInterface.prototype.GetTechnologyData = function(player, name)
 
 GuiInterface.prototype.IsTechnologyResearched = function(player, tech)
 {
-	if (!tech)
-		return true;
-
 	var cmpTechnologyManager = QueryPlayerIDInterface(player, IID_TechnologyManager);
 	
 	if (!cmpTechnologyManager)
@@ -854,7 +750,7 @@ GuiInterface.prototype.GetNeededResources = function(player, amounts)
 GuiInterface.prototype.AddTimeNotification = function(notification)
 {
 	var time = Engine.QueryInterface(SYSTEM_ENTITY, IID_Timer).GetTime();
-	notification.endTime = notification.duration + time;
+	notification.endTime = notification.time + time;
 	notification.id = ++this.timeNotificationID;
 	this.timeNotifications.push(notification);
 	this.timeNotifications.sort(function (n1, n2){return n2.endTime - n1.endTime});
@@ -873,30 +769,36 @@ GuiInterface.prototype.DeleteTimeNotification = function(notificationID)
 	}
 };
 
-GuiInterface.prototype.GetTimeNotifications = function(playerID)
-{
+GuiInterface.prototype.GetTimeNotificationText = function(playerID)
+{	
+	var formatTime = function(time)
+		{
+			// add 1000 ms to get ceiled instead of floored millisecons
+			// displaying 00:00 for a full second isn't nice
+			time += 1000;
+			var hours   = Math.floor(time / 1000 / 60 / 60);
+			var minutes = Math.floor(time / 1000 / 60) % 60;
+			var seconds = Math.floor(time / 1000) % 60;
+			return (hours ? hours + ':' : "") + (minutes < 10 ? '0' + minutes : minutes) + ':' + (seconds < 10 ? '0' + seconds : seconds);
+		};
 	var time = Engine.QueryInterface(SYSTEM_ENTITY, IID_Timer).GetTime();
-	var toDelete = [];
-	for (var n of this.timeNotifications)
+	var text = "";
+	for each (var n in this.timeNotifications)
 	{
-		n.time = n.endTime - time;
-		if (n.time < 0)
-			toDelete.push(n.id);
+		if (time >= n.endTime)
+		{
+			// delete the notification and start over 
+			this.DeleteTimeNotification(n.id);
+			return this.GetTimeNotificationText(playerID);
+		}
+		if (n.players.indexOf(playerID) >= 0)
+			text += n.message.replace("%T",formatTime(n.endTime - time))+"\n";
 	}
-	for (var id of toDelete)
-		this.DeleteTimeNotification(id);
-	return this.timeNotifications;
+	return text;
 };
 
 GuiInterface.prototype.PushNotification = function(notification)
 {
-	if (!notification.type || notification.type == "text")
-	{
-		if (!notification.duration)
-			notification.duration = 10000;
-		this.AddTimeNotification(notification);
-		return;
-	}
 	this.notifications.push(notification);
 };
 
@@ -905,7 +807,7 @@ GuiInterface.prototype.GetNextNotification = function()
 	if (this.notifications.length)
 		return this.notifications.pop();
 	else
-		return false;
+		return "";
 };
 
 GuiInterface.prototype.GetAvailableFormations = function(player, data)
@@ -933,8 +835,7 @@ GuiInterface.prototype.GetFormationInfoFromTemplate = function(player, data)
 	if (!template || !template.Formation)
 		return r;
 	r.name = template.Formation.FormationName;
-	r.tooltip = template.Formation.DisabledTooltip || "";
-	r.icon = template.Formation.Icon;
+	r.tooltip = template.Formation.DisabledTooltip;
 	return r;
 };
 
@@ -1069,11 +970,10 @@ GuiInterface.prototype.DisplayRallyPoint = function(player, cmd)
 		if (pos)
 		{
 			// Only update the position if we changed it (cmd.queued is set)
-			if ("queued" in cmd)
-				if (cmd.queued == true)
-					cmpRallyPointRenderer.AddPosition({'x': pos.x, 'y': pos.z}); // AddPosition takes a CFixedVector2D which has X/Y components, not X/Z
-				else
-					cmpRallyPointRenderer.SetPosition({'x': pos.x, 'y': pos.z}); // SetPosition takes a CFixedVector2D which has X/Y components, not X/Z
+			if (cmd.queued == true)
+				cmpRallyPointRenderer.AddPosition({'x': pos.x, 'y': pos.z}); // AddPosition takes a CFixedVector2D which has X/Y components, not X/Z
+			else if (cmd.queued == false)
+				cmpRallyPointRenderer.SetPosition({'x': pos.x, 'y': pos.z}); // SetPosition takes a CFixedVector2D which has X/Y components, not X/Z
 			// rebuild the renderer when not set (when reading saved game or in case of building update)
 			else if (!cmpRallyPointRenderer.IsSet())
 				for each (var posi in cmpRallyPoint.GetPositions())
@@ -1094,11 +994,8 @@ GuiInterface.prototype.DisplayRallyPoint = function(player, cmd)
  * 
  * Returns result object from CheckPlacement:
  * 	{
- *		"success":             true iff the placement is valid, else false
- *		"message":             message to display in UI for invalid placement, else ""
- *		"parameters":          parameters to use in the message
- *		"translateMessage":    localisation info
- *		"translateParameters": localisation info
+ *		"success":	true iff the placement is valid, else false
+ *		"message":	message to display in UI for invalid placement, else empty string
  *  }
  */
 GuiInterface.prototype.SetBuildingPlacementPreview = function(player, cmd)
@@ -1106,9 +1003,6 @@ GuiInterface.prototype.SetBuildingPlacementPreview = function(player, cmd)
 	var result = {
 		"success": false,
 		"message": "",
-		"parameters": {},
-		"translateMessage": false,
-		"translateParameters": [],
 	}
 
 	// See if we're changing template
@@ -1748,12 +1642,88 @@ GuiInterface.prototype.GetFoundationSnapData = function(player, data)
 		if (minDistEntitySnapData != null)
 			return minDistEntitySnapData;
 	}
-
+	
 	if (template.BuildRestrictions.Category == "Dock")
 	{
-		var angle = GetDockAngle(template, data.x, data.z);
-		if (angle !== undefined)
-			return {"x": data.x, "z": data.z, "angle": angle};
+		// warning: copied almost identically in helpers/command.js , "GetDockAngle".
+		var cmpTerrain = Engine.QueryInterface(SYSTEM_ENTITY, IID_Terrain);
+		var cmpWaterManager = Engine.QueryInterface(SYSTEM_ENTITY, IID_WaterManager);
+		if (!cmpTerrain || !cmpWaterManager)
+		{
+			return false;
+		}
+		
+		// Get footprint size
+		var halfSize = 0;
+		if (template.Footprint.Square)
+		{
+			halfSize = Math.max(template.Footprint.Square["@depth"], template.Footprint.Square["@width"])/2;
+		}
+		else if (template.Footprint.Circle)
+		{
+			halfSize = template.Footprint.Circle["@radius"];
+		}
+		
+		/* Find direction of most open water, algorithm:
+		 *	1. Pick points in a circle around dock
+		 *	2. If point is in water, add to array
+		 *	3. Scan array looking for consecutive points
+		 *	4. Find longest sequence of consecutive points
+		 *	5. If sequence equals all points, no direction can be determined,
+		 *		expand search outward and try (1) again
+		 *	6. Calculate angle using average of sequence
+		 */
+		const numPoints = 16;
+		for (var dist = 0; dist < 4; ++dist)
+		{
+			var waterPoints = [];
+			for (var i = 0; i < numPoints; ++i)
+			{
+				var angle = (i/numPoints)*2*Math.PI;
+				var d = halfSize*(dist+1);
+				var nx = data.x - d*Math.sin(angle);
+				var nz = data.z + d*Math.cos(angle);
+				
+				if (cmpTerrain.GetGroundLevel(nx, nz) < cmpWaterManager.GetWaterLevel(nx, nz))
+				{
+					waterPoints.push(i);
+				}
+			}
+			var consec = [];
+			var length = waterPoints.length;
+			for (var i = 0; i < length; ++i)
+			{
+				var count = 0;
+				for (var j = 0; j < (length-1); ++j)
+				{
+					if (((waterPoints[(i + j) % length]+1) % numPoints) == waterPoints[(i + j + 1) % length])
+					{
+						++count;
+					}
+					else
+					{
+						break;
+					}
+				}
+				consec[i] = count;
+			}
+			var start = 0;
+			var count = 0;
+			for (var c in consec)
+			{
+				if (consec[c] > count)
+				{
+					start = c;
+					count = consec[c];
+				}
+			}
+			
+			// If we've found a shoreline, stop searching
+			if (count != numPoints-1)
+			{
+				return {"x": data.x, "z": data.z, "angle": -(((waterPoints[start] + consec[start]/2) % numPoints)/numPoints*2*Math.PI)};
+			}
+		}
 	}
 
 	return false;
@@ -1768,29 +1738,40 @@ GuiInterface.prototype.PlaySound = function(player, data)
 	PlaySound(data.name, data.entity);
 };
 
+function isIdleUnit(ent, idleClass)
+{
+	var cmpUnitAI = Engine.QueryInterface(ent, IID_UnitAI);
+	var cmpIdentity = Engine.QueryInterface(ent, IID_Identity);
+	
+	// TODO: Do something with garrisoned idle units
+	return (cmpUnitAI && cmpIdentity && cmpUnitAI.IsIdle() && !cmpUnitAI.IsGarrisoned() && idleClass && cmpIdentity.HasClass(idleClass));
+};
+
 GuiInterface.prototype.FindIdleUnits = function(player, data)
 {
-	var cmpRangeManager = Engine.QueryInterface(SYSTEM_ENTITY, IID_RangeManager);
-	var playerEntities = cmpRangeManager.GetEntitiesByPlayer(player).filter( function(e) {
+	var rangeMan = Engine.QueryInterface(SYSTEM_ENTITY, IID_RangeManager);
+	var playerEntities = rangeMan.GetEntitiesByPlayer(player).filter( function(e) {
 		var cmpUnitAI = Engine.QueryInterface(e, IID_UnitAI);
-		if (!cmpUnitAI || !cmpUnitAI.IsIdle() || cmpUnitAI.IsGarrisoned())
-			return false;
-		var cmpIdentity = Engine.QueryInterface(e, IID_Identity);
-		if (!cmpIdentity || !cmpIdentity.HasClass(data.idleClass))
-			return false;
-		return true;
+		if (cmpUnitAI)
+			return true;
+		return false;
 	});
 
 	var idleUnits = [];
+	var noFilter = (data.prevUnit == undefined && data.excludeUnits == undefined);
 
 	for (var j = 0; j < playerEntities.length; ++j)
 	{
 		var ent = playerEntities[j];
-
-		if (ent <= data.prevUnit|0 || data.excludeUnits.indexOf(ent) > -1)
+		if (!isIdleUnit(ent, data.idleClass))
 			continue;
-		idleUnits.push(ent);
-		playerEntities.splice(j--, 1);
+
+		if (noFilter || ((data.prevUnit == undefined || ent > data.prevUnit) &&
+				(data.excludeUnits == undefined || data.excludeUnits.indexOf(ent) == -1)))
+		{
+			idleUnits.push(ent);
+			playerEntities.splice(j--, 1);
+		}
 
 		if (data.limit && idleUnits.length >= data.limit)
 			break;
@@ -1874,19 +1855,13 @@ GuiInterface.prototype.GetBatchTime = function(player, data)
 GuiInterface.prototype.IsMapRevealed = function(player)
 {
 	var cmpRangeManager = Engine.QueryInterface(SYSTEM_ENTITY, IID_RangeManager);
-	return cmpRangeManager.GetLosRevealAll(player);
+	return cmpRangeManager.GetLosRevealAll(-1);
 };
 
 GuiInterface.prototype.SetPathfinderDebugOverlay = function(player, enabled)
 {
 	var cmpPathfinder = Engine.QueryInterface(SYSTEM_ENTITY, IID_Pathfinder);
 	cmpPathfinder.SetDebugOverlay(enabled);
-};
-
-GuiInterface.prototype.SetPathfinderHierDebugOverlay = function(player, enabled)
-{
-	var cmpPathfinder = Engine.QueryInterface(SYSTEM_ENTITY, IID_Pathfinder);
-	cmpPathfinder.SetHierDebugOverlay(enabled);
 };
 
 GuiInterface.prototype.SetObstructionDebugOverlay = function(player, enabled)
@@ -1984,7 +1959,7 @@ var exposedFunctions = {
 	"GetIncomingAttacks": 1,
 	"GetNeededResources": 1,
 	"GetNextNotification": 1,
-	"GetTimeNotifications": 1,
+	"GetTimeNotificationText": 1,
 
 	"GetAvailableFormations": 1,
 	"GetFormationRequirements": 1,
@@ -2009,7 +1984,6 @@ var exposedFunctions = {
 
 	"IsMapRevealed": 1,
 	"SetPathfinderDebugOverlay": 1,
-	"SetPathfinderHierDebugOverlay": 1,
 	"SetObstructionDebugOverlay": 1,
 	"SetMotionDebugOverlay": 1,
 	"SetRangeDebugOverlay": 1,
@@ -2026,4 +2000,4 @@ GuiInterface.prototype.ScriptCall = function(player, name, args)
 		throw new Error("Invalid GuiInterface Call name \""+name+"\"");
 };
 
-Engine.RegisterSystemComponentType(IID_GuiInterface, "GuiInterface", GuiInterface);
+Engine.RegisterComponentType(IID_GuiInterface, "GuiInterface", GuiInterface);
