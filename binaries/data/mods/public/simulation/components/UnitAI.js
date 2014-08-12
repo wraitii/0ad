@@ -3257,7 +3257,7 @@ UnitAI.prototype.IsWalkingAndFighting = function()
 UnitAI.prototype.OnCreate = function()
 {
 	if (this.IsAnimal())
-		UnitFsm.Init(this, "ANIMAL.FEEDING");
+		this.UnitFsm.Init(this, "ANIMAL.FEEDING");
 	else if (this.IsFormationController())
 		this.UnitFsm.Init(this, "FORMATIONCONTROLLER.IDLE");
 	else
