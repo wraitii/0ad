@@ -23,6 +23,14 @@
 #include "renderer/TerrainOverlay.h"
 #include "simulation2/helpers/Render.h"
 
+#define PATHFINDER_HIER_PROFILE 1
+#if PATHFINDER_HIER_PROFILE
+	#include "lib/timer.h"
+	TIMER_ADD_CLIENT(tc_MakeGoalReachable);
+#else
+	#define	TIMER_ACCRUE(a) ;
+#endif
+
 class PathfinderHierOverlay;
 
 /**
@@ -531,6 +539,7 @@ CCmpPathfinder_Hier::RegionID CCmpPathfinder_Hier::Get(u16 i, u16 j, pass_class_
 
 bool CCmpPathfinder_Hier::MakeGoalReachable(u16 i0, u16 j0, PathGoal& goal, pass_class_t passClass)
 {
+	TIMER_ACCRUE(tc_MakeGoalReachable);
 	RegionID source = Get(i0, j0, passClass);
 
 	// Find everywhere that's reachable

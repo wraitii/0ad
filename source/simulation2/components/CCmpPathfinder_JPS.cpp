@@ -27,7 +27,7 @@
 
 #define PATHFIND_STATS 0
 
-#define USE_JUMPPOINT_CACHE 1
+#define USE_JUMPPOINT_CACHE 0
 
 #define ACCEPT_DIAGONAL_GAPS 0
 
@@ -807,8 +807,8 @@ void CCmpPathfinder::ComputePathJPS(entity_pos_t x0, entity_pos_t z0, const Path
 
 	PathfinderStateJPS state = { 0 };
 
-	state.jpc = m_JumpPointCache[passClass].get();
 #if USE_JUMPPOINT_CACHE
+	state.jpc = m_JumpPointCache[passClass].get();
 	if (!state.jpc)
 	{
 		state.jpc = new JumpPointCache;
