@@ -561,20 +561,15 @@ bool CCmpPathfinder_Hier::MakeGoalReachable(u16 i0, u16 j0, PathGoal& goal, pass
 	m_Pathfinder.NearestNavcell(goal.x - goal.hw - goal.hh, goal.z - goal.hw - goal.hh, gi0, gj0);
 	m_Pathfinder.NearestNavcell(goal.x + goal.hw + goal.hh, goal.z + goal.hw + goal.hh, gi1, gj1);
 
-	u16 ci0 = gi0 / CHUNK_SIZE;
-	u16 cj0 = gj0 / CHUNK_SIZE;
-	u16 ci1 = gi1 / CHUNK_SIZE;
-	u16 cj1 = gj1 / CHUNK_SIZE;
-
-	for (u16 ci = ci0; ci <= ci1; ci++)
+	for (u16 gi = gi0; gi <= gi1; gi++)
 	{
-		for (u16 cj = cj0; cj <= cj1; cj++)
+		for (u16 gj = gj0; gj <= gj1; gj++)
 		{
-			Chunk& cnk = GetChunk(ci, cj, passClass);
-			// If the region contains the goal area, the goal is reachable
-			// and we don't need to move it
-			if (cnk.RegionContainsGoal(source.r , goal))
-				return false;
+			if (goal.NavcellContainsGoal(gi, gj))
+			{
+				if (source.r == Get(gi, gj, passClass).r)
+					return false;
+			}
 		}
 	}
 
