@@ -558,8 +558,9 @@ bool CCmpPathfinder_Hier::MakeGoalReachable(u16 i0, u16 j0, PathGoal& goal, pass
 	}
 
 	u16 gi0, gj0, gi1, gj1;
-	m_Pathfinder.NearestNavcell(goal.x - goal.hw - goal.hh, goal.z - goal.hw - goal.hh, gi0, gj0);
-	m_Pathfinder.NearestNavcell(goal.x + goal.hw + goal.hh, goal.z + goal.hw + goal.hh, gi1, gj1);
+	const fixed margin = goal.hw + goal.hh;
+	m_Pathfinder.NearestNavcell(goal.x - margin, goal.z - margin, gi0, gj0);
+	m_Pathfinder.NearestNavcell(goal.x + margin, goal.z + margin, gi1, gj1);
 
 	for (u16 gi = gi0; gi <= gi1; gi++)
 	{
