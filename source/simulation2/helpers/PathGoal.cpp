@@ -112,7 +112,18 @@ bool PathGoal::NavcellContainsGoal(int i, int j) const
 		return gi == i && gj == j;
 	}
 	case CIRCLE:
+	{
+		int r = ((x - hw) >> ICmpObstructionManager::NAVCELL_SIZE_LOG2).ToInt_RoundToNegInfinity();
+		if (i < r) return false;
+		r = ((z - hw) >> ICmpObstructionManager::NAVCELL_SIZE_LOG2).ToInt_RoundToNegInfinity();
+		if (j < r) return false;
+		r = ((x + hw) >> ICmpObstructionManager::NAVCELL_SIZE_LOG2).ToInt_RoundToNegInfinity();
+		if (i > r) return false;
+		r = ((z + hw) >> ICmpObstructionManager::NAVCELL_SIZE_LOG2).ToInt_RoundToNegInfinity();
+		if (j > r) return false;
+
 		return NavcellContainsCircle(i, j, x, z, hw, true);
+	}
 	case INVERTED_CIRCLE:
 		return NavcellContainsCircle(i, j, x, z, hw, false);
 	case SQUARE:

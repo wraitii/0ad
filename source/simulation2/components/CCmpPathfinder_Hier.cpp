@@ -28,6 +28,7 @@
 	#include "lib/timer.h"
 	TIMER_ADD_CLIENT(tc_MakeGoalReachable);
 #else
+	#undef	TIMER_ACCRUE
 	#define	TIMER_ACCRUE(a) ;
 #endif
 
