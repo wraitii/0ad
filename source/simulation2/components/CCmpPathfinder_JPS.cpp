@@ -662,14 +662,15 @@ static void AddJumpedHoriz(int i, int j, int di, PathCost g, PathfinderStateJPS&
 	}
 }
 
-static bool HasJumpedHoriz(int i, int j, int di, PathfinderStateJPS& state)
+//if found JP or goal, returns ni, else returns 0.
+static int HasJumpedHoriz(int i, int j, int di, PathfinderStateJPS& state)
 {
 	ASSERT(di == 1 || di == -1);
 	int ni = i + di;
 	while (true)
 	{
 		if (!PASSABLE(ni, j))
-			return false;
+			return 0;
 
 		if (state.goal.NavcellContainsGoal(ni, j) || // XXX
 #if ACCEPT_DIAGONAL_GAPS
@@ -680,7 +681,7 @@ static bool HasJumpedHoriz(int i, int j, int di, PathfinderStateJPS& state)
 			(!PASSABLE(ni-di, j+1) && PASSABLE(ni, j+1)))
 #endif
 		{
-			return true;
+			return ni;
 		}
 
 		ni += di;
@@ -713,14 +714,15 @@ static void AddJumpedVert(int i, int j, int dj, PathCost g, PathfinderStateJPS& 
 	}
 }
 
-static bool HasJumpedVert(int i, int j, int dj, PathfinderStateJPS& state)
+//if found JP or goal, returns nj, else returns 0.
+static int HasJumpedVert(int i, int j, int dj, PathfinderStateJPS& state)
 {
 	ASSERT(dj == 1 || dj == -1);
 	int nj = j + dj;
 	while (true)
 	{
 		if (!PASSABLE(i, nj))
-			return false;
+			return 0;
 
 		if (state.goal.NavcellContainsGoal(i, nj) || // XXX
 #if ACCEPT_DIAGONAL_GAPS
@@ -731,7 +733,7 @@ static bool HasJumpedVert(int i, int j, int dj, PathfinderStateJPS& state)
 			(!PASSABLE(i+1, nj-dj) && PASSABLE(i+1, nj)))
 #endif
 		{
-			return true;
+			return nj;
 		}
 
 		nj += dj;
@@ -783,10 +785,15 @@ static void AddJumpedDiag(int i, int j, int di, int dj, PathCost g, PathfinderSt
 			return;
 		}
 #endif
-
-		if (HasJumpedHoriz(ni, nj, di, state) || HasJumpedVert(ni, nj, dj, state))
+		int fi = HasJumpedHoriz(ni, nj, di, state);
+		int fj = HasJumpedVert(ni, nj, dj, state);
+		if (fi || fj)
 		{
 			ProcessNeighbour(i, j, ni, nj, g, state);
+			if (fi)
+				ProcessNeighbour(ni, nj, fi, nj, g + PathCost::diag(abs(ni - i)), state);
+			if (fj)
+				ProcessNeighbour(ni, nj, ni, fj, g + PathCost::diag(abs(ni - i)), state);
 			return;
 		}
 
@@ -955,8 +962,8 @@ void CCmpPathfinder::ComputePathJPS(entity_pos_t x0, entity_pos_t z0, const Path
 			if (!IS_PASSABLE(state.terrain->get(i, j + dpj), state.passClass))
 				AddJumpedDiag(i, j, -dpi, dpj, g, state);
 #endif
-			AddJumpedHoriz(i, j, -dpi, g, state);
-			AddJumpedVert(i, j, -dpj, g, state);
+			//AddJumpedHoriz(i, j, -dpi, g, state);
+			//AddJumpedVert(i, j, -dpj, g, state);
 			AddJumpedDiag(i, j, -dpi, -dpj, g, state);
 		}
 		else
@@ -971,22 +978,26 @@ void CCmpPathfinder::ComputePathJPS(entity_pos_t x0, entity_pos_t z0, const Path
 			bool passd = IS_PASSABLE(state.terrain->get(i, j-1), state.passClass);
 			bool passu = IS_PASSABLE(state.terrain->get(i, j+1), state.passClass);
 
-			if (passl && passd)
-				ProcessNeighbour(i, j, i-1, j-1, g, state);
-			if (passr && passd)
-				ProcessNeighbour(i, j, i+1, j-1, g, state);
-			if (passl && passu)
-				ProcessNeighbour(i, j, i-1, j+1, g, state);
-			if (passr && passu)
-				ProcessNeighbour(i, j, i+1, j+1, g, state);
 			if (passl)
-				ProcessNeighbour(i, j, i-1, j, g, state);
+			{
+				AddJumpedHoriz(i, j, -1, g, state);
+				if (passd)
+					AddJumpedDiag(i, j, -1, -1, g, state);
+				if (passu)
+					AddJumpedDiag(i, j, -1, +1, g, state);
+			}
 			if (passr)
-				ProcessNeighbour(i, j, i+1, j, g, state);
+			{
+				AddJumpedHoriz(i, j, +1, g, state);
+				if (passd)
+					AddJumpedDiag(i, j, +1, -1, g, state);
+				if (passu)
+					AddJumpedDiag(i, j, +1, +1, g, state);
+			}
 			if (passd)
-				ProcessNeighbour(i, j, i, j-1, g, state);
+				AddJumpedVert(i, j, -1, g, state);
 			if (passu)
-				ProcessNeighbour(i, j, i, j+1, g, state);
+				AddJumpedVert(i, j, +1, g, state);
 		}
 	}
 
