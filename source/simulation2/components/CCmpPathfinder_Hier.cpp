@@ -27,6 +27,7 @@
 #if PATHFINDER_HIER_PROFILE
 	#include "lib/timer.h"
 	TIMER_ADD_CLIENT(tc_MakeGoalReachable);
+	TIMER_ADD_CLIENT(tc_InitRegions);
 #else
 	#undef	TIMER_ACCRUE
 	#define	TIMER_ACCRUE(a) ;
@@ -204,6 +205,7 @@ public:
 
 void CCmpPathfinder_Hier::Chunk::InitRegions(int ci, int cj, Grid<NavcellData>* grid, pass_class_t passClass)
 {
+	TIMER_ACCRUE(tc_InitRegions);
 	ENSURE(ci < 256 && cj < 256); // avoid overflows
 	m_ChunkI = ci;
 	m_ChunkJ = cj;
