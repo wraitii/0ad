@@ -542,37 +542,47 @@ bool CCmpPathfinder_Hier::MakeGoalReachable(u16 i0, u16 j0, PathGoal& goal, pass
 	TIMER_ACCRUE(tc_MakeGoalReachable);
 	RegionID source = Get(i0, j0, passClass);
 
-	// Find everywhere that's reachable
-	std::set<RegionID> reachableRegions;
-	FindReachableRegions(source, reachableRegions, passClass);
-
 // 	debug_printf(L"\nReachable from (%d,%d): ", i0, j0);
 // 	for (std::set<RegionID>::iterator it = reachableRegions.begin(); it != reachableRegions.end(); ++it)
 // 		debug_printf(L"[%d,%d,%d], ", it->ci, it->cj, it->r);
 // 	debug_printf(L"\n");
 
 	// Check whether any reachable region contains the goal
-	for (std::set<RegionID>::const_iterator it = reachableRegions.begin(); it != reachableRegions.end(); ++it)
+	u16 iGoal, jGoal;
+	m_Pathfinder.NearestNavcell(goal.x, goal.z, iGoal, jGoal);
+	if (goal.type == PathGoal::POINT || goal.type == PathGoal::CIRCLE || goal.type == PathGoal::SQUARE)
 	{
-		// Skip region if its chunk doesn't contain the goal area
-		entity_pos_t x0 = ICmpObstructionManager::NAVCELL_SIZE * (it->ci * CHUNK_SIZE);
-		entity_pos_t z0 = ICmpObstructionManager::NAVCELL_SIZE * (it->cj * CHUNK_SIZE);
-		entity_pos_t x1 = x0 + ICmpObstructionManager::NAVCELL_SIZE * CHUNK_SIZE;
-		entity_pos_t z1 = z0 + ICmpObstructionManager::NAVCELL_SIZE * CHUNK_SIZE;
-		if (!goal.RectContainsGoal(x0, z0, x1, z1))
-			continue;
-
-		// If the region contains the goal area, the goal is reachable
-		// and we don't need to move it
-		if (GetChunk(it->ci, it->cj, passClass).RegionContainsGoal(it->r, goal))
+		if (source.r == Get(iGoal, jGoal, passClass).r)
 			return false;
+	}
+
+	u16 gi0, gj0, gi1, gj1;
+	m_Pathfinder.NearestNavcell(goal.x - goal.hw - goal.hh, goal.z - goal.hw - goal.hh, gi0, gj0);
+	m_Pathfinder.NearestNavcell(goal.x + goal.hw + goal.hh, goal.z + goal.hw + goal.hh, gi1, gj1);
+
+	u16 ci0 = gi0 / CHUNK_SIZE;
+	u16 cj0 = gj0 / CHUNK_SIZE;
+	u16 ci1 = gi1 / CHUNK_SIZE;
+	u16 cj1 = gj1 / CHUNK_SIZE;
+
+	for (u16 ci = ci0; ci <= ci1; ci++)
+	{
+		for (u16 cj = cj0; cj <= cj1; cj++)
+		{
+			Chunk& cnk = GetChunk(ci, cj, passClass);
+			// If the region contains the goal area, the goal is reachable
+			// and we don't need to move it
+			if (cnk.RegionContainsGoal(source.r , goal))
+				return false;
+		}
 	}
 
 	// The goal area wasn't reachable,
 	// so find the navcell that's nearest to the goal's center
 
-	u16 iGoal, jGoal;
-	m_Pathfinder.NearestNavcell(goal.x, goal.z, iGoal, jGoal);
+	// Find everywhere that's reachable
+	std::set<RegionID> reachableRegions;
+	FindReachableRegions(source, reachableRegions, passClass);
 
 	FindNearestNavcellInRegions(reachableRegions, iGoal, jGoal, passClass);
 
