@@ -331,10 +331,7 @@ void CCmpPathfinder_Hier::Chunk::InitRegions(int ci, int cj, Grid<NavcellData>* 
 	for (int j = 0; j < CHUNK_SIZE; ++j)
 	{
 		for (int i = 0; i < CHUNK_SIZE; ++i)
-		{
-			if (m_Regions[j][i] > v[m_Regions[j][i]])
 				m_Regions[j][i] = v[m_Regions[j][i]];
-		}
 	}
 }
 
