@@ -203,6 +203,14 @@ public:
 	}
 };
 
+u16 rootID(u16 x, std::vector<u16> v)
+{
+	while (v[x] < x)
+		x = v[x];
+
+	return x;
+}
+
 void CCmpPathfinder_Hier::Chunk::InitRegions(int ci, int cj, Grid<NavcellData>* grid, pass_class_t passClass)
 {
 	TIMER_ACCRUE(tc_InitRegions);
@@ -216,33 +224,85 @@ void CCmpPathfinder_Hier::Chunk::InitRegions(int ci, int cj, Grid<NavcellData>* 
 	int j0 = cj * CHUNK_SIZE;
 	int i1 = std::min(i0 + CHUNK_SIZE, (int)grid->m_W);
 	int j1 = std::min(j0 + CHUNK_SIZE, (int)grid->m_H);
+	int regionID = 0;
+	std::vector<u16> v;
 
+	u16* pCurID = NULL;
+	u16 LeftID = 0;
+	u16 DownID = 0;
+
+	v.reserve(32);
+	v.push_back(0); //v[0] is unused, but for ease
 	// Start by filling the grid with 0 for blocked,
-	// and a 0xFFFF placeholder for unblocked
+	// and regionID for unblocked
 	for (int j = j0; j < j1; ++j)
 	{
 		for (int i = i0; i < i1; ++i)
 		{
-			if (IS_PASSABLE(grid->get(i, j), passClass))
-				m_Regions[j-j0][i-i0] = 0xFFFF;
+			pCurID = &m_Regions[j-j0][i-i0];
+			if (!IS_PASSABLE(grid->get(i, j), passClass))
+				*pCurID = 0;
 			else
-				m_Regions[j-j0][i-i0] = 0;
+			{
+				if (j > j0)
+					DownID = m_Regions[j-1-j0][i-i0];
+
+				if (i == i0)
+					LeftID = 0;
+				else
+					LeftID = m_Regions[j-j0][i-1-i0];
+
+				if (DownID > 0)
+				{
+					*pCurID = DownID;
+					if (*pCurID != LeftID && LeftID > 0)
+					{
+						u16 id0 = rootID(*pCurID, v);
+						u16 id1 = rootID(LeftID, v);
+						
+						//register region connection
+						if (id0 < id1)
+							v[id1] = id0;
+						else if (id0 > id1)
+							v[id0] = id1;
+					}
+				}
+				else if (LeftID > 0)
+					*pCurID = LeftID;
+				else
+				{
+					//new ID
+					*pCurID = ++regionID;
+					v.push_back(regionID);
+				}
+
+			}
 		}
 	}
 
-	// Scan for tiles with the 0xFFFF placeholder, and then floodfill
-	// the new region this tile belongs to
-	int r = 0;
+	//convert to point root ID directry
+	for (u16 i = regionID; i > 0; --i)
+		v[i] = rootID(i,v);
+
+	u16 r = 0;
+	int k = 0;
+	// Scan for tiles with the non-zero ID, and then integrate ID
 	for (int j = 0; j < CHUNK_SIZE; ++j)
 	{
 		for (int i = 0; i < CHUNK_SIZE; ++i)
 		{
-			if (m_Regions[j][i] == 0xFFFF)
-				FloodFill(i, j, ++r);
+			if (m_Regions[j][i] > r)
+			{
+				r = m_Regions[j][i];
+				FloodFill(i, j, r);
+				++k;
+				//m_Regions[j][i] = v[m_Regions[j][i]];
+			}
 		}
 	}
 
-	m_NumRegions = r;
+	//m_NumRegions = regionID;
+	m_NumRegions = k;
 }
 
 /**
@@ -262,13 +322,13 @@ void CCmpPathfinder_Hier::Chunk::FloodFill(int i0, int j0, u16 r)
 		stack.pop_back();
 		m_Regions[j][i] = r;
 
-		if (i > 0 && m_Regions[j][i-1] == 0xFFFF)
+		if (i > 0 && m_Regions[j][i-1] != 0 && m_Regions[j][i-1] != r)
 			stack.push_back(std::make_pair(i-1, j));
-		if (j > 0 && m_Regions[j-1][i] == 0xFFFF)
+		if (j > 0 && m_Regions[j-1][i] != 0 && m_Regions[j-1][i] != r)
 			stack.push_back(std::make_pair(i, j-1));
-		if (i < CHUNK_SIZE-1 && m_Regions[j][i+1] == 0xFFFF)
+		if (i < CHUNK_SIZE-1 && m_Regions[j][i+1] != 0 && m_Regions[j][i+1] != r)
 			stack.push_back(std::make_pair(i+1, j));
-		if (j < CHUNK_SIZE-1 && m_Regions[j+1][i] == 0xFFFF)
+		if (j < CHUNK_SIZE-1 && m_Regions[j+1][i] != 0 && m_Regions[j+1][i] != r)
 			stack.push_back(std::make_pair(i, j+1));
 	}
 }
