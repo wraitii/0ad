@@ -224,6 +224,43 @@ void CCmpPathfinder_Hier::Chunk::InitRegions(int ci, int cj, Grid<NavcellData>* 
 	int j0 = cj * CHUNK_SIZE;
 	int i1 = std::min(i0 + CHUNK_SIZE, (int)grid->m_W);
 	int j1 = std::min(j0 + CHUNK_SIZE, (int)grid->m_H);
+
+	//// for compare
+
+	//// Start by filling the grid with 0 for blocked,
+	//// and a 0xFFFF placeholder for unblocked
+	//for (int j = j0; j < j1; ++j)
+	//{
+	//	for (int i = i0; i < i1; ++i)
+	//	{
+	//		if (IS_PASSABLE(grid->get(i, j), passClass))
+	//			m_Regions[j-j0][i-i0] = 0xFFFF;
+	//		else
+	//			m_Regions[j-j0][i-i0] = 0;
+	//	}
+	//}
+
+	//u16 old_NumRegions;
+	//{
+	//	// Scan for tiles with the 0xFFFF placeholder, and then floodfill
+	//	// the new region this tile belongs to
+	//	int r = 0;
+	//	for (int j = 0; j < CHUNK_SIZE; ++j)
+	//	{
+	//		for (int i = 0; i < CHUNK_SIZE; ++i)
+	//		{
+	//			if (m_Regions[j][i] == 0xFFFF)
+	//				FloodFill(i, j, ++r);
+	//		}
+	//	}
+	//	old_NumRegions = r;
+	//}
+
+	//u16 old_Regions[CHUNK_SIZE][CHUNK_SIZE];
+	//memcpy(old_Regions, m_Regions, sizeof(old_Regions));
+	//memset(m_Regions, 0, sizeof(m_Regions));
+	////end of old call
+
 	int regionID = 0;
 	std::vector<u16> v;
 
@@ -281,28 +318,24 @@ void CCmpPathfinder_Hier::Chunk::InitRegions(int ci, int cj, Grid<NavcellData>* 
 	}
 
 	//convert to point root ID directry
+	m_NumRegions = 0;
 	for (u16 i = regionID; i > 0; --i)
-		v[i] = rootID(i,v);
+	{
+		if (v[i] == i)
+			++m_NumRegions;
+		else
+			v[i] = rootID(i,v);
+	}
 
-	u16 r = 0;
-	int k = 0;
 	// Scan for tiles with the non-zero ID, and then integrate ID
 	for (int j = 0; j < CHUNK_SIZE; ++j)
 	{
 		for (int i = 0; i < CHUNK_SIZE; ++i)
 		{
-			if (m_Regions[j][i] > r)
-			{
-				r = m_Regions[j][i];
-				FloodFill(i, j, r);
-				++k;
-				//m_Regions[j][i] = v[m_Regions[j][i]];
-			}
+			if (m_Regions[j][i] > v[m_Regions[j][i]])
+				m_Regions[j][i] = v[m_Regions[j][i]];
 		}
 	}
-
-	//m_NumRegions = regionID;
-	m_NumRegions = k;
 }
 
 /**
@@ -322,16 +355,17 @@ void CCmpPathfinder_Hier::Chunk::FloodFill(int i0, int j0, u16 r)
 		stack.pop_back();
 		m_Regions[j][i] = r;
 
-		if (i > 0 && m_Regions[j][i-1] != 0 && m_Regions[j][i-1] != r)
+		if (i > 0 && m_Regions[j][i-1] == 0xFFFF)
 			stack.push_back(std::make_pair(i-1, j));
-		if (j > 0 && m_Regions[j-1][i] != 0 && m_Regions[j-1][i] != r)
+		if (j > 0 && m_Regions[j-1][i] == 0xFFFF)
 			stack.push_back(std::make_pair(i, j-1));
-		if (i < CHUNK_SIZE-1 && m_Regions[j][i+1] != 0 && m_Regions[j][i+1] != r)
+		if (i < CHUNK_SIZE-1 && m_Regions[j][i+1] == 0xFFFF)
 			stack.push_back(std::make_pair(i+1, j));
-		if (j < CHUNK_SIZE-1 && m_Regions[j+1][i] != 0 && m_Regions[j+1][i] != r)
+		if (j < CHUNK_SIZE-1 && m_Regions[j+1][i] == 0xFFFF)
 			stack.push_back(std::make_pair(i, j+1));
 	}
 }
+
 
 /**
  * Returns a RegionID for the given global navcell coords
