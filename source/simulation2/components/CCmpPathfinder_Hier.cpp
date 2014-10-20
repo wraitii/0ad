@@ -289,12 +289,12 @@ void CCmpPathfinder_Hier::Chunk::InitRegions(int ci, int cj, Grid<NavcellData>* 
 				else
 					LeftID = m_Regions[j-j0][i-1-i0];
 
-				if (DownID > 0)
+				if (LeftID > 0)
 				{
-					*pCurID = DownID;
-					if (*pCurID != LeftID && LeftID > 0)
+					*pCurID = LeftID;
+					if (*pCurID != DownID && DownID > 0)
 					{
-						u16 id0 = rootID(*pCurID, v);
+						u16 id0 = rootID(DownID, v);
 						u16 id1 = rootID(LeftID, v);
 						
 						//register region connection
@@ -304,8 +304,8 @@ void CCmpPathfinder_Hier::Chunk::InitRegions(int ci, int cj, Grid<NavcellData>* 
 							v[id0] = id1;
 					}
 				}
-				else if (LeftID > 0)
-					*pCurID = LeftID;
+				else if (DownID > 0)
+					*pCurID = DownID;
 				else
 				{
 					//new ID
@@ -328,11 +328,13 @@ void CCmpPathfinder_Hier::Chunk::InitRegions(int ci, int cj, Grid<NavcellData>* 
 	}
 
 	// Scan for tiles with the non-zero ID, and then integrate ID
-	for (int j = 0; j < CHUNK_SIZE; ++j)
-	{
-		for (int i = 0; i < CHUNK_SIZE; ++i)
-				m_Regions[j][i] = v[m_Regions[j][i]];
-	}
+	const u16 asize = CHUNK_SIZE * CHUNK_SIZE;
+	u16* p = &m_Regions[0][0];
+	const u16* pend = p + asize;
+
+	for (; p < pend; ++p)
+		*p = v[*p];
+
 }
 
 /**
