@@ -44,7 +44,9 @@
 	TIMER_ADD_CLIENT(tc_ProcessLongRequests);
 	TIMER_ADD_CLIENT(tc_ProcessShortRequests);
 	TIMER_ADD_CLIENT(tc_ProcessLongRequests_Loop);	
+	TIMER_ADD_CLIENT(tc_UpdateGrid);	
 #else
+	#undef TIMER_ACCRUE
 	#define	TIMER_ACCRUE(a) ;
 #endif
 
@@ -476,6 +478,7 @@ void CCmpPathfinder::ComputeTerrainPassabilityGrid(const Grid<u16>& shoreGrid)
 
 void CCmpPathfinder::UpdateGrid()
 {
+	TIMER_ACCRUE(tc_UpdateGrid);
 	CmpPtr<ICmpTerrain> cmpTerrain(GetSimContext(), SYSTEM_ENTITY);
 	if (!cmpTerrain)
 		return; // error
