@@ -810,7 +810,7 @@ void CCmpPathfinder::PathfinderJPSMakeDirty()
 
 void CCmpPathfinder::ComputePathJPS(entity_pos_t x0, entity_pos_t z0, const PathGoal& origGoal, pass_class_t passClass, Path& path)
 {
-	UpdateGrid();
+	UpdateGrid(0, 0, m_Grid->m_W - 1,  m_Grid->m_H - 1);
 
 	PathfinderStateJPS state = { 0 };
 

@@ -106,7 +106,7 @@ public:
 	virtual void BuildTextureRGBA(u8* data, size_t w, size_t h)
 	{
 		// Ensure m_Pathfinder.m_Grid is up-to-date
-		m_Pathfinder.UpdateGrid();
+		m_Pathfinder.UpdateGrid(0, 0, w - 1, h - 1);
 
 		// Grab the debug data for the most recently generated path
 		u32 steps;
@@ -354,7 +354,7 @@ static void ProcessNeighbour(int pi, int pj, int i, int j, PathCost pg, Pathfind
 
 void CCmpPathfinder::ComputePath(entity_pos_t x0, entity_pos_t z0, const PathGoal& origGoal, pass_class_t passClass, Path& path)
 {
-	UpdateGrid();
+	UpdateGrid(0, 0, m_Grid->m_W - 1,  m_Grid->m_H - 1);
 
 	PROFILE3("ComputePath");
 	TIMER(L"ComputePath");

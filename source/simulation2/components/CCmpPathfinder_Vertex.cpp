@@ -626,7 +626,7 @@ void CCmpPathfinder::ComputeShortPath(const IObstructionTestFilter& filter,
 	entity_pos_t x0, entity_pos_t z0, entity_pos_t r,
 	entity_pos_t range, const PathGoal& goal, pass_class_t passClass, Path& path)
 {
-	UpdateGrid(); // TODO: only need to bother updating if the terrain changed
+	UpdateGrid(0, 0, m_Grid->m_W - 1,  m_Grid->m_H - 1); // TODO: only need to bother updating if the terrain changed
 
 	PROFILE3("ComputeShortPath");
 	TIMER(L"ComputeShortPath");
@@ -1054,11 +1054,11 @@ bool CCmpPathfinder::CheckMovement(const IObstructionTestFilter& filter,
 	// we allow them to move from an impassable to a passable cell (but not
 	// vice versa).
 
-	UpdateGrid();
-
 	u16 i0, j0, i1, j1;
 	NearestNavcell(x0, z0, i0, j0);
 	NearestNavcell(x1, z1, i1, j1);
+
+	UpdateGrid(i0, j0, i1, j1);
 
 	// Find which direction the line heads in
 	int di = (i0 < i1 ? +1 : i1 < i0 ? -1 : 0);

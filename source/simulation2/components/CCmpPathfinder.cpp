@@ -232,7 +232,11 @@ const PathfinderPassability* CCmpPathfinder::GetPassabilityFromMask(pass_class_t
 
 const Grid<u16>& CCmpPathfinder::GetPassabilityGrid()
 {
-	UpdateGrid();
+	if (m_Grid)
+		UpdateGrid(0, 0, m_Grid->m_W - 1, m_Grid->m_H - 1);
+	else
+		UpdateGrid(0, 0, 0, 0);
+
 	return *m_Grid;
 }
 
@@ -476,7 +480,7 @@ void CCmpPathfinder::ComputeTerrainPassabilityGrid(const Grid<u16>& shoreGrid)
 	}
 }
 
-void CCmpPathfinder::UpdateGrid()
+void CCmpPathfinder::UpdateGrid(int i0, int j0, int i1, int j1)
 {
 	TIMER_ACCRUE(tc_UpdateGrid);
 	CmpPtr<ICmpTerrain> cmpTerrain(GetSimContext(), SYSTEM_ENTITY);
@@ -761,8 +765,11 @@ ICmpObstruction::EFoundationCheck CCmpPathfinder::CheckBuildingPlacement(const I
 		return ICmpObstruction::FOUNDATION_CHECK_FAIL_OBSTRUCTS_FOUNDATION;
 
 	// Test against terrain:
+	u16 i0, j0, i1, j1;
+	NearestNavcell(x - w - h, z - w - h, i0, j0);
+	NearestNavcell(x + w + h, z + w + h, i1, j1);
 
-	UpdateGrid();
+	UpdateGrid(i0, j0, i1, j1);
 
 	ICmpObstructionManager::ObstructionSquare square;
 	CmpPtr<ICmpObstruction> cmpObstruction(GetSimContext(), id);

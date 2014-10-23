@@ -438,7 +438,7 @@ public:
 	/**
 	 * Regenerates the grid based on the current obstruction list, if necessary
 	 */
-	void UpdateGrid();
+	void UpdateGrid(int i0, int j0, int i1, int j1);
 
 	Grid<u16> ComputeShoreGrid();
 
