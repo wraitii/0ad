@@ -442,7 +442,7 @@ public:
 
 	Grid<u16> ComputeShoreGrid();
 
-	void ComputeTerrainPassabilityGrid(const Grid<u16>& shoreGrid);
+	void ComputeTerrainPassabilityGrid(const Grid<u16>& shoreGrid, int i0, int j0, int i1, int j1);
 
 	void RenderSubmit(SceneCollector& collector);
 };

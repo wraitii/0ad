@@ -428,7 +428,7 @@ Grid<u16> CCmpPathfinder::ComputeShoreGrid()
 	return shoreGrid;
 }
 
-void CCmpPathfinder::ComputeTerrainPassabilityGrid(const Grid<u16>& shoreGrid)
+void CCmpPathfinder::ComputeTerrainPassabilityGrid(const Grid<u16>& shoreGrid, int i0, int j0, int i1, int j1)
 {
 	PROFILE3("terrain passability");
 
@@ -437,9 +437,9 @@ void CCmpPathfinder::ComputeTerrainPassabilityGrid(const Grid<u16>& shoreGrid)
 	CTerrain& terrain = GetSimContext().GetTerrain();
 
 	// Compute initial terrain-dependent passability
-	for (int j = 0; j < m_MapSize * ICmpObstructionManager::NAVCELLS_PER_TILE; ++j)
+	for (int j = j0; j <= j1; ++j)
 	{
-		for (int i = 0; i < m_MapSize * ICmpObstructionManager::NAVCELLS_PER_TILE; ++i)
+		for (int i = i0; i <= i1; ++i)
 		{
 			// World-space coordinates for this navcell
 			fixed x, z;
@@ -500,6 +500,8 @@ void CCmpPathfinder::UpdateGrid(int i0, int j0, int i1, int j1)
 		m_MapSize = cmpTerrain->GetTilesPerSide();
 		m_Grid = new Grid<NavcellData>(m_MapSize * ICmpObstructionManager::NAVCELLS_PER_TILE, m_MapSize * ICmpObstructionManager::NAVCELLS_PER_TILE);
 		m_ObstructionGridDirtyID = 0;
+		i1 = m_MapSize * ICmpObstructionManager::NAVCELLS_PER_TILE - 1;
+		j1 = i1;
 	}
 
 	CmpPtr<ICmpObstructionManager> cmpObstructionManager(GetSimContext(), SYSTEM_ENTITY);
@@ -519,7 +521,7 @@ void CCmpPathfinder::UpdateGrid(int i0, int j0, int i1, int j1)
 
 		Grid<u16> shoreGrid = ComputeShoreGrid();
 
-		ComputeTerrainPassabilityGrid(shoreGrid);
+		ComputeTerrainPassabilityGrid(shoreGrid, i0, j0, i1, j1);
 
 		if (1) // XXX: if circular
 		{
@@ -534,9 +536,9 @@ void CCmpPathfinder::UpdateGrid(int i0, int j0, int i1, int j1)
 
 			int w = m_Grid->m_W;
 			int h = m_Grid->m_H;
-			for (int j = 0; j < h; ++j)
+			for (int j = j0; j <= j1; ++j)
 			{
-				for (int i = 0; i < w; ++i)
+				for (int i = i0; i <= i1; ++i)
 				{
 					// Based on CCmpRangeManager::LosIsOffWorld
 					// but tweaked since it's tile-based instead.
