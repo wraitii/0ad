@@ -805,7 +805,9 @@ static void AddJumpedDiag(int i, int j, int di, int dj, PathCost g, PathfinderSt
 
 void CCmpPathfinder::PathfinderJPSMakeDirty()
 {
+#if USE_JUMPPOINT_CACHE
 	m_JumpPointCache.clear();
+#endif
 }
 
 void CCmpPathfinder::ComputePathJPS(entity_pos_t x0, entity_pos_t z0, const PathGoal& origGoal, pass_class_t passClass, Path& path)
