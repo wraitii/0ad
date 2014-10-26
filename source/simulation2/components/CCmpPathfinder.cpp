@@ -572,21 +572,36 @@ void CCmpPathfinder::UpdateGrid(int i0, int j0, int i1, int j1)
 			}
 
 			// make master grid
-			for (int i = i0; i <= i1; ++i)
+
+			if (i0 == 0 && j0 == 0 && i1 == m_Grid->m_W - 1 && j1 == m_Grid->m_H - 1)
 			{
-				for (int j = j0; j <= j1; ++j)
+				master_Grid = *m_Grid;
+			}
+			else
+			{
+				for (int i = i0; i <= i1; ++i)
 				{
-					master_Grid.set(i, j, m_Grid->get(i, j));
+					for (int j = j0; j <= j1; ++j)
+					{
+						master_Grid.set(i, j, m_Grid->get(i, j));
+					}
 				}
 			}
 		}
 		else //copy from master instead of make from scratch
 		{
-			for (int i = i0; i <= i1; ++i)
+			if (i0 == 0 && j0 == 0 && i1 == m_Grid->m_W - 1 && j1 == m_Grid->m_H - 1)
 			{
-				for (int j = j0; j <= j1; ++j)
+				memcpy(m_Grid->m_Data, master_Grid.m_Data, m_Grid->m_W * m_Grid->m_H * sizeof(NavcellData));
+			}
+			else
+			{
+				for (int i = i0; i <= i1; ++i)
 				{
-					m_Grid->set(i, j, master_Grid.get(i, j));
+					for (int j = j0; j <= j1; ++j)
+					{
+						m_Grid->set(i, j, master_Grid.get(i, j));
+					}
 				}
 			}
 		}
