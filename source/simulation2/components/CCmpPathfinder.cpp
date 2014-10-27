@@ -623,7 +623,7 @@ void CCmpPathfinder::UpdateGrid(int i0, int j0, int i1, int j1)
 			++m_Grid->m_DirtyID;
 		}
 
-		PathfinderHierReload();
+		PathfinderHierReload(i0, j0, i1, j1);
 
 		PathfinderJPSMakeDirty();
 	}
@@ -677,6 +677,7 @@ void CCmpPathfinder::ProcessLongRequests(const std::vector<AsyncLongPathRequest>
 		const AsyncLongPathRequest& req = longRequests[i];
 		Path path;
 #if PATHFIND_USE_JPS
+
 		ComputePathJPS(req.x0, req.z0, req.goal, req.passClass, path);
 #else
 		ComputePath(req.x0, req.z0, req.goal, req.passClass, path);

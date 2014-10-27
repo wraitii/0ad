@@ -300,7 +300,7 @@ public:
 	CCmpPathfinder_Hier* m_PathfinderHier;
 	void PathfinderHierInit();
 	void PathfinderHierDeinit();
-	void PathfinderHierReload();
+	void PathfinderHierReload(int i0, int j0, int i1, int j1);
 	void PathfinderHierRenderSubmit(SceneCollector& collector);
 	bool PathfinderHierMakeGoalReachable(u16 i0, u16 j0, PathGoal& goal, pass_class_t passClass);
 	void PathfinderHierFindNearestPassableNavcell(u16& i, u16& j, pass_class_t passClass);

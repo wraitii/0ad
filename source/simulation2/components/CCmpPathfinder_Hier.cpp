@@ -85,7 +85,7 @@ public:
 	CCmpPathfinder_Hier(CCmpPathfinder& pathfinder);
 	~CCmpPathfinder_Hier();
 
-	void Init(const std::vector<PathfinderPassability>& passClasses, Grid<NavcellData>* grid);
+	void Init(const std::vector<PathfinderPassability>& passClasses, Grid<NavcellData>* grid, int i0, int j0, int i1, int j1);
 
 	RegionID Get(u16 i, u16 j, pass_class_t passClass);
 
@@ -489,9 +489,14 @@ void CCmpPathfinder_Hier::SetDebugOverlay(bool enabled)
 	}
 }
 
-void CCmpPathfinder_Hier::Init(const std::vector<PathfinderPassability>& passClasses, Grid<NavcellData>* grid)
+void CCmpPathfinder_Hier::Init(const std::vector<PathfinderPassability>& passClasses, Grid<NavcellData>* grid, int i0, int j0, int i1, int j1)
 {
 	PROFILE3("hier init");
+
+	i0 = i0 / CHUNK_SIZE;
+	j0 = j0 / CHUNK_SIZE;
+	i1 = i1 / CHUNK_SIZE;
+	j1 = j1 / CHUNK_SIZE;
 
 	// Divide grid into chunks with round-to-positive-infinity
 	m_ChunksW = (grid->m_W + CHUNK_SIZE - 1) / CHUNK_SIZE;
@@ -499,18 +504,17 @@ void CCmpPathfinder_Hier::Init(const std::vector<PathfinderPassability>& passCla
 
 	ENSURE(m_ChunksW < 256 && m_ChunksH < 256); // else the u8 Chunk::m_ChunkI will overflow
 
-	m_Chunks.clear();
-	m_Edges.clear();
-
 	for (size_t n = 0; n < passClasses.size(); ++n)
 	{
 		pass_class_t passClass = passClasses[n].m_Mask;
 
 		// Compute the regions within each chunk
-		m_Chunks[passClass].resize(m_ChunksW*m_ChunksH);
-		for (int cj = 0; cj < m_ChunksH; ++cj)
+		if (m_Chunks[passClass].size() < m_ChunksW*m_ChunksH)
+			m_Chunks[passClass].resize(m_ChunksW*m_ChunksH);
+
+		for (int cj = j0; cj <= j1; ++cj)
 		{
-			for (int ci = 0; ci < m_ChunksW; ++ci)
+			for (int ci = i0; ci <= i1; ++ci)
 			{
 				m_Chunks[passClass].at(cj*m_ChunksW + ci).InitRegions(ci, cj, grid, passClass);
 			}
@@ -520,10 +524,20 @@ void CCmpPathfinder_Hier::Init(const std::vector<PathfinderPassability>& passCla
 
 		EdgesMap& edges = m_Edges[passClass];
 
-		for (int cj = 0; cj < m_ChunksH; ++cj)
+
+		for (int cj = std::max(j0 - 1, 0); cj <= j1; ++cj)
 		{
-			for (int ci = 0; ci < m_ChunksW; ++ci)
+			for (int ci = std::max(i0 - 1, 0); ci <= i1; ++ci)
 			{
+				for (int r = 1; r <= m_Chunks[passClass].at(cj*m_ChunksW + ci).m_NumRegions; ++r)
+				{
+					for (std::set<RegionID>::iterator it = edges[RegionID(ci, cj, r)].begin(); it != edges[RegionID(ci, cj, r)].end(); ++it)
+					{
+						edges[*it].clear();
+					}
+					edges[RegionID(ci, cj, r)].clear();
+				}
+				
 				FindEdges(ci, cj, passClass, edges);
 			}
 		}
@@ -799,9 +813,9 @@ void CCmpPathfinder::PathfinderHierDeinit()
 	SAFE_DELETE(m_PathfinderHier);
 }
 
-void CCmpPathfinder::PathfinderHierReload()
+void CCmpPathfinder::PathfinderHierReload(int i0, int j0, int i1, int j1)
 {
-	m_PathfinderHier->Init(m_PassClasses, m_Grid);
+	m_PathfinderHier->Init(m_PassClasses, m_Grid, i0, j0, i1, j1);
 }
 
 void CCmpPathfinder::SetHierDebugOverlay(bool enabled)
