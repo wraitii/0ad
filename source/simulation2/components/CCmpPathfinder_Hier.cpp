@@ -566,33 +566,43 @@ void CCmpPathfinder_Hier::FindEdges(u8 ci, u8 cj, pass_class_t passClass, EdgesM
 	// (We don't need to test for duplicates since EdgesMap already uses a
 	// std::set which will drop duplicate entries.)
 
+
+
 	if (ci > 0)
 	{
 		Chunk& b = chunks.at(cj*m_ChunksW + (ci-1));
+		u16 oa = 0;
+		u16 ob = 0;
 		for (int j = 0; j < CHUNK_SIZE; ++j)
 		{
 			RegionID ra = a.Get(0, j);
 			RegionID rb = b.Get(CHUNK_SIZE-1, j);
-			if (ra.r && rb.r)
+			if (0 == oa * ob  && ra.r * rb.r)
 			{
 				edges[ra].insert(rb);
 				edges[rb].insert(ra);
 			}
+			oa = ra.r;
+			ob = rb.r;
 		}
 	}
 
 	if (cj > 0)
 	{
 		Chunk& b = chunks.at((cj-1)*m_ChunksW + ci);
+		u16 oa = 0;
+		u16 ob = 0;
 		for (int i = 0; i < CHUNK_SIZE; ++i)
 		{
 			RegionID ra = a.Get(i, 0);
 			RegionID rb = b.Get(i, CHUNK_SIZE-1);
-			if (ra.r && rb.r)
+			if (0 == oa * ob  && ra.r * rb.r)
 			{
 				edges[ra].insert(rb);
 				edges[rb].insert(ra);
 			}
+			oa = ra.r;
+			ob = rb.r;
 		}
 	}
 
