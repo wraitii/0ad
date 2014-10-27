@@ -509,7 +509,7 @@ void CCmpPathfinder_Hier::Init(const std::vector<PathfinderPassability>& passCla
 		pass_class_t passClass = passClasses[n].m_Mask;
 
 		// Compute the regions within each chunk
-		if (m_Chunks[passClass].size() < m_ChunksW*m_ChunksH)
+		if (m_Chunks[passClass].size() < (int)m_ChunksW*m_ChunksH)
 			m_Chunks[passClass].resize(m_ChunksW*m_ChunksH);
 
 		for (int cj = j0; cj <= j1; ++cj)
@@ -533,7 +533,7 @@ void CCmpPathfinder_Hier::Init(const std::vector<PathfinderPassability>& passCla
 				{
 					for (std::set<RegionID>::iterator it = edges[RegionID(ci, cj, r)].begin(); it != edges[RegionID(ci, cj, r)].end(); ++it)
 					{
-						edges[*it].clear();
+						edges[*it].erase(RegionID(ci, cj, r));
 					}
 					edges[RegionID(ci, cj, r)].clear();
 				}
