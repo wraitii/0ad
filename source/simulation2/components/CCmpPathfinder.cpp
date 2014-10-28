@@ -706,6 +706,8 @@ void CCmpPathfinder::ProcessSameTurnMoves()
 {
 	TIMER_ACCRUE(tc_ProcessSameTurnMoves);
 
+	UpdateGrid(0, 0, m_Grid->m_W - 1, m_Grid->m_H - 1);
+
 	if (!m_AsyncLongPathRequests.empty())
 	{
 		// Figure out how many moves we can do this time

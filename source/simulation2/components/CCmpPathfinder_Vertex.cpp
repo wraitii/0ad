@@ -626,7 +626,7 @@ void CCmpPathfinder::ComputeShortPath(const IObstructionTestFilter& filter,
 	entity_pos_t x0, entity_pos_t z0, entity_pos_t r,
 	entity_pos_t range, const PathGoal& goal, pass_class_t passClass, Path& path)
 {
-	UpdateGrid(0, 0, m_Grid->m_W - 1,  m_Grid->m_H - 1); // TODO: only need to bother updating if the terrain changed
+	//UpdateGrid(0, 0, m_Grid->m_W - 1,  m_Grid->m_H - 1); // TODO: only need to bother updating if the terrain changed
 
 	PROFILE3("ComputeShortPath");
 	TIMER(L"ComputeShortPath");
