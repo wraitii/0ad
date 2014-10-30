@@ -134,8 +134,10 @@ private:
 
 	typedef std::map<RegionID, std::set<RegionID> > EdgesMap;
 
-	void FindEdges(u8 ci, u8 cj, pass_class_t passClass, EdgesMap& edges);
-
+	void FindEdges(u8 ci, u8 cj, EdgesMap& edges, std::vector<Chunk>& chunks, Chunk& a);
+	void FindAboveEdges(u8 ci, u8 cj, EdgesMap& edges, std::vector<Chunk>& chunks, Chunk& a);
+	void FindRightEdges(EdgesMap& edges, Chunk& a, Chunk& b);
+	
 	void AddDebugEdges(pass_class_t passClass);
 
 	void FindReachableRegions(RegionID from, std::set<RegionID>& reachable, pass_class_t passClass);
@@ -504,12 +506,13 @@ void CCmpPathfinder_Hier::Init(const std::vector<PathfinderPassability>& passCla
 
 	ENSURE(m_ChunksW < 256 && m_ChunksH < 256); // else the u8 Chunk::m_ChunkI will overflow
 
+
 	for (size_t n = 0; n < passClasses.size(); ++n)
 	{
 		pass_class_t passClass = passClasses[n].m_Mask;
 
 		// Compute the regions within each chunk
-		if (m_Chunks[passClass].size() < (int)m_ChunksW*m_ChunksH)
+		if (m_Chunks[passClass].size() < (size_t)m_ChunksW*m_ChunksH)
 			m_Chunks[passClass].resize(m_ChunksW*m_ChunksH);
 
 		for (int cj = j0; cj <= j1; ++cj)
@@ -524,21 +527,55 @@ void CCmpPathfinder_Hier::Init(const std::vector<PathfinderPassability>& passCla
 
 		EdgesMap& edges = m_Edges[passClass];
 
-
-		for (int cj = std::max(j0 - 1, 0); cj <= j1; ++cj)
+		if (i0 == 0 && j0 == 0 && i1 == m_ChunksW - 1 && j1 == m_ChunksH - 1)
 		{
-			for (int ci = std::max(i0 - 1, 0); ci <= i1; ++ci)
+			edges.clear();
+		}
+		else
+		{
+			for (int cj = j0; cj <= j1; ++cj)
 			{
-				for (int r = 1; r <= m_Chunks[passClass].at(cj*m_ChunksW + ci).m_NumRegions; ++r)
+				for (int ci = i0; ci <= i1; ++ci)
 				{
-					for (std::set<RegionID>::iterator it = edges[RegionID(ci, cj, r)].begin(); it != edges[RegionID(ci, cj, r)].end(); ++it)
+					for (int r = 1; r <= m_Chunks[passClass].at(cj*m_ChunksW + ci).m_NumRegions; ++r)
 					{
-						edges[*it].erase(RegionID(ci, cj, r));
+						for (std::set<RegionID>::iterator it = edges[RegionID(ci, cj, r)].begin(); it != edges[RegionID(ci, cj, r)].end(); ++it)
+						{
+							edges[*it].erase(RegionID(ci, cj, r));
+						}
+						edges[RegionID(ci, cj, r)].clear();
 					}
-					edges[RegionID(ci, cj, r)].clear();
+				}
+			}
+		}
+		std::vector<Chunk>& chunks = m_Chunks[passClass];
+		for (int cj = j0; cj <= j1; ++cj)
+		{				
+			Chunk& a = chunks.at(cj*m_ChunksW + i0);
+			if (i0 > 0)
+			{
+				Chunk& b = chunks.at(cj*m_ChunksW + i0 - 1);
+				FindRightEdges(edges, b, a);
+			}
+			for (int ci = i0; ci <= i1; ++ci)
+			{
+				if (cj == j0 && cj > 0)
+				{
+					Chunk& b = chunks.at((cj - 1)*m_ChunksW + ci);
+					FindAboveEdges(ci, cj - 1, edges, chunks, b);
+				}
+
+				if (cj < m_ChunksH - 1)
+					FindAboveEdges(ci, cj, edges, chunks, a);
+
+				if (ci < m_ChunksW - 1)
+				{
+					Chunk& b = chunks.at(cj*m_ChunksW + ci + 1);
+					FindRightEdges(edges, a, b);
+					a = b;
 				}
 				
-				FindEdges(ci, cj, passClass, edges);
+				//FindEdges(ci, cj, edges, chunks, a);
 			}
 		}
 	}
@@ -552,21 +589,71 @@ void CCmpPathfinder_Hier::Init(const std::vector<PathfinderPassability>& passCla
 }
 
 /**
- * Find edges between regions in this chunk and the adjacent below/left chunks.
+ * Find edges between regions in this chunk and the adjacent right chunks.
  */
-void CCmpPathfinder_Hier::FindEdges(u8 ci, u8 cj, pass_class_t passClass, EdgesMap& edges)
+void CCmpPathfinder_Hier::FindRightEdges(EdgesMap& edges, Chunk& a, Chunk& b)
 {
-	std::vector<Chunk>& chunks = m_Chunks[passClass];
-
-	Chunk& a = chunks.at(cj*m_ChunksW + ci);
-
 	// For each edge between chunks, we loop over every adjacent pair of
 	// navcells in the two chunks. If they are both in valid regions
 	// (i.e. are passable navcells) then add a graph edge between those regions.
 	// (We don't need to test for duplicates since EdgesMap already uses a
 	// std::set which will drop duplicate entries.)
 
+	u16 oa = 0;
+	u16 ob = 0;
+	for (int j = 0; j < CHUNK_SIZE; ++j)
+	{
+		RegionID ra = a.Get(CHUNK_SIZE-1, j);
+		RegionID rb = b.Get(0, j);
+		if (0 == oa * ob  && ra.r * rb.r)
+		{
+			edges[ra].insert(rb);
+			edges[rb].insert(ra);
+		}
+		oa = ra.r;
+		ob = rb.r;
+	}
+}
 
+/**
+ * Find edges between regions in this chunk and the adjacent above chunks.
+ */
+void CCmpPathfinder_Hier::FindAboveEdges(u8 ci, u8 cj, EdgesMap& edges, std::vector<Chunk>& chunks, Chunk& a)
+{
+	// For each edge between chunks, we loop over every adjacent pair of
+	// navcells in the two chunks. If they are both in valid regions
+	// (i.e. are passable navcells) then add a graph edge between those regions.
+	// (We don't need to test for duplicates since EdgesMap already uses a
+	// std::set which will drop duplicate entries.)
+
+	Chunk& b = chunks.at((cj+1)*m_ChunksW + ci);
+	u16 oa = 0;
+	u16 ob = 0;
+	for (int i = 0; i < CHUNK_SIZE; ++i)
+	{
+		RegionID ra = a.Get(i, CHUNK_SIZE-1);
+		RegionID rb = b.Get(i, 0);
+		if (0 == oa * ob  && ra.r * rb.r)
+		{
+			edges[ra].insert(rb);
+			edges[rb].insert(ra);
+		}
+		oa = ra.r;
+		ob = rb.r;
+	}
+
+}
+
+/**
+ * Find edges between regions in this chunk and the adjacent below/left chunks.
+ */
+void CCmpPathfinder_Hier::FindEdges(u8 ci, u8 cj, EdgesMap& edges, std::vector<Chunk>& chunks, Chunk& a)
+{
+	// For each edge between chunks, we loop over every adjacent pair of
+	// navcells in the two chunks. If they are both in valid regions
+	// (i.e. are passable navcells) then add a graph edge between those regions.
+	// (We don't need to test for duplicates since EdgesMap already uses a
+	// std::set which will drop duplicate entries.)
 
 	if (ci > 0)
 	{
