@@ -135,8 +135,8 @@ private:
 	typedef std::map<RegionID, std::set<RegionID> > EdgesMap;
 
 	void FindEdges(u8 ci, u8 cj, EdgesMap& edges, std::vector<Chunk>& chunks, Chunk& a);
-	void FindAboveEdges(u8 ci, u8 cj, EdgesMap& edges, std::vector<Chunk>& chunks, Chunk& a);
-	void FindRightEdges(EdgesMap& edges, Chunk& a, Chunk& b);
+	void FindAboveEdges(u8 ci, u8 cj, EdgesMap& edges, std::vector<Chunk>& chunks, Chunk* a);
+	void FindRightEdges(EdgesMap& edges, Chunk* a, Chunk* b);
 	
 	void AddDebugEdges(pass_class_t passClass);
 
@@ -551,17 +551,17 @@ void CCmpPathfinder_Hier::Init(const std::vector<PathfinderPassability>& passCla
 		std::vector<Chunk>& chunks = m_Chunks[passClass];
 		for (int cj = j0; cj <= j1; ++cj)
 		{				
-			Chunk& a = chunks.at(cj*m_ChunksW + i0);
+			Chunk* a = &chunks.at(cj*m_ChunksW + i0);
 			if (i0 > 0)
 			{
-				Chunk& b = chunks.at(cj*m_ChunksW + i0 - 1);
+				Chunk* b = &chunks.at(cj*m_ChunksW + i0 - 1);
 				FindRightEdges(edges, b, a);
 			}
 			for (int ci = i0; ci <= i1; ++ci)
 			{
 				if (cj == j0 && cj > 0)
 				{
-					Chunk& b = chunks.at((cj - 1)*m_ChunksW + ci);
+					Chunk* b = &chunks.at((cj - 1)*m_ChunksW + ci);
 					FindAboveEdges(ci, cj - 1, edges, chunks, b);
 				}
 
@@ -570,7 +570,7 @@ void CCmpPathfinder_Hier::Init(const std::vector<PathfinderPassability>& passCla
 
 				if (ci < m_ChunksW - 1)
 				{
-					Chunk& b = chunks.at(cj*m_ChunksW + ci + 1);
+					Chunk* b = &chunks.at(cj*m_ChunksW + ci + 1);
 					FindRightEdges(edges, a, b);
 					a = b;
 				}
@@ -591,7 +591,7 @@ void CCmpPathfinder_Hier::Init(const std::vector<PathfinderPassability>& passCla
 /**
  * Find edges between regions in this chunk and the adjacent right chunks.
  */
-void CCmpPathfinder_Hier::FindRightEdges(EdgesMap& edges, Chunk& a, Chunk& b)
+void CCmpPathfinder_Hier::FindRightEdges(EdgesMap& edges, Chunk* a, Chunk* b)
 {
 	// For each edge between chunks, we loop over every adjacent pair of
 	// navcells in the two chunks. If they are both in valid regions
@@ -603,8 +603,8 @@ void CCmpPathfinder_Hier::FindRightEdges(EdgesMap& edges, Chunk& a, Chunk& b)
 	u16 ob = 0;
 	for (int j = 0; j < CHUNK_SIZE; ++j)
 	{
-		RegionID ra = a.Get(CHUNK_SIZE-1, j);
-		RegionID rb = b.Get(0, j);
+		RegionID ra = a->Get(CHUNK_SIZE-1, j);
+		RegionID rb = b->Get(0, j);
 		if (0 == oa * ob  && ra.r * rb.r)
 		{
 			edges[ra].insert(rb);
@@ -618,7 +618,7 @@ void CCmpPathfinder_Hier::FindRightEdges(EdgesMap& edges, Chunk& a, Chunk& b)
 /**
  * Find edges between regions in this chunk and the adjacent above chunks.
  */
-void CCmpPathfinder_Hier::FindAboveEdges(u8 ci, u8 cj, EdgesMap& edges, std::vector<Chunk>& chunks, Chunk& a)
+void CCmpPathfinder_Hier::FindAboveEdges(u8 ci, u8 cj, EdgesMap& edges, std::vector<Chunk>& chunks, Chunk* a)
 {
 	// For each edge between chunks, we loop over every adjacent pair of
 	// navcells in the two chunks. If they are both in valid regions
@@ -631,7 +631,7 @@ void CCmpPathfinder_Hier::FindAboveEdges(u8 ci, u8 cj, EdgesMap& edges, std::vec
 	u16 ob = 0;
 	for (int i = 0; i < CHUNK_SIZE; ++i)
 	{
-		RegionID ra = a.Get(i, CHUNK_SIZE-1);
+		RegionID ra = a->Get(i, CHUNK_SIZE-1);
 		RegionID rb = b.Get(i, 0);
 		if (0 == oa * ob  && ra.r * rb.r)
 		{
