@@ -255,6 +255,37 @@ struct AsyncShortPathRequest
 	entity_id_t notify;
 };
 
+struct PathReq {
+	u16 i0;
+	u16 j0;
+	u16 i1;
+	u16 j1;
+	ICmpPathfinder::pass_class_t pc;
+	PathReq(u16 i0, u16 j0, u16 i1, u16 j1, ICmpPathfinder::pass_class_t pc): i0(i0), j0(j0), i1(i1), j1(j1), pc(pc){}
+	bool operator < (const PathReq& ref) const {
+		if (i0 < ref.i0)
+			return true;
+		else if(i0 > ref.i0)
+			return false;
+		if (j0 < ref.j0)
+			return true;
+		else if(j0 > ref.j0)
+			return false;
+		if (i1 < ref.i1)
+			return true;
+		else if(i1 > ref.i1)
+			return false;
+		if (j1 < ref.j1)
+			return true;
+		else if(j1 > ref.j1)
+			return false;
+		if (pc < ref.pc)
+			return true;
+		else
+			return false;
+	}
+};
+
 /**
  * Implementation of ICmpPathfinder
  */
@@ -293,6 +324,7 @@ public:
 	bool m_TerrainDirty; // indicates if m_Grid has been updated since terrain changed
 	
 	std::map<pass_class_t, shared_ptr<JumpPointCache> > m_JumpPointCache; // for JPS pathfinder
+	std::map<PathReq, std::vector<Waypoint>> pCache; // path cache
 
 	// Interface to the hierarchical pathfinder.
 	// (This is hidden behind proxy methods to keep the code

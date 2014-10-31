@@ -670,18 +670,36 @@ void CCmpPathfinder::FinishAsyncRequests()
 void CCmpPathfinder::ProcessLongRequests(const std::vector<AsyncLongPathRequest>& longRequests)
 {
 	TIMER_ACCRUE(tc_ProcessLongRequests);
+//	static std::map<PathReq, std::vector<Waypoint>> pCache;
 
 	for (size_t i = 0; i < longRequests.size(); ++i)
 	{
 		TIMER_ACCRUE(tc_ProcessLongRequests_Loop);
 		const AsyncLongPathRequest& req = longRequests[i];
 		Path path;
+
+		u16 i0, j0, i1, j1;
+
+		NearestNavcell(req.x0, req.z0, i0, j0);
+		NearestNavcell(req.goal.x, req.goal.z, i1, j1);
+		PathReq preq(i0, j0, i1, j1, req.passClass);
+
+		std::map<PathReq, std::vector<Waypoint>>::iterator it = pCache.find(preq);
+
+		if (it != pCache.end())
+			path.m_Waypoints = it->second;
+		else
+		{
 #if PATHFIND_USE_JPS
 
-		ComputePathJPS(req.x0, req.z0, req.goal, req.passClass, path);
+			ComputePathJPS(req.x0, req.z0, req.goal, req.passClass, path);
 #else
-		ComputePath(req.x0, req.z0, req.goal, req.passClass, path);
+			ComputePath(req.x0, req.z0, req.goal, req.passClass, path);
 #endif
+
+			//save the result to cache
+			pCache[preq] = path.m_Waypoints;
+		}
 		CMessagePathResult msg(req.ticket, path);
 		GetSimContext().GetComponentManager().PostMessage(req.notify, msg);
 	}
@@ -707,6 +725,7 @@ void CCmpPathfinder::ProcessSameTurnMoves()
 	TIMER_ACCRUE(tc_ProcessSameTurnMoves);
 
 	UpdateGrid(0, 0, m_Grid->m_W - 1, m_Grid->m_H - 1);
+	pCache.clear();
 
 	if (!m_AsyncLongPathRequests.empty())
 	{
