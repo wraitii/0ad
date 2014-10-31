@@ -327,59 +327,108 @@ Grid<u16> CCmpPathfinder::ComputeShoreGrid()
 
 	// First pass - find underwater tiles
 	Grid<u8> waterGrid(m_MapSize, m_MapSize);
+	Grid<u16> shoreGrid(m_MapSize, m_MapSize);
+	bool left_underWater = false;
 	for (u16 j = 0; j < m_MapSize; ++j)
 	{
+		u16 min = shoreMax;
 		for (u16 i = 0; i < m_MapSize; ++i)
 		{
 			fixed x, z;
 			TileCenter(i, j, x, z);
 
 			bool underWater = cmpWaterManager && (cmpWaterManager->GetWaterLevel(x, z) > terrain.GetExactGroundLevelFixed(x, z));
-			waterGrid.set(i, j, underWater ? 1 : 0);
+			if (underWater) //water
+			{
+				waterGrid.set(i, j, 1);
+				if (!left_underWater && i > 0)
+					shoreGrid.set(i - 1, j, 0);
+				if (j > 0)
+				{
+					if (i > 0 && waterGrid.get(i - 1, j - 1))
+						shoreGrid.set(i - 1, j - 1, 0);
+					if (waterGrid.get(i, j - 1))
+						shoreGrid.set(i, j - 1, 0);
+					if (i < m_MapSize-1 && waterGrid.get(i + 1, j - 1))
+						shoreGrid.set(i, j - 1, 0);
+				}
+			}
+			else //land
+			{
+				waterGrid.set(i, j, 0);
+				if (i > 0 && left_underWater)
+				{
+					shoreGrid.set(i, j, 0);
+					min = 0;
+				}
+				else if (j > 0)
+				{
+					if ((i > 0 && waterGrid.get(i-1, j-1))
+					|| (waterGrid.get(i, j-1))
+					|| (i < m_MapSize - 1 && waterGrid.get(i+1, j-1))
+					)
+					{
+						shoreGrid.set(i, j, 0);
+						min = 0;
+					}
+					else  // set shore distance from below grid
+					{
+						u16 g = shoreGrid.get(i, j - 1);
+						if (min > g)
+							min = g;
+						if (min < shoreMax)
+							++min;
+						shoreGrid.set(i, j, min);
+					}
+				}
+				else // set shore distance from left grid
+					shoreGrid.set(i, j, ++min);
+
+			}
+			left_underWater = underWater;
 		}
 	}
 
-	// Second pass - find shore tiles
-	Grid<u16> shoreGrid(m_MapSize, m_MapSize);
-	for (u16 j = 0; j < m_MapSize; ++j)
-	{
-		for (u16 i = 0; i < m_MapSize; ++i)
-		{
-			// Find a land tile
-			if (!waterGrid.get(i, j))
-			{
-				if ((i > 0 && waterGrid.get(i-1, j)) || (i > 0 && j < m_MapSize-1 && waterGrid.get(i-1, j+1)) || (i > 0 && j > 0 && waterGrid.get(i-1, j-1))
-					|| (i < m_MapSize-1 && waterGrid.get(i+1, j)) || (i < m_MapSize-1 && j < m_MapSize-1 && waterGrid.get(i+1, j+1)) || (i < m_MapSize-1 && j > 0 && waterGrid.get(i+1, j-1))
-					|| (j > 0 && waterGrid.get(i, j-1)) || (j < m_MapSize-1 && waterGrid.get(i, j+1))
-					)
-				{	// If it's bordered by water, it's a shore tile
-					shoreGrid.set(i, j, 0);
-				}
-				else
-				{
-					shoreGrid.set(i, j, shoreMax);
-				}
-			}
-		}
-	}
+	//// Second pass - find shore tiles
+	//for (u16 j = 0; j < m_MapSize; ++j)
+	//{
+	//	for (u16 i = 0; i < m_MapSize; ++i)
+	//	{
+	//		// Find a land tile
+	//		if (!waterGrid.get(i, j))
+	//		{
+	//			if ((i > 0 && waterGrid.get(i-1, j)) || (i > 0 && j < m_MapSize-1 && waterGrid.get(i-1, j+1)) || (i > 0 && j > 0 && waterGrid.get(i-1, j-1))
+	//				|| (i < m_MapSize-1 && waterGrid.get(i+1, j)) || (i < m_MapSize-1 && j < m_MapSize-1 && waterGrid.get(i+1, j+1)) || (i < m_MapSize-1 && j > 0 && waterGrid.get(i+1, j-1))
+	//				|| (j > 0 && waterGrid.get(i, j-1)) || (j < m_MapSize-1 && waterGrid.get(i, j+1))
+	//				)
+	//			{	// If it's bordered by water, it's a shore tile
+	//				shoreGrid.set(i, j, 0);
+	//			}
+	//			else
+	//			{
+	//				shoreGrid.set(i, j, shoreMax);
+	//			}
+	//		}
+	//	}
+	//}
 
 	// Expand influences on land to find shore distance
 	for (u16 y = 0; y < m_MapSize; ++y)
 	{
 		u16 min = shoreMax;
-		for (u16 x = 0; x < m_MapSize; ++x)
-		{
-			if (!waterGrid.get(x, y))
-			{
-				u16 g = shoreGrid.get(x, y);
-				if (g > min)
-					shoreGrid.set(x, y, min);
-				else if (g < min)
-					min = g;
+		//for (u16 x = 0; x < m_MapSize; ++x)
+		//{
+		//	if (!waterGrid.get(x, y))
+		//	{
+		//		u16 g = shoreGrid.get(x, y);
+		//		if (g > min)
+		//			shoreGrid.set(x, y, min);
+		//		else if (g < min)
+		//			min = g;
 
-				++min;
-			}
-		}
+		//		++min;
+		//	}
+		//}
 		for (u16 x = m_MapSize; x > 0; --x)
 		{
 			if (!waterGrid.get(x-1, y))
@@ -397,19 +446,19 @@ Grid<u16> CCmpPathfinder::ComputeShoreGrid()
 	for (u16 x = 0; x < m_MapSize; ++x)
 	{
 		u16 min = shoreMax;
-		for (u16 y = 0; y < m_MapSize; ++y)
-		{
-			if (!waterGrid.get(x, y))
-			{
-				u16 g = shoreGrid.get(x, y);
-				if (g > min)
-					shoreGrid.set(x, y, min);
-				else if (g < min)
-					min = g;
+		//for (u16 y = 0; y < m_MapSize; ++y)
+		//{
+		//	if (!waterGrid.get(x, y))
+		//	{
+		//		u16 g = shoreGrid.get(x, y);
+		//		if (g > min)
+		//			shoreGrid.set(x, y, min);
+		//		else if (g < min)
+		//			min = g;
 
-				++min;
-			}
-		}
+		//		++min;
+		//	}
+		//}
 		for (u16 y = m_MapSize; y > 0; --y)
 		{
 			if (!waterGrid.get(x, y-1))
