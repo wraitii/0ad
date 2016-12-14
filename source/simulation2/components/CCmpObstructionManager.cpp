@@ -1084,7 +1084,7 @@ void CCmpObstructionManager::RenderSubmit(SceneCollector& collector)
 			m_DebugOverlayLines.push_back(SOverlayLine());
 			m_DebugOverlayLines.back().m_Color = defaultColor;
 			float a = atan2f(it->second.v.X.ToFloat(), it->second.v.Y.ToFloat());
-			SimRender::ConstructSquareOnGround(GetSimContext(), it->second.x.ToFloat(), it->second.z.ToFloat(), it->second.hw.ToFloat()*2, it->second.hh.ToFloat()*2, a, m_DebugOverlayLines.back(), true);
+			SimRender::ConstructSquareOnGround(GetSimContext(), it->second.x.ToFloat(), it->second.z.ToFloat(), it->second.hw.ToFloat()*2 + 1, it->second.hh.ToFloat()*2 + 1, a, m_DebugOverlayLines.back(), true);
 		}
 
 		m_DebugOverlayDirty = false;

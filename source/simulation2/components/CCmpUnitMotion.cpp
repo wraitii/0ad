@@ -304,7 +304,7 @@ public:
 		m_WaitingTurns = 0;
 
 		m_DebugOverlayEnabled = false;
-		m_AbortIfStuck = false;
+		m_AbortIfStuck = true;
 	}
 
 	virtual void Deinit()
