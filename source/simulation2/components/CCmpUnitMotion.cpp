@@ -151,7 +151,7 @@ private:
 
 		const PathGoal& Goal() const { return m_Goal; };
 
-		bool TargetIsEntity() const { return m_TargetEntity == INVALID_ENTITY; }
+		bool TargetIsEntity() const { return m_TargetEntity != INVALID_ENTITY; }
 		entity_id_t GetEntity() const { return m_TargetEntity; }
 
 		bool Valid() const { return m_Valid; }
@@ -407,7 +407,8 @@ public:
 
 	virtual bool IsTryingToMove()
 	{
-		return m_FinalGoal.Valid();
+		// speed check as sanity check to avoid infinite loops.
+		return m_FinalGoal.Valid() && m_Speed > fixed::Zero();
 	}
 
 	virtual fixed GetTemplateSpeed()
@@ -779,7 +780,7 @@ void CCmpUnitMotion::Move(fixed dt)
 		fixed maxdist = m_Speed.Multiply(timeLeft);
 
 		CFixedVector2D destination;
-		if (offsetLength > maxdist)
+		if (offsetLength <= maxdist)
 			destination = target;
 		else
 		{
@@ -793,7 +794,7 @@ void CCmpUnitMotion::Move(fixed dt)
 		{
 			pos = destination;
 
-			timeLeft = timeLeft - (offsetLength / m_Speed);
+			timeLeft = (timeLeft.Multiply(m_Speed) - offsetLength) / m_Speed;
 
 			if (destination == target && !m_Path.m_Waypoints.empty())
 				m_Path.m_Waypoints.pop_back();
@@ -806,6 +807,8 @@ void CCmpUnitMotion::Move(fixed dt)
 			break;
 		}
 	}
+
+	std::cout << "Waypoint Size " << m_Path.m_Waypoints.size() << std::endl;
 
 	if (!m_StartedMoving && wasObstructed)
 		// If this is the turn we start moving, and we're already obstructed,
@@ -985,6 +988,8 @@ bool CCmpUnitMotion::CheckTargetMovement(const CFixedVector2D& from, entity_pos_
 // TODO: ought to be cleverer here.
 bool CCmpUnitMotion::ShouldConsiderOurselvesAtDestination()
 {
+	std::cout << "are we there? " << std::endl;
+	std::cout << m_FinalGoal.TargetIsEntity() << std::endl;
 	if (m_FinalGoal.TargetIsEntity())
 		return IsInTargetRange(m_FinalGoal.GetEntity(), m_FinalGoal.MinRange(), m_FinalGoal.MaxRange());
 	else
@@ -1193,40 +1198,23 @@ bool CCmpUnitMotion::IsInPointRange(entity_pos_t x, entity_pos_t z, entity_pos_t
 
 	CFixedVector2D pos = cmpPosition->GetPosition2D();
 
-	bool hasObstruction = false;
-	CmpPtr<ICmpObstructionManager> cmpObstructionManager(GetSystemEntity());
-	ICmpObstructionManager::ObstructionSquare obstruction;
+	std::cout << "position X" << pos.X.ToFloat() << std::endl;
+	std::cout << "position Z" << pos.Y.ToFloat() << std::endl;
+	std::cout << "X " << x.ToFloat() << std::endl;
+	std::cout << "Z " << z.ToFloat() << std::endl;
 
-//TODO	if (cmpObstructionManager)
-//		hasObstruction = cmpObstructionManager->FindMostImportantObstruction(GetObstructionFilter(), x, z, m_Radius, obstruction);
+	entity_pos_t distance = (pos - CFixedVector2D(x, z)).Length();
 
-	if (minRange.IsZero() && maxRange.IsZero() && hasObstruction)
-	{
-		// Handle the non-ranged mode:
-		CFixedVector2D halfSize(obstruction.hw, obstruction.hh);
-		entity_pos_t distance = Geometry::DistanceToSquare(pos - CFixedVector2D(obstruction.x, obstruction.z), obstruction.u, obstruction.v, halfSize);
+	std::cout << "distance " << distance.ToFloat() << std::endl;
+	std::cout << "minRange " << minRange.ToFloat() << std::endl;
+	std::cout << "maxRange " << maxRange.ToFloat() << std::endl;
 
-		// See if we're too close to the target square
-		if (distance < minRange)
-			return false;
-
-		// See if we're close enough to the target square
-		if (maxRange < entity_pos_t::Zero() || distance <= maxRange)
-			return true;
-
+	if (distance < minRange)
 		return false;
-	}
+	else if (maxRange >= entity_pos_t::Zero() && distance > maxRange)
+		return false;
 	else
-	{
-		entity_pos_t distance = (pos - CFixedVector2D(x, z)).Length();
-
-		if (distance < minRange)
-			return false;
-		else if (maxRange >= entity_pos_t::Zero() && distance > maxRange)
-			return false;
-		else
-			return true;
-	}
+		return true;
 }
 
 bool CCmpUnitMotion::ShouldTreatTargetAsCircle(entity_pos_t range, entity_pos_t circleRadius) const
