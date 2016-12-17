@@ -27,6 +27,7 @@
 #include "simulation2/components/ICmpPathfinder.h"
 #include "simulation2/components/ICmpRangeManager.h"
 #include "simulation2/components/ICmpValueModificationManager.h"
+#include "simulation2/components/ICmpVisual.h"
 #include "simulation2/helpers/Geometry.h"
 #include "simulation2/helpers/Render.h"
 #include "simulation2/MessageTypes.h"
@@ -105,6 +106,11 @@ static const entity_pos_t CHECK_TARGET_MOVEMENT_AT_MAX_DIST = entity_pos_t::From
  * on the cosine of this angle, with a PI/6 angle.
  */
 static const fixed CHECK_TARGET_MOVEMENT_MIN_COS = fixed::FromInt(866)/1000;
+
+/**
+ * See unitmotion logic for details. Higher means units will retry more often before potentially failing.
+ */
+static const size_t MAX_PATH_REATTEMPS = 6;
 
 static const CColor OVERLAY_COLOR_LONG_PATH(1, 1, 1, 1);
 static const CColor OVERLAY_COLOR_SHORT_PATH(1, 0, 0, 1);
@@ -291,8 +297,7 @@ public:
 		m_WaitingTurns = 0;
 
 		m_DebugOverlayEnabled = false;
-		// I believe it's safer in general to abort and let the components know.
-		m_AbortIfStuck = true;
+		m_AbortIfStuck = false;
 	}
 
 	virtual void Deinit()
@@ -549,6 +554,10 @@ private:
 		CmpPtr<ICmpObstruction> cmpObstruction(GetEntityHandle());
 		if (cmpObstruction)
 			cmpObstruction->SetMovingFlag(false);
+
+		CmpPtr<ICmpVisual> cmpVisualActor(GetEntityHandle());
+		if (cmpVisualActor)
+			cmpVisualActor->SelectMovementAnimation(m_Speed);
 	}
 
 	// TODO: warn visual actor
@@ -558,6 +567,9 @@ private:
 
 		CMessageFinishedMove msg(true);
 		GetSimContext().GetComponentManager().PostMessage(GetEntityId(), msg);
+		CmpPtr<ICmpVisual> cmpVisualActor(GetEntityHandle());
+		if (cmpVisualActor)
+			cmpVisualActor->SelectAnimation("idle", false, fixed::FromInt(2), L"");
 	}
 
 	// TODO: warn visual actor
@@ -567,6 +579,9 @@ private:
 
 		CMessagePausedMove msg;
 		GetSimContext().GetComponentManager().PostMessage(GetEntityId(), msg);
+		CmpPtr<ICmpVisual> cmpVisualActor(GetEntityHandle());
+		if (cmpVisualActor)
+			cmpVisualActor->SelectAnimation("idle", false, fixed::FromInt(2), L"");
 	}
 
 	// TODO: warn visual actor
@@ -576,6 +591,9 @@ private:
 
 		CMessageBeginMove msg;
 		GetSimContext().GetComponentManager().PostMessage(GetEntityId(), msg);
+		CmpPtr<ICmpVisual> cmpVisualActor(GetEntityHandle());
+		if (cmpVisualActor)
+			cmpVisualActor->SelectMovementAnimation(m_Speed);
 	}
 
 	bool MoveToPointRange(entity_pos_t x, entity_pos_t z, entity_pos_t minRange, entity_pos_t maxRange, entity_id_t target);
@@ -796,7 +814,7 @@ void CCmpUnitMotion::Move(fixed dt)
 
 			timeLeft = (timeLeft.Multiply(m_Speed) - offsetLength) / m_Speed;
 
-			if (destination == target && !m_Path.m_Waypoints.empty())
+			if (destination == target)
 				m_Path.m_Waypoints.pop_back();
 			continue;
 		}
@@ -807,8 +825,6 @@ void CCmpUnitMotion::Move(fixed dt)
 			break;
 		}
 	}
-
-	std::cout << "Waypoint Size " << m_Path.m_Waypoints.size() << std::endl;
 
 	if (!m_StartedMoving && wasObstructed)
 		// If this is the turn we start moving, and we're already obstructed,
@@ -867,34 +883,47 @@ void CCmpUnitMotion::Move(fixed dt)
 	if (m_WaitingTurns == 0)
 	{
 		if (HasValidPath())
-			m_WaitingTurns = 5;
+			m_WaitingTurns = MAX_PATH_REATTEMPS + 1;
 		else
-			m_WaitingTurns = 4;
+			m_WaitingTurns = 3;
 	}
 
 	--m_WaitingTurns;
 
 	// Try again next turn, no changes
-	if (m_WaitingTurns >= 4)
+	if (m_WaitingTurns >= MAX_PATH_REATTEMPS)
 		return;
 
-	// Waited one turn, no changes, compute a long path.
-	if (m_WaitingTurns == 3)
+	// already waited one turn, no changes, so try computing a short path.
+	if (m_WaitingTurns >= 3)
 	{
 		PathGoal goal;
-		goal = { PathGoal::POINT, m_Path.m_Waypoints.back().x, m_Path.m_Waypoints.back().z };
+		if (m_Path.m_Waypoints.empty())
+			goal = { PathGoal::POINT, m_FinalGoal.X(), m_FinalGoal.Z() };
+		else
+		{
+			goal = { PathGoal::POINT, m_Path.m_Waypoints.back().x, m_Path.m_Waypoints.back().z };
+			m_Path.m_Waypoints.pop_back();
+		}
+		RequestShortPath(pos, goal, true);
+		return;
+	}
+
+	// Last resort, compute a long path
+	if (m_WaitingTurns == 2)
+	{
+		PathGoal goal;
+		if (m_Path.m_Waypoints.empty())
+			goal = { PathGoal::POINT, m_FinalGoal.X(), m_FinalGoal.Z() };
+		else
+		{
+			goal = { PathGoal::POINT, m_Path.m_Waypoints.back().x, m_Path.m_Waypoints.back().z };
+			m_Path.m_Waypoints.pop_back();
+		}
 		RequestLongPath(pos, goal);
 		return;
 	}
 
-	// already waited one turn, no changes, so try computing a short path.
-	if (m_WaitingTurns == 2)
-	{
-		PathGoal goal;
-		goal = { PathGoal::POINT, m_Path.m_Waypoints.back().x, m_Path.m_Waypoints.back().z };
-		RequestShortPath(pos, goal, true);
-		return;
-	}
 
 	// m_waitingTurns == 1 here
 
@@ -905,8 +934,8 @@ void CCmpUnitMotion::Move(fixed dt)
 		return;
 	}
 
-	// Recompute a long path next turn, full of hope.
-	m_WaitingTurns = 4;
+	// Recompute a new path, but wait a dozen turns.
+	m_WaitingTurns = 12 + MAX_PATH_REATTEMPS;
 
 	return;
 }
@@ -988,8 +1017,6 @@ bool CCmpUnitMotion::CheckTargetMovement(const CFixedVector2D& from, entity_pos_
 // TODO: ought to be cleverer here.
 bool CCmpUnitMotion::ShouldConsiderOurselvesAtDestination()
 {
-	std::cout << "are we there? " << std::endl;
-	std::cout << m_FinalGoal.TargetIsEntity() << std::endl;
 	if (m_FinalGoal.TargetIsEntity())
 		return IsInTargetRange(m_FinalGoal.GetEntity(), m_FinalGoal.MinRange(), m_FinalGoal.MaxRange());
 	else
@@ -1198,16 +1225,7 @@ bool CCmpUnitMotion::IsInPointRange(entity_pos_t x, entity_pos_t z, entity_pos_t
 
 	CFixedVector2D pos = cmpPosition->GetPosition2D();
 
-	std::cout << "position X" << pos.X.ToFloat() << std::endl;
-	std::cout << "position Z" << pos.Y.ToFloat() << std::endl;
-	std::cout << "X " << x.ToFloat() << std::endl;
-	std::cout << "Z " << z.ToFloat() << std::endl;
-
 	entity_pos_t distance = (pos - CFixedVector2D(x, z)).Length();
-
-	std::cout << "distance " << distance.ToFloat() << std::endl;
-	std::cout << "minRange " << minRange.ToFloat() << std::endl;
-	std::cout << "maxRange " << maxRange.ToFloat() << std::endl;
 
 	if (distance < minRange)
 		return false;

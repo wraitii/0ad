@@ -4322,6 +4322,8 @@ UnitAI.prototype.SelectAnimation = function(name, once, speed, sound)
 	// movement mode that deals with speeds and walk/run automatically
 	if (name == "move")
 	{
+		return;
+
 		// Speed to switch from walking to running animations
 		var runThreshold = (this.GetWalkSpeed() + this.GetRunSpeed()) / 2;
 
