@@ -4081,14 +4081,14 @@ UnitAI.prototype.OnPackFinished = function(msg)
 UnitAI.prototype.GetWalkSpeed = function()
 {
 	var cmpUnitMotion = Engine.QueryInterface(this.entity, IID_UnitMotion);
-	return cmpUnitMotion.GetWalkSpeed();
+	return cmpUnitMotion.GetSpeed();
 };
 
 UnitAI.prototype.GetRunSpeed = function()
 {
 	var cmpUnitMotion = Engine.QueryInterface(this.entity, IID_UnitMotion);
-	var runSpeed = cmpUnitMotion.GetRunSpeed();
-	var walkSpeed = cmpUnitMotion.GetWalkSpeed();
+	var runSpeed = cmpUnitMotion.GetSpeed();
+	var walkSpeed = cmpUnitMotion.GetSpeed();
 	if (runSpeed <= walkSpeed)
 		return runSpeed;
 	var cmpHealth = Engine.QueryInterface(this.entity, IID_Health);
@@ -4361,7 +4361,7 @@ UnitAI.prototype.SetAnimationSync = function(actiontime, repeattime)
 UnitAI.prototype.StopMoving = function()
 {
 	var cmpUnitMotion = Engine.QueryInterface(this.entity, IID_UnitMotion);
-	cmpUnitMotion.StopMoving();
+	cmpUnitMotion.DiscardMove();
 };
 
 UnitAI.prototype.MoveToPoint = function(x, z)
@@ -5696,7 +5696,7 @@ UnitAI.prototype.GetStanceName = function()
 UnitAI.prototype.SetMoveSpeed = function(speed)
 {
 	var cmpMotion = Engine.QueryInterface(this.entity, IID_UnitMotion);
-	cmpMotion.SetSpeed(speed);
+	cmpMotion.SetSpeed(1.0);
 };
 
 UnitAI.prototype.SetHeldPosition = function(x, z)

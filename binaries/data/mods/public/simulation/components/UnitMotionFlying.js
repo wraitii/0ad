@@ -295,7 +295,7 @@ UnitMotionFlying.prototype.IsInTargetRange = function(target, minRange, maxRange
 	return this.IsInPointRange(targetPos.x, targetPos.y, minRange, maxRange);
 };
 
-UnitMotionFlying.prototype.GetWalkSpeed = function()
+UnitMotionFlying.prototype.GetSpeed = function()
 {
 	return +this.template.MaxSpeed;
 };
