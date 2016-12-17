@@ -1391,11 +1391,12 @@ UnitAI.prototype.UnitFsmSpec = {
 			"enter": function () {
 				var cmpFormation = Engine.QueryInterface(this.formationController, IID_Formation);
 				var cmpVisual = Engine.QueryInterface(this.entity, IID_Visual);
-				if (cmpFormation && cmpVisual)
+/* TOREPLACE				if (cmpFormation && cmpVisual)
 				{
 					cmpVisual.ReplaceMoveAnimation("walk", cmpFormation.GetFormationAnimation(this.entity, "walk"));
 					cmpVisual.ReplaceMoveAnimation("run", cmpFormation.GetFormationAnimation(this.entity, "run"));
 				}
+				*/
 				this.SelectAnimation("move");
 			},
 
@@ -1405,13 +1406,13 @@ UnitAI.prototype.UnitFsmSpec = {
 				// We can only finish this order if the move was really completed.
 				if (!msg.data.error && this.FinishOrder())
 					return;
-				var cmpVisual = Engine.QueryInterface(this.entity, IID_Visual);
+/* TOREPLACE				var cmpVisual = Engine.QueryInterface(this.entity, IID_Visual);
 				if (cmpVisual)
 				{
 					cmpVisual.ResetMoveAnimation("walk");
 					cmpVisual.ResetMoveAnimation("run");
 				}
-
+*/
 				var cmpFormation = Engine.QueryInterface(this.formationController, IID_Formation);
 				if (cmpFormation)
 					cmpFormation.SetInPosition(this.entity);
@@ -4292,11 +4293,12 @@ UnitAI.prototype.SetGathererAnimationOverride = function(disable)
 	// Remove the animation override, so that weapons are shown again.
 	if (disable)
 	{
-		cmpVisual.ResetMoveAnimation("walk");
+//TOREPLACE		cmpVisual.ResetMoveAnimation("walk");
 		return;
 	}
 
 	// Work out what we're carrying, in order to select an appropriate animation
+	/*
 	var type = cmpResourceGatherer.GetLastCarriedType();
 	if (type)
 	{
@@ -4306,10 +4308,11 @@ UnitAI.prototype.SetGathererAnimationOverride = function(disable)
 		if (type.specific == "meat")
 			typename = "carry_" + type.specific;
 
-		cmpVisual.ReplaceMoveAnimation("walk", typename);
+//	TOREPLACE	cmpVisual.ReplaceMoveAnimation("walk", typename);
 	}
 	else
-		cmpVisual.ResetMoveAnimation("walk");
+		cmpVisual.ResetMoveAnimation("idle");
+	*/
 };
 
 UnitAI.prototype.SelectAnimation = function(name, once, speed, sound)
@@ -4325,10 +4328,10 @@ UnitAI.prototype.SelectAnimation = function(name, once, speed, sound)
 		return;
 
 		// Speed to switch from walking to running animations
-		var runThreshold = (this.GetWalkSpeed() + this.GetRunSpeed()) / 2;
+// TOREPLACE		var runThreshold = (this.GetWalkSpeed() + this.GetRunSpeed()) / 2;
 
-		cmpVisual.SelectMovementAnimation(runThreshold);
-		return;
+//		cmpVisual.SelectMovementAnimation(runThreshold);
+//		return;
 	}
 
 	var soundgroup;

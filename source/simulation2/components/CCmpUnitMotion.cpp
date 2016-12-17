@@ -222,8 +222,10 @@ public:
 	bool m_AbortIfStuck;
 	// turn towards our target at the end
 	bool m_FacePointAfterMove;
-	// actual unit speed
+	// actual unit speed, after technology and ratio
 	fixed m_Speed;
+	// cached for convenience
+	fixed m_SpeedRatio;
 
 	// asynchronous request ID we're waiting for, or 0 if none
 	u32 m_ExpectedPathTicket;
@@ -278,6 +280,7 @@ public:
 
 		m_TemplateSpeed = m_Speed = paramNode.GetChild("WalkSpeed").ToFixed();
 		m_ActualSpeed = fixed::Zero();
+		m_SpeedRatio = fixed::FromInt(1);
 
 		CmpPtr<ICmpPathfinder> cmpPathfinder(GetSystemEntity());
 		if (cmpPathfinder)
@@ -391,8 +394,7 @@ public:
 			if (!cmpValueModificationManager)
 				break;
 
-			fixed ratio = m_Speed.MulDiv(fixed::FromInt(1), m_TemplateSpeed);
-			m_Speed = ratio.Multiply(cmpValueModificationManager->ApplyModifications(L"UnitMotion/WalkSpeed", m_TemplateSpeed, GetEntityId()));
+			m_Speed = m_SpeedRatio.Multiply(cmpValueModificationManager->ApplyModifications(L"UnitMotion/WalkSpeed", m_TemplateSpeed, GetEntityId()));
 
 			break;
 		}
@@ -431,18 +433,24 @@ public:
 		return m_ActualSpeed;
 	}
 
+	virtual fixed GetSpeedRatio()
+	{
+		return m_SpeedRatio;
+	}
+
 	// don't call this all the time
 	// it's voluntarily too slow, because you shouldn't be doing this.
 	virtual void SetSpeed(fixed ratio)
 	{
+		m_SpeedRatio = ratio;
 		CmpPtr<ICmpValueModificationManager> cmpValueModificationManager(GetSystemEntity());
 		if (cmpValueModificationManager)
 		{
-			m_Speed = ratio.Multiply(cmpValueModificationManager->ApplyModifications(L"UnitMotion/WalkSpeed", m_TemplateSpeed, GetEntityId()));
+			m_Speed = m_SpeedRatio.Multiply(cmpValueModificationManager->ApplyModifications(L"UnitMotion/WalkSpeed", m_TemplateSpeed, GetEntityId()));
 			return;
 		}
 
-		m_Speed = ratio.Multiply(m_TemplateSpeed);
+		m_Speed = m_SpeedRatio.Multiply(m_TemplateSpeed);
 	}
 
 	virtual pass_class_t GetPassabilityClass()
@@ -557,7 +565,7 @@ private:
 
 		CmpPtr<ICmpVisual> cmpVisualActor(GetEntityHandle());
 		if (cmpVisualActor)
-			cmpVisualActor->SelectMovementAnimation(m_Speed);
+			cmpVisualActor->SetMoving(true);
 	}
 
 	// TODO: warn visual actor
@@ -569,7 +577,7 @@ private:
 		GetSimContext().GetComponentManager().PostMessage(GetEntityId(), msg);
 		CmpPtr<ICmpVisual> cmpVisualActor(GetEntityHandle());
 		if (cmpVisualActor)
-			cmpVisualActor->SelectAnimation("idle", false, fixed::FromInt(2), L"");
+			cmpVisualActor->SetMoving(false);
 	}
 
 	// TODO: warn visual actor
@@ -581,7 +589,7 @@ private:
 		GetSimContext().GetComponentManager().PostMessage(GetEntityId(), msg);
 		CmpPtr<ICmpVisual> cmpVisualActor(GetEntityHandle());
 		if (cmpVisualActor)
-			cmpVisualActor->SelectAnimation("idle", false, fixed::FromInt(2), L"");
+			cmpVisualActor->SetMoving(false);
 	}
 
 	// TODO: warn visual actor
@@ -593,7 +601,7 @@ private:
 		GetSimContext().GetComponentManager().PostMessage(GetEntityId(), msg);
 		CmpPtr<ICmpVisual> cmpVisualActor(GetEntityHandle());
 		if (cmpVisualActor)
-			cmpVisualActor->SelectMovementAnimation(m_Speed);
+			cmpVisualActor->SetMoving(true);
 	}
 
 	bool MoveToPointRange(entity_pos_t x, entity_pos_t z, entity_pos_t minRange, entity_pos_t maxRange, entity_id_t target);

@@ -105,6 +105,11 @@ public:
 	virtual fixed GetActualSpeed() = 0;
 
 	/**
+	 * Get how much faster/slower we are at than normal.
+	 */
+	virtual fixed GetSpeedRatio() = 0;
+
+	/**
 	 * Set the current movement speed.
 	 * 'speed' in % of top speed (ie 3.0 will be 3 times top speed).
 	 */

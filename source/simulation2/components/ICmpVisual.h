@@ -99,25 +99,9 @@ public:
 	virtual void SelectAnimation(const std::string& name, bool once, fixed speed, const std::wstring& soundgroup) = 0;
 
 	/**
-	 * Replaces a specified animation with another. Only affects the special speed-based
-	 * animation determination behaviour.
-	 * @param name Animation to match.
-	 * @param replace Animation that should replace the matched animation.
+	 * if moving is true, start playing the walk/run animations, scaled to the unit's movement speed.
 	 */
-	virtual void ReplaceMoveAnimation(const std::string& name, const std::string& replace) = 0;
-
-	/**
-	 * Ensures that the given animation will be used when it normally would be,
-	 * removing reference to any animation that might replace it.
-	 * @param name Animation name to remove from the replacement map.
-	 */
-	virtual void ResetMoveAnimation(const std::string& name) = 0;
-
-	/**
-	 * Start playing the walk/run animations, scaled to the unit's movement speed.
-	 * @param runThreshold movement speed at which to switch to the run animation
-	 */
-	virtual void SelectMovementAnimation(fixed runThreshold) = 0;
+	virtual void SetMoving(bool moving) = 0;
 
 	/**
 	 * Adjust the speed of the current animation, so it can match simulation events.

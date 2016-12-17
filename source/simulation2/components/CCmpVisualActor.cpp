@@ -71,10 +71,7 @@ private:
 
 	fixed m_R, m_G, m_B; // shading color
 
-	std::map<std::string, std::string> m_AnimOverride;
-
 	// Current animation state
-	fixed m_AnimRunThreshold; // if non-zero this is the special walk/run mode
 	std::string m_AnimName;
 	bool m_AnimOnce;
 	fixed m_AnimSpeed;
@@ -82,6 +79,10 @@ private:
 	fixed m_AnimDesync;
 	fixed m_AnimSyncRepeatTime; // 0.0 if not synced
 	fixed m_AnimSyncOffsetTime;
+
+	std::string m_MovingPrefix;
+	fixed m_MovingSpeed;
+	bool m_MovingNow, m_MovingLastTurn;
 
 	std::map<CStr, CStr> m_VariantSelections;
 
@@ -206,6 +207,8 @@ public:
 
 		InitModel(paramNode);
 
+		m_MovingLastTurn = m_MovingNow = false;
+
 		SelectAnimation("idle", false, fixed::FromInt(1), L"");
 	}
 
@@ -225,9 +228,6 @@ public:
 		serialize.NumberFixed_Unbounded("g", m_G);
 		serialize.NumberFixed_Unbounded("b", m_B);
 
-		SerializeMap<SerializeString, SerializeString>()(serialize, "anim overrides", m_AnimOverride);
-
-		serialize.NumberFixed_Unbounded("anim run threshold", m_AnimRunThreshold);
 		serialize.StringASCII("anim name", m_AnimName, 0, 256);
 		serialize.Bool("anim once", m_AnimOnce);
 		serialize.NumberFixed_Unbounded("anim speed", m_AnimSpeed);
@@ -235,6 +235,9 @@ public:
 		serialize.NumberFixed_Unbounded("anim desync", m_AnimDesync);
 		serialize.NumberFixed_Unbounded("anim sync repeat time", m_AnimSyncRepeatTime);
 		serialize.NumberFixed_Unbounded("anim sync offset time", m_AnimSyncOffsetTime);
+
+		serialize.Bool("moving now", m_MovingNow);
+		serialize.Bool("moving last turn", m_MovingLastTurn);
 
 		SerializeMap<SerializeString, SerializeString>()(serialize, "variation", m_VariantSelections);
 
@@ -423,7 +426,6 @@ public:
 
 	virtual void SelectAnimation(const std::string& name, bool once, fixed speed, const std::wstring& soundgroup)
 	{
-		m_AnimRunThreshold = fixed::Zero();
 		m_AnimName = name;
 		m_AnimOnce = once;
 		m_AnimSpeed = speed;
@@ -432,28 +434,22 @@ public:
 		m_AnimSyncRepeatTime = fixed::Zero();
 		m_AnimSyncOffsetTime = fixed::Zero();
 
-		SetVariant("animation", m_AnimName);
+		// TODO: change this once we support walk/run-anims
+		std::string animName = name;
+		if (!m_MovingPrefix.empty() && m_AnimName != "idle")
+			animName = m_MovingPrefix + "-" + m_AnimName;
+		else if (!m_MovingPrefix.empty())
+			animName = m_MovingPrefix;
+
+		SetVariant("animation", animName);
 
 		if (m_Unit && m_Unit->GetAnimation())
-			m_Unit->GetAnimation()->SetAnimationState(m_AnimName, m_AnimOnce, m_AnimSpeed.ToFloat(), m_AnimDesync.ToFloat(), m_SoundGroup.c_str());
+			m_Unit->GetAnimation()->SetAnimationState(animName, m_AnimOnce, m_MovingSpeed.Multiply(m_AnimSpeed).ToFloat(), m_AnimDesync.ToFloat(), m_SoundGroup.c_str());
 	}
 
-	virtual void ReplaceMoveAnimation(const std::string& name, const std::string& replace)
+	virtual void SetMoving(bool moving)
 	{
-		m_AnimOverride[name] = replace;
-	}
-
-	virtual void ResetMoveAnimation(const std::string& name)
-	{
-		std::map<std::string, std::string>::const_iterator it = m_AnimOverride.find(name);
-		if (it != m_AnimOverride.end())
-			m_AnimOverride.erase(name);
-	}
-
-	virtual void SelectMovementAnimation(fixed runThreshold)
-	{
-		SelectAnimation("walk", false, fixed::FromFloat(1.f), L"");
-		m_AnimRunThreshold = runThreshold;
+		m_MovingNow = moving;
 	}
 
 	virtual void SetAnimationSyncRepeat(fixed repeattime)
@@ -751,9 +747,8 @@ void CCmpVisualActor::Update(fixed UNUSED(turnLength))
 	// far less hacky. We should also take into account the speed when the animation is different
 	// from the "special movement mode" walking animation.
 
-	// If we're not in the special movement mode, nothing to do.
-	if (m_AnimRunThreshold.IsZero())
-		return;
+	//if (!m_MovingNow && !m_MovingLastTurn)
+	//	return;
 
 	CmpPtr<ICmpPosition> cmpPosition(GetEntityHandle());
 	if (!cmpPosition || !cmpPosition->IsInWorld())
@@ -763,23 +758,23 @@ void CCmpVisualActor::Update(fixed UNUSED(turnLength))
 	if (!cmpUnitMotion)
 		return;
 
-	fixed speed = cmpUnitMotion->GetSpeed();
-	std::string name;
+	// TODO: change this to make us run as fast but stop earlier instead of this hack.
+	// Probably should subscribe dynamically too.
+	fixed speed = cmpUnitMotion->GetActualSpeed();
+	std::string prefix;
 
-	if (speed.IsZero())
+	if (!m_MovingNow || speed.IsZero())
 	{
 		speed = fixed::FromFloat(1.f);
-		name = "idle";
+		prefix = "";
 	}
 	else
-		name = speed < m_AnimRunThreshold ? "walk" : "run";
+		prefix = cmpUnitMotion->GetSpeedRatio() <= fixed::FromInt(1) ? "walk" : "run";
 
-	std::map<std::string, std::string>::const_iterator it = m_AnimOverride.find(name);
-	if (it != m_AnimOverride.end())
-		name = it->second;
+	m_MovingPrefix = prefix;
+	m_MovingSpeed = speed;
 
-	// Selecting the animation is going to reset the anim run threshold, so save it
-	fixed runThreshold = m_AnimRunThreshold;
-	SelectAnimation(name, false, speed, L"");
-	m_AnimRunThreshold = runThreshold;
+	SelectAnimation(m_AnimName, m_AnimOnce, m_AnimSpeed, m_SoundGroup);
+
+	m_MovingLastTurn = m_MovingNow;
 }

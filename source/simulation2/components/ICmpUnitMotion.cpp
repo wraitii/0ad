@@ -128,6 +128,11 @@ public:
 		return m_Script.Call<pass_class_t>("GetPassabilityClass");
 	}
 
+	virtual fixed GetSpeedRatio()
+	{
+		return fixed::FromInt(1);
+	}
+
 	virtual std::string GetPassabilityClassName()
 	{
 		return m_Script.Call<std::string>("GetPassabilityClassName");
