@@ -267,20 +267,46 @@ CMessage* CMessageTerritoryPositionChanged::FromJSVal(ScriptInterface& scriptInt
 
 ////////////////////////////////
 
-JS::Value CMessageMotionChanged::ToJSVal(ScriptInterface& scriptInterface) const
+JS::Value CMessageBeginMove::ToJSVal(ScriptInterface& scriptInterface) const
 {
 	TOJSVAL_SETUP();
-	SET_MSG_PROPERTY(starting);
-	SET_MSG_PROPERTY(error);
 	return JS::ObjectValue(*obj);
 }
 
-CMessage* CMessageMotionChanged::FromJSVal(ScriptInterface& scriptInterface, JS::HandleValue val)
+CMessage* CMessageBeginMove::FromJSVal(ScriptInterface& scriptInterface, JS::HandleValue val)
 {
 	FROMJSVAL_SETUP();
-	GET_MSG_PROPERTY(bool, starting);
-	GET_MSG_PROPERTY(bool, error);
-	return new CMessageMotionChanged(starting, error);
+	return new CMessageBeginMove();
+}
+
+////////////////////////////////
+
+JS::Value CMessagePausedMove::ToJSVal(ScriptInterface& scriptInterface) const
+{
+	TOJSVAL_SETUP();
+	return JS::ObjectValue(*obj);
+}
+
+CMessage* CMessagePausedMove::FromJSVal(ScriptInterface& scriptInterface, JS::HandleValue val)
+{
+	FROMJSVAL_SETUP();
+	return new CMessagePausedMove();
+}
+
+////////////////////////////////
+
+JS::Value CMessageFinishedMove::ToJSVal(ScriptInterface& scriptInterface) const
+{
+	TOJSVAL_SETUP();
+	SET_MSG_PROPERTY(failed);
+	return JS::ObjectValue(*obj);
+}
+
+CMessage* CMessageFinishedMove::FromJSVal(ScriptInterface& scriptInterface, JS::HandleValue val)
+{
+	FROMJSVAL_SETUP();
+	GET_MSG_PROPERTY(bool, failed);
+	return new CMessageFinishedMove(failed);
 }
 
 ////////////////////////////////

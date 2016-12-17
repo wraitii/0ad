@@ -375,7 +375,7 @@ void ActorViewer::SetActor(const CStrW& name, const CStrW& animation, player_id_
 		{
 			CmpPtr<ICmpUnitMotion> cmpUnitMotion(m.Simulation2, m.Entity);
 			if (cmpUnitMotion)
-				speed = cmpUnitMotion->GetWalkSpeed().ToFloat();
+				speed = cmpUnitMotion->GetTemplateSpeed().ToFloat();
 			else
 				speed = 7.f; // typical unit speed
 
@@ -385,7 +385,7 @@ void ActorViewer::SetActor(const CStrW& name, const CStrW& animation, player_id_
 		{
 			CmpPtr<ICmpUnitMotion> cmpUnitMotion(m.Simulation2, m.Entity);
 			if (cmpUnitMotion)
-				speed = cmpUnitMotion->GetRunSpeed().ToFloat();
+				speed = cmpUnitMotion->GetTemplateSpeed().ToFloat();
 			else
 				speed = 12.f; // typical unit speed
 

@@ -71,45 +71,68 @@ public:
 	virtual bool MoveToTargetRange(entity_id_t target, entity_pos_t minRange, entity_pos_t maxRange) = 0;
 
 	/**
-	 * Join a formation, and move towards a given offset relative to the formation controller entity.
-	 * Continues following the formation until given a different command.
-	 */
-	virtual void MoveToFormationOffset(entity_id_t target, entity_pos_t x, entity_pos_t z) = 0;
-
-	/**
 	 * Turn to look towards the given point.
 	 */
 	virtual void FaceTowardsPoint(entity_pos_t x, entity_pos_t z) = 0;
 
 	/**
-	 * Stop moving immediately.
+	 * Determine whether to abort or retry infinitely if pathing fails.
+	 * Generally safer to let it abort and inform us.
 	 */
-	virtual void StopMoving() = 0;
+	virtual void SetAbortIfStuck(bool shouldAbort) = 0;
 
 	/**
-	 * Get the current movement speed.
+	 * Stop moving immediately, don't send messages.
+	 * This should be used if you are going to ask for a new path,
+	 * in the same function, for example.
+	 * In doubt, UnitAI should probably call this.
+	 * Use with caution.
 	 */
-	virtual fixed GetCurrentSpeed() = 0;
+	virtual void DiscardMove() = 0;
+
+	/**
+	 * Stop moving immediately, send messages.
+	 * In doubt, components that are not UnitIA should probably call this.
+	 */
+	virtual void CompleteMove() = 0;
+
+	/**
+	 * Get the movement speed from last turn to this turn
+	 * This is effectively historical data
+	 * And not a good indicator of whether we are actually moving,
+	 * Prefer IsActuallyMoving
+	 */
+	virtual fixed GetActualSpeed() = 0;
 
 	/**
 	 * Set the current movement speed.
+	 * 'speed' in % of top speed (ie 3.0 will be 3 times top speed).
 	 */
 	virtual void SetSpeed(fixed speed) = 0;
 
 	/**
-	 * Get whether the unit is moving.
+	 * Get whether the unit is actually moving on the map this turn.
 	 */
-	virtual bool IsMoving() = 0;
+	virtual bool IsActuallyMoving() = 0;
 
 	/**
-	 * Get the default speed that this unit will have when walking, in metres per second.
+	 * Get whether a unit is trying to go somewhere
+	 * NB: this does not mean its position is actually changing right now.
 	 */
-	virtual fixed GetWalkSpeed() = 0;
+	virtual bool IsTryingToMove() = 0;
 
 	/**
-	 * Get the default speed that this unit will have when running, in metres per second.
+	 * Get the unit theoretical speed in metres per second.
+	 * GetActualSpeed will return historical speed
+	 * This is affected by SetSpeed.
 	 */
-	virtual fixed GetRunSpeed() = 0;
+	virtual fixed GetSpeed() = 0;
+
+	/**
+	 * Get the unit template speed in metres per second.
+	 * This is NOT affected by SetSpeed.
+	 */
+	virtual fixed GetTemplateSpeed() = 0;
 
 	/**
 	 * Set whether the unit will turn to face the target point after finishing moving.

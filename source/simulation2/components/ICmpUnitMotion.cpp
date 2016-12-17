@@ -27,14 +27,16 @@ DEFINE_INTERFACE_METHOD_4("MoveToPointRange", bool, ICmpUnitMotion, MoveToPointR
 DEFINE_INTERFACE_METHOD_4("IsInPointRange", bool, ICmpUnitMotion, IsInPointRange, entity_pos_t, entity_pos_t, entity_pos_t, entity_pos_t)
 DEFINE_INTERFACE_METHOD_3("IsInTargetRange", bool, ICmpUnitMotion, IsInTargetRange, entity_id_t, entity_pos_t, entity_pos_t)
 DEFINE_INTERFACE_METHOD_3("MoveToTargetRange", bool, ICmpUnitMotion, MoveToTargetRange, entity_id_t, entity_pos_t, entity_pos_t)
-DEFINE_INTERFACE_METHOD_3("MoveToFormationOffset", void, ICmpUnitMotion, MoveToFormationOffset, entity_id_t, entity_pos_t, entity_pos_t)
 DEFINE_INTERFACE_METHOD_2("FaceTowardsPoint", void, ICmpUnitMotion, FaceTowardsPoint, entity_pos_t, entity_pos_t)
-DEFINE_INTERFACE_METHOD_0("StopMoving", void, ICmpUnitMotion, StopMoving)
-DEFINE_INTERFACE_METHOD_0("GetCurrentSpeed", fixed, ICmpUnitMotion, GetCurrentSpeed)
+DEFINE_INTERFACE_METHOD_1("SetAbordIfStuck", void, ICmpUnitMotion, SetAbortIfStuck, bool)
+DEFINE_INTERFACE_METHOD_0("DiscardMove", void, ICmpUnitMotion, DiscardMove)
+DEFINE_INTERFACE_METHOD_0("CompleteMove", void, ICmpUnitMotion, CompleteMove)
+DEFINE_INTERFACE_METHOD_0("GetActualSpeed", fixed, ICmpUnitMotion, GetActualSpeed)
 DEFINE_INTERFACE_METHOD_1("SetSpeed", void, ICmpUnitMotion, SetSpeed, fixed)
-DEFINE_INTERFACE_METHOD_0("IsMoving", bool, ICmpUnitMotion, IsMoving)
-DEFINE_INTERFACE_METHOD_0("GetWalkSpeed", fixed, ICmpUnitMotion, GetWalkSpeed)
-DEFINE_INTERFACE_METHOD_0("GetRunSpeed", fixed, ICmpUnitMotion, GetRunSpeed)
+DEFINE_INTERFACE_METHOD_0("IsActuallyMoving", bool, ICmpUnitMotion, IsActuallyMoving)
+DEFINE_INTERFACE_METHOD_0("IsTryingToMove", bool, ICmpUnitMotion, IsTryingToMove)
+DEFINE_INTERFACE_METHOD_0("GetSpeed", fixed, ICmpUnitMotion, GetSpeed)
+DEFINE_INTERFACE_METHOD_0("GetTemplateSpeed", fixed, ICmpUnitMotion, GetTemplateSpeed)
 DEFINE_INTERFACE_METHOD_0("GetPassabilityClassName", std::string, ICmpUnitMotion, GetPassabilityClassName)
 DEFINE_INTERFACE_METHOD_0("GetUnitClearance", entity_pos_t, ICmpUnitMotion, GetUnitClearance)
 DEFINE_INTERFACE_METHOD_1("SetFacePointAfterMove", void, ICmpUnitMotion, SetFacePointAfterMove, bool)
@@ -66,24 +68,29 @@ public:
 		return m_Script.Call<bool>("MoveToTargetRange", target, minRange, maxRange);
 	}
 
-	virtual void MoveToFormationOffset(entity_id_t target, entity_pos_t x, entity_pos_t z)
-	{
-		m_Script.CallVoid("MoveToFormationOffset", target, x, z);
-	}
-
 	virtual void FaceTowardsPoint(entity_pos_t x, entity_pos_t z)
 	{
 		m_Script.CallVoid("FaceTowardsPoint", x, z);
 	}
 
-	virtual void StopMoving()
+	virtual void DiscardMove()
 	{
-		m_Script.CallVoid("StopMoving");
+		m_Script.CallVoid("DiscardMove");
 	}
 
-	virtual fixed GetCurrentSpeed()
+	virtual void CompleteMove()
 	{
-		return m_Script.Call<fixed>("GetCurrentSpeed");
+		m_Script.CallVoid("CompleteMove");
+	}
+
+	virtual void SetAbortIfStuck(bool shouldAbort)
+	{
+		m_Script.CallVoid("SetAbortIfStuck", shouldAbort);
+	}
+
+	virtual fixed GetActualSpeed()
+	{
+		return m_Script.Call<fixed>("GetActualSpeed");
 	}
 
 	virtual void SetSpeed(fixed speed)
@@ -91,19 +98,24 @@ public:
 		m_Script.CallVoid("SetSpeed", speed);
 	}
 
-	virtual bool IsMoving()
+	virtual bool IsActuallyMoving()
 	{
-		return m_Script.Call<bool>("IsMoving");
+		return m_Script.Call<bool>("IsActuallyMoving");
 	}
 
-	virtual fixed GetWalkSpeed()
+	virtual bool IsTryingToMove()
 	{
-		return m_Script.Call<fixed>("GetWalkSpeed");
+		return m_Script.Call<bool>("IsTryingToMove");
 	}
 
-	virtual fixed GetRunSpeed()
+	virtual fixed GetSpeed()
 	{
-		return m_Script.Call<fixed>("GetRunSpeed");
+		return m_Script.Call<fixed>("GetSpeed");
+	}
+
+	virtual fixed GetTemplateSpeed()
+	{
+		return m_Script.Call<fixed>("GetTemplateSpeed");
 	}
 
 	virtual void SetFacePointAfterMove(bool facePointAfterMove)

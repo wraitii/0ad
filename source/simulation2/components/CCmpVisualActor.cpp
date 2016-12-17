@@ -763,7 +763,7 @@ void CCmpVisualActor::Update(fixed UNUSED(turnLength))
 	if (!cmpUnitMotion)
 		return;
 
-	fixed speed = cmpUnitMotion->GetCurrentSpeed();
+	fixed speed = cmpUnitMotion->GetSpeed();
 	std::string name;
 
 	if (speed.IsZero())

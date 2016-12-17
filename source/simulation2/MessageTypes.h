@@ -317,21 +317,55 @@ public:
 };
 
 /**
- * Sent by CCmpUnitMotion during Update, whenever the motion status has changed
- * since the previous update.
+ * Sent by CCmpUnitMotion during Update,
+ * whenever we have started actually moving and were not moving before.
+ * We may or may not already have been trying to move
  */
-class CMessageMotionChanged : public CMessage
+class CMessageBeginMove : public CMessage
 {
 public:
-	DEFAULT_MESSAGE_IMPL(MotionChanged)
+	DEFAULT_MESSAGE_IMPL(BeginMove)
 
-	CMessageMotionChanged(bool starting, bool error) :
-		starting(starting), error(error)
+	CMessageBeginMove()
+	{
+	}
+};
+
+/**
+ * Sent by CCmpUnitMotion during Update,
+ * whenever we were actually moving before, and cannot continue
+ * this can be because we've arrived (failed=false) or we failed moving (failed=true)
+ * After this message is sent, the unit won't remove/repath without orders.
+ * Will never be sent on the same turn as MT_BeginMove.
+ */
+class CMessageFinishedMove : public CMessage
+{
+public:
+	DEFAULT_MESSAGE_IMPL(FinishedMove)
+
+	CMessageFinishedMove(bool fail) : failed(fail)
 	{
 	}
 
-	bool starting; // whether this is a start or end of movement
-	bool error; // whether we failed to start moving (couldn't find any path)
+	bool failed; // move failed
+};
+
+/**
+ * Sent by CCmpUnitMotion during Update,
+ * whenever we were actually moving before, and now stopped
+ * In this case, we will retry moving/pathing in the future on our own
+ * Unless ordered otherwise.
+ * We are just possibly stuck short-term, or must repath.
+ * Will never be sent on the same turn as MT_BeginMove.
+ */
+class CMessagePausedMove : public CMessage
+{
+public:
+	DEFAULT_MESSAGE_IMPL(PausedMove)
+
+	CMessagePausedMove()
+	{
+	}
 };
 
 /**
