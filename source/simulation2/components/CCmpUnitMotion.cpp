@@ -787,7 +787,7 @@ void CCmpUnitMotion::Move(fixed dt)
 			destination = pos + offset;
 		}
 
-		// TODO: try moving as much as we can still.
+		// TODO: try moving as much as we can still?
 		// TODO: get more information about what blocked us.
 		if (cmpPathfinder->CheckMovement(GetObstructionFilter(), pos.X, pos.Y, target.X, target.Y, m_Clearance, m_PassClass))
 		{
@@ -797,9 +797,6 @@ void CCmpUnitMotion::Move(fixed dt)
 
 			if (destination == target && !m_Path.m_Waypoints.empty())
 				m_Path.m_Waypoints.pop_back();
-			else
-				ENSURE(timeLeft == fixed::Zero()); // validation, should be safe to remove.
-
 			continue;
 		}
 		else
