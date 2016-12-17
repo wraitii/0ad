@@ -4010,12 +4010,14 @@ UnitAI.prototype.StopTimer = function()
 
 //// Message handlers /////
 
-UnitAI.prototype.OnMotionChanged = function(msg)
+UnitAI.prototype.OnBeginMove = function(msg)
 {
-	if (msg.starting && !msg.error)
-		this.UnitFsm.ProcessMessage(this, {"type": "MoveStarted", "data": msg});
-	else if (!msg.starting || msg.error)
-		this.UnitFsm.ProcessMessage(this, {"type": "MoveCompleted", "data": msg});
+	this.UnitFsm.ProcessMessage(this, {"type": "MoveStarted", "data": msg});
+};
+
+UnitAI.prototype.OnFinishedMove = function(msg)
+{
+	this.UnitFsm.ProcessMessage(this, {"type": "MoveCompleted", "data": msg});
 };
 
 UnitAI.prototype.OnGlobalConstructionFinished = function(msg)
