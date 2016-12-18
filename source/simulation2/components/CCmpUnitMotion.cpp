@@ -110,7 +110,7 @@ static const fixed CHECK_TARGET_MOVEMENT_MIN_COS = fixed::FromInt(866)/1000;
 /**
  * See unitmotion logic for details. Higher means units will retry more often before potentially failing.
  */
-static const size_t MAX_PATH_REATTEMPS = 6;
+static const size_t MAX_PATH_REATTEMPS = 8;
 
 static const CColor OVERLAY_COLOR_LONG_PATH(1, 1, 1, 1);
 static const CColor OVERLAY_COLOR_SHORT_PATH(1, 0, 0, 1);
