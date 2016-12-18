@@ -1,3 +1,5 @@
+const WALKING_SPEED = 1.0
+
 function UnitAI() {}
 
 UnitAI.prototype.Schema =
@@ -1700,27 +1702,29 @@ UnitAI.prototype.UnitFsmSpec = {
 				},
 
 				"leave": function(msg) {
-					this.SetMoveSpeed(this.GetWalkSpeed());
+					this.SetMoveSpeed(WALKING_SPEED);
 					this.StopTimer();
 				},
 
 				"MoveStarted": function(msg) {
 					// Adapt the speed to the one of the target if needed
-					var cmpUnitMotion = Engine.QueryInterface(this.entity, IID_UnitMotion);
+					let cmpUnitMotion = Engine.QueryInterface(this.entity, IID_UnitMotion);
 					if (cmpUnitMotion.IsInTargetRange(this.isGuardOf, 0, 3*this.guardRange))
 					{
-						var cmpUnitAI = Engine.QueryInterface(this.isGuardOf, IID_UnitAI);
-						if (cmpUnitAI)
+						var cmpOtherMotion = Engine.QueryInterface(this.isGuardOf, IID_UnitMotion);
+						if (cmpOtherMotion)
 						{
-							var speed = cmpUnitAI.GetWalkSpeed();
-							if (speed < this.GetWalkSpeed())
+							let otherSpeed = cmpOtherMotion.GetSpeed();
+							let mySpeed = cmpUnitMotion.GetSpeed();
+							let speed = otherSpeed / mySpeed;
+							if (speed < WALKING_SPEED)
 								this.SetMoveSpeed(speed);
 						}
 					}
 				},
 
 				"MoveCompleted": function() {
-					this.SetMoveSpeed(this.GetWalkSpeed());
+					this.SetMoveSpeed(WALKING_SPEED);
 					if (!this.MoveToTargetRangeExplicit(this.isGuardOf, 0, this.guardRange))
 						this.SetNextState("GUARDING");
 				},
@@ -1775,19 +1779,12 @@ UnitAI.prototype.UnitFsmSpec = {
 				this.PlaySound("panic");
 
 				// Run quickly
-				var speed = this.GetRunSpeed();
-				this.SelectAnimation("move");
-				this.SetMoveSpeed(speed);
-			},
-
-			"HealthChanged": function() {
-				var speed = this.GetRunSpeed();
-				this.SetMoveSpeed(speed);
+				this.SetMoveSpeed(this.GetRunSpeed());
 			},
 
 			"leave": function() {
 				// Reset normal speed
-				this.SetMoveSpeed(this.GetWalkSpeed());
+				this.SetMoveSpeed(WALKING_SPEED);
 			},
 
 			"MoveCompleted": function() {
@@ -2101,12 +2098,9 @@ UnitAI.prototype.UnitFsmSpec = {
 
 					this.SelectAnimation("move");
 					var cmpUnitAI = Engine.QueryInterface(this.order.data.target, IID_UnitAI);
+					// Run after a fleeing target
 					if (cmpUnitAI && cmpUnitAI.IsFleeing())
-					{
-						// Run after a fleeing target
-						var speed = this.GetRunSpeed();
-						this.SetMoveSpeed(speed);
-					}
+						this.SetMoveSpeed(this.GetRunSpeed());
 					this.StartTimer(1000, 1000);
 				},
 
@@ -2114,13 +2108,14 @@ UnitAI.prototype.UnitFsmSpec = {
 					var cmpUnitAI = Engine.QueryInterface(this.order.data.target, IID_UnitAI);
 					if (!cmpUnitAI || !cmpUnitAI.IsFleeing())
 						return;
-					var speed = this.GetRunSpeed();
-					this.SetMoveSpeed(speed);
+					// TODO: figure out what to do with fleeing
+					//var speed = this.GetRunSpeed();
+					//this.SetMoveSpeed(speed);
 				},
 
 				"leave": function() {
 					// Reset normal speed in case it was changed
-					this.SetMoveSpeed(this.GetWalkSpeed());
+					this.SetMoveSpeed(WALKING_SPEED);
 					// Show carried resources when walking.
 					this.SetGathererAnimationOverride();
 
@@ -3228,7 +3223,6 @@ UnitAI.prototype.UnitFsmSpec = {
 		"ROAMING": {
 			"enter": function() {
 				// Walk in a random direction
-				this.SelectAnimation("walk", false, this.GetWalkSpeed());
 				this.MoveRandomly(+this.template.RoamDistance);
 				// Set a random timer to switch to feeding state
 				this.StartTimer(RandomInt(+this.template.RoamTimeMin, +this.template.RoamTimeMax));
@@ -4079,22 +4073,10 @@ UnitAI.prototype.OnPackFinished = function(msg)
 
 //// Helper functions to be called by the FSM ////
 
-UnitAI.prototype.GetWalkSpeed = function()
-{
-	var cmpUnitMotion = Engine.QueryInterface(this.entity, IID_UnitMotion);
-	return cmpUnitMotion.GetSpeed();
-};
-
 UnitAI.prototype.GetRunSpeed = function()
 {
 	var cmpUnitMotion = Engine.QueryInterface(this.entity, IID_UnitMotion);
-	var runSpeed = cmpUnitMotion.GetSpeed();
-	var walkSpeed = cmpUnitMotion.GetSpeed();
-	if (runSpeed <= walkSpeed)
-		return runSpeed;
-	var cmpHealth = Engine.QueryInterface(this.entity, IID_Health);
-	var health = cmpHealth.GetHitpoints()/cmpHealth.GetMaxHitpoints();
-	return (health*runSpeed + (1-health)*walkSpeed);
+	return cmpUnitMotion.GetTopSpeedRatio();
 };
 
 /**
@@ -4320,19 +4302,6 @@ UnitAI.prototype.SelectAnimation = function(name, once, speed, sound)
 	var cmpVisual = Engine.QueryInterface(this.entity, IID_Visual);
 	if (!cmpVisual)
 		return;
-
-	// Special case: the "move" animation gets turned into a special
-	// movement mode that deals with speeds and walk/run automatically
-	if (name == "move")
-	{
-		return;
-
-		// Speed to switch from walking to running animations
-// TOREPLACE		var runThreshold = (this.GetWalkSpeed() + this.GetRunSpeed()) / 2;
-
-//		cmpVisual.SelectMovementAnimation(runThreshold);
-//		return;
-	}
 
 	var soundgroup;
 	if (sound)

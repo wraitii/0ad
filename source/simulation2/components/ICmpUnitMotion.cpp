@@ -32,6 +32,7 @@ DEFINE_INTERFACE_METHOD_1("SetAbordIfStuck", void, ICmpUnitMotion, SetAbortIfStu
 DEFINE_INTERFACE_METHOD_0("DiscardMove", void, ICmpUnitMotion, DiscardMove)
 DEFINE_INTERFACE_METHOD_0("CompleteMove", void, ICmpUnitMotion, CompleteMove)
 DEFINE_INTERFACE_METHOD_0("GetActualSpeed", fixed, ICmpUnitMotion, GetActualSpeed)
+DEFINE_INTERFACE_METHOD_0("GetTopSpeedRatio", fixed, ICmpUnitMotion, GetTopSpeedRatio)
 DEFINE_INTERFACE_METHOD_1("SetSpeed", void, ICmpUnitMotion, SetSpeed, fixed)
 DEFINE_INTERFACE_METHOD_0("IsActuallyMoving", bool, ICmpUnitMotion, IsActuallyMoving)
 DEFINE_INTERFACE_METHOD_0("IsTryingToMove", bool, ICmpUnitMotion, IsTryingToMove)
@@ -96,6 +97,11 @@ public:
 	virtual void SetSpeed(fixed speed)
 	{
 		m_Script.CallVoid("SetSpeed", speed);
+	}
+
+	virtual fixed GetTopSpeedRatio()
+	{
+		return m_Script.Call<fixed>("GetTopSpeedRatio");
 	}
 
 	virtual bool IsActuallyMoving()

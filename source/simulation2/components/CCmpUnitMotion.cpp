@@ -206,7 +206,7 @@ public:
 	std::vector<SOverlayLine> m_DebugOverlayShortPathLines;
 
 	// Template state, never changed after init.
-	fixed m_TemplateSpeed;
+	fixed m_TemplateSpeed, m_TopSpeedRatio;
 	pass_class_t m_PassClass;
 	std::string m_PassClassName;
 	entity_pos_t m_Clearance;
@@ -281,6 +281,10 @@ public:
 		m_TemplateSpeed = m_Speed = paramNode.GetChild("WalkSpeed").ToFixed();
 		m_ActualSpeed = fixed::Zero();
 		m_SpeedRatio = fixed::FromInt(1);
+
+		m_TopSpeedRatio = fixed::FromInt(1);
+		if (paramNode.GetChild("RunMultiplier").IsOk())
+			m_TopSpeedRatio = paramNode.GetChild("WalkSpeed").ToFixed();
 
 		CmpPtr<ICmpPathfinder> cmpPathfinder(GetSystemEntity());
 		if (cmpPathfinder)
@@ -436,6 +440,11 @@ public:
 	virtual fixed GetSpeedRatio()
 	{
 		return m_SpeedRatio;
+	}
+
+	virtual fixed GetTopSpeedRatio()
+	{
+		return m_TopSpeedRatio;
 	}
 
 	// don't call this all the time
