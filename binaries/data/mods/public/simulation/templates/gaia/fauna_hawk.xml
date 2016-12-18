@@ -6,11 +6,9 @@
     <Floating>false</Floating>
     <TurnRate>1.0</TurnRate>
   </Position>
-  <UnitAI>
-    <RoamDistance>1000.0</RoamDistance>
-  </UnitAI>
+  <UnitAI disable=""/>
   <UnitMotion disable=""/>
-  <UnitMotionFlying>
+  <!--<UnitMotionFlying>
     <MaxSpeed>15.0</MaxSpeed>
     <TakeoffSpeed>1.0</TakeoffSpeed>
     <LandingSpeed>5.0</LandingSpeed>
@@ -22,7 +20,7 @@
     <FlyingHeight>40.0</FlyingHeight>
     <ClimbRate>4.0</ClimbRate>
     <DiesInWater>false</DiesInWater>
-  </UnitMotionFlying>
+  </UnitMotionFlying>-->
   <VisualActor>
     <Actor>fauna/hawk.xml</Actor>
   </VisualActor>
