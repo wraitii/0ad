@@ -784,6 +784,7 @@ void CCmpUnitMotion::Move(fixed dt)
 
 	fixed timeLeft = dt;
 
+	// TODO: I think this may be a little buggy if we want to compute it several times per turn.
 	while (timeLeft > fixed::Zero())
 	{
 		// If we ran out of path, we have to stop
@@ -809,7 +810,7 @@ void CCmpUnitMotion::Move(fixed dt)
 
 		// TODO: try moving as much as we can still?
 		// TODO: get more information about what blocked us.
-		if (cmpPathfinder->CheckMovement(GetObstructionFilter(), pos.X, pos.Y, target.X, target.Y, m_Clearance, m_PassClass))
+		if (cmpPathfinder->CheckMovement(GetObstructionFilter(), pos.X, pos.Y, destination.X, destination.Y, m_Clearance, m_PassClass))
 		{
 			pos = destination;
 
