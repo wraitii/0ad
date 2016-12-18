@@ -610,30 +610,11 @@ void CCmpPathfinder::ComputeShortPath(const IObstructionTestFilter& filter,
 		// Check whether this is an axis-aligned square
 		bool aa = (u.X == fixed::FromInt(1) && u.Y == fixed::Zero() && v.X == fixed::Zero() && v.Y == fixed::FromInt(1));
 
+		bool add = true;
 		Vertex vert;
 		vert.status = Vertex::UNEXPLORED;
 		vert.quadInward = QUADRANT_NONE;
 		vert.quadOutward = QUADRANT_ALL;
-		vert.p.X = center.X - hd0.Dot(u); vert.p.Y = center.Y + hd0.Dot(v); if (aa) vert.quadInward = QUADRANT_BR; vertexes.push_back(vert);
-		if (vert.p.X < rangeXMin) rangeXMin = vert.p.X;
-		if (vert.p.Y < rangeZMin) rangeZMin = vert.p.Y;
-		if (vert.p.X > rangeXMax) rangeXMax = vert.p.X;
-		if (vert.p.Y > rangeZMax) rangeZMax = vert.p.Y;
-		vert.p.X = center.X - hd1.Dot(u); vert.p.Y = center.Y + hd1.Dot(v); if (aa) vert.quadInward = QUADRANT_TR; vertexes.push_back(vert);
-		if (vert.p.X < rangeXMin) rangeXMin = vert.p.X;
-		if (vert.p.Y < rangeZMin) rangeZMin = vert.p.Y;
-		if (vert.p.X > rangeXMax) rangeXMax = vert.p.X;
-		if (vert.p.Y > rangeZMax) rangeZMax = vert.p.Y;
-		vert.p.X = center.X + hd0.Dot(u); vert.p.Y = center.Y - hd0.Dot(v); if (aa) vert.quadInward = QUADRANT_TL; vertexes.push_back(vert);
-		if (vert.p.X < rangeXMin) rangeXMin = vert.p.X;
-		if (vert.p.Y < rangeZMin) rangeZMin = vert.p.Y;
-		if (vert.p.X > rangeXMax) rangeXMax = vert.p.X;
-		if (vert.p.Y > rangeZMax) rangeZMax = vert.p.Y;
-		vert.p.X = center.X + hd1.Dot(u); vert.p.Y = center.Y - hd1.Dot(v); if (aa) vert.quadInward = QUADRANT_BL; vertexes.push_back(vert);
-		if (vert.p.X < rangeXMin) rangeXMin = vert.p.X;
-		if (vert.p.Y < rangeZMin) rangeZMin = vert.p.Y;
-		if (vert.p.X > rangeXMax) rangeXMax = vert.p.X;
-		if (vert.p.Y > rangeZMax) rangeZMax = vert.p.Y;
 
 		// Add the edges:
 
@@ -654,8 +635,6 @@ void CCmpPathfinder::ComputeShortPath(const IObstructionTestFilter& filter,
 			edges.emplace_back(Edge{ ev3, ev0 });
 		}
 
-		// TODO: should clip out vertexes and edges that are outside the range,
-		// to reduce the search space
 	}
 
 	// Add terrain obstructions

@@ -1371,7 +1371,7 @@
 			<Actor seed="44678"/>
 		</Entity>
 		<Entity uid="199">
-			<Template>units/spart_infantry_javelinist_b</Template>
+			<Template>units/spart_support_female_citizen</Template>
 			<Player>2</Player>
 			<Position x="290.43445" z="23.92124"/>
 			<Orientation y="2.35621"/>

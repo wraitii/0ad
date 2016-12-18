@@ -5,6 +5,7 @@ var start = 0;
 
 var failedTests = 0;
 
+Trigger.prototype.setupTests = function()
 {
 	let cmpTimer = Engine.QueryInterface(SYSTEM_ENTITY, IID_Timer);
 	start = cmpTimer.GetTime();
@@ -20,7 +21,7 @@ var failedTests = 0;
 
 	cmpTechMgr = QueryPlayerIDInterface(2, IID_TechnologyManager);
 	cmpTechMgr.modifications = {};
-	cmpTechMgr.modifications['Attack/Ranged/MaxRange'] = [ {"affects":["Unit"], "replace":5.5} ];
+	cmpTechMgr.modifications['Attack/Ranged/MaxRange'] = [ {"affects":["Unit"], "replace":0} ];
 
 	let cmpFoundation = Engine.QueryInterface(391, IID_Foundation);
 	cmpFoundation.InitialiseConstruction(1, "structures/maur_house");
@@ -39,10 +40,10 @@ var failedTests = 0;
 		"186" : {"target":359, "expectfail" : true},	// inside forest - dense
 		"372" : {"target":359, "continuous":true, "expectfail" : true},	// inside forest - dense
 		"187" : {"target":360},	// inside forest - sparse
-		"50" : {"target":352, "underTime" : 40000},	// super long trip
+		"50" : {"target":352, "underTime" : 44000},	// super long trip
 		"46" : {"target":363},	// trip inside hills
-		"53" : {"target":362, "underTime" : 15000},	// labyrinth: with hole for small
-		"54" : {"target":362},	// labyrinth: with hole for small - this is the elephant
+		"53" : {"target":362, "underTime" : 20000},	// labyrinth: with hole for small
+		"54" : {"target":365},	// labyrinth: with hole for small - this is the elephant
 		"85" : {"target":362},	// labyrinth: with hole for small - this is the ram
 		"390" : {"target":391, "type" : "build"},	// build a house
 		"393" : {"target":392, "type" : "hunt"},	// hunt a chicken
@@ -75,7 +76,7 @@ var failedTests = 0;
 
 			// must be below C++ constant for "short pathfinder only"
 			let vector = new Vector2D(TgPos.x,TgPos.y);
-			vector = vector.sub(MyPos).normalize().mult(2);
+			vector = vector.sub(MyPos).normalize().mult(3.4); // 2 happened to put a waypoint inside a unit, which is unreachable.
 			
 			let position = new Vector2D(MyPos.x,MyPos.y);
 			while (position.distanceToSquared(TgPos) > 12)
@@ -94,6 +95,9 @@ var failedTests = 0;
 		"interval": 1 * 1000,
 	});
 }
+
+let cmpTrigger = Engine.QueryInterface(SYSTEM_ENTITY, IID_Trigger);
+cmpTrigger.DoAfterDelay(4000, "setupTests", {});
 
 function Success(test)
 {
@@ -175,7 +179,7 @@ Trigger.prototype.CheckUnits = function(data)
 		else if (tests[test].type === "hunt")
 			testHunt(test);
 	}
-	if (time > 60000)
+	if (time > 120000)
 		for (let test in tests)
 		{
 			let cmpTesterAI = Engine.QueryInterface(+test, IID_UnitAI);
