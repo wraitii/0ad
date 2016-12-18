@@ -47,14 +47,12 @@ public:
 	virtual bool MoveToPointRange(entity_pos_t x, entity_pos_t z, entity_pos_t minRange, entity_pos_t maxRange) = 0;
 
 	/**
-	 * Determine wether the givven point is within the given range, using the same measurement
-	 * as MoveToPointRange.
+	 * Wrapper around ObstructionManager::IsInPointRange with unit position
 	 */
 	virtual bool IsInPointRange(entity_pos_t x, entity_pos_t z, entity_pos_t minRange, entity_pos_t maxRange) = 0;
 
 	/**
-	 * Determine whether the target is within the given range, using the same measurement
-	 * as MoveToTargetRange.
+	 * Wrapper around ObstructionManager::IsInTargetRange with unit position
 	 */
 	virtual bool IsInTargetRange(entity_id_t target, entity_pos_t minRange, entity_pos_t maxRange) = 0;
 

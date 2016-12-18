@@ -619,30 +619,6 @@ private:
 	void Move(fixed dt);
 
 	/**
-	 * Decide whether to approximate the given range from a square target as a circle,
-	 * rather than as a square.
-	 */
-	bool ShouldTreatTargetAsCircle(entity_pos_t range, entity_pos_t circleRadius) const;
-
-	/**
-	 * Computes the current location of our target entity (plus offset).
-	 * Returns false if no target entity or no valid position.
-	 */
-	bool ComputeTargetPosition(CFixedVector2D& out);
-
-	/**
-	 * Attempts to replace the current path with a straight line to the goal,
-	 * if this goal is a point, is close enough and the route is not obstructed.
-	 */
-	bool TryGoingStraightToGoalPoint(const CFixedVector2D& from);
-
-	/**
-	 * Attempts to replace the current path with a straight line to the target
-	 * entity, if it's close enough and the route is not obstructed.
-	 */
-	bool TryGoingStraightToTargetEntity(const CFixedVector2D& from);
-
-	/**
 	 * Returns whether the target entity has moved more than minDelta since our
 	 * last path computations, and we're close enough to it to care.
 	 */
@@ -883,16 +859,22 @@ void CCmpUnitMotion::Move(fixed dt)
 	// if our next waypoint is close enough to our goal and our goal isn't a point, drop our path and recompute directly.
 	if (m_FinalGoal.IsNotAPoint() && !m_Path.m_Waypoints.empty())
 	{
-		CFixedVector2D nextWP(m_Path.m_Waypoints.back().x, m_Path.m_Waypoints.back().z);
-		bool inRange = false;
-		if (m_FinalGoal.TargetIsEntity())
-			inRange = IsInTargetRange(nextWP, m_FinalGoal.GetEntity(), m_FinalGoal.MinRange(), m_FinalGoal.MaxRange());
-		else
-			inRange = IsInPointRange(nextWP, m_FinalGoal.X(),m_FinalGoal.Z(), m_FinalGoal.MinRange(), m_FinalGoal.MaxRange());
-		if (inRange)
+
+		CmpPtr<ICmpObstructionManager> cmpObstructionManager(GetSystemEntity());
+		if (cmpObstructionManager)
 		{
-			m_Path.m_Waypoints.clear();
-			m_WaitingTurns = MAX_PATH_REATTEMPS; // short path
+			bool inRange = false;
+			if (m_FinalGoal.TargetIsEntity())
+				inRange = cmpObstructionManager->IsInTargetRange(m_Path.m_Waypoints.back().x, m_Path.m_Waypoints.back().z,
+																 m_FinalGoal.GetEntity(), m_FinalGoal.MinRange(), m_FinalGoal.MaxRange());
+			else
+				inRange = cmpObstructionManager->IsInPointRange(m_Path.m_Waypoints.back().x, m_Path.m_Waypoints.back().z,
+																m_FinalGoal.X(), m_FinalGoal.Z(), m_FinalGoal.MinRange(), m_FinalGoal.MaxRange());
+			if (inRange)
+			{
+				m_Path.m_Waypoints.clear();
+				m_WaitingTurns = MAX_PATH_REATTEMPS; // short path
+			}
 		}
 	}
 
@@ -1017,15 +999,10 @@ bool CCmpUnitMotion::CheckTargetMovement(const CFixedVector2D& from, entity_pos_
 // In particular maybe we should support some "margin" for error.
 bool CCmpUnitMotion::ShouldConsiderOurselvesAtDestination()
 {
-	CmpPtr<ICmpPosition> cmpPosition(GetEntityHandle());
-	if (!cmpPosition || !cmpPosition->IsInWorld())
-		return false;
-	CFixedVector2D pos = cmpPosition->GetPosition2D();
-
 	if (m_FinalGoal.TargetIsEntity())
-		return IsInTargetRange(pos, m_FinalGoal.GetEntity(), m_FinalGoal.MinRange(), m_FinalGoal.MaxRange());
+		return IsInTargetRange(m_FinalGoal.GetEntity(), m_FinalGoal.MinRange(), m_FinalGoal.MaxRange());
 	else
-		return IsInPointRange(pos, m_FinalGoal.X(),m_FinalGoal.Z(), m_FinalGoal.MinRange(), m_FinalGoal.MaxRange());
+		return IsInPointRange(m_FinalGoal.X(),m_FinalGoal.Z(), m_FinalGoal.MinRange(), m_FinalGoal.MaxRange());
 }
 
 bool CCmpUnitMotion::PathIsShort(const WaypointPath& path, const CFixedVector2D& from, entity_pos_t minDistance) const
@@ -1159,6 +1136,7 @@ bool CCmpUnitMotion::MoveToPointRange(entity_pos_t x, entity_pos_t z, entity_pos
 
 bool CCmpUnitMotion::MoveToPointRange(entity_pos_t x, entity_pos_t z, entity_pos_t minRange, entity_pos_t maxRange, entity_id_t target)
 {
+	// Must closely mirror CmpObstructionManager::IsInPointRange
 	PROFILE("MoveToPointRange");
 
 	DiscardMove();
@@ -1224,36 +1202,9 @@ bool CCmpUnitMotion::MoveToPointRange(entity_pos_t x, entity_pos_t z, entity_pos
 	return true;
 }
 
-bool CCmpUnitMotion::IsInPointRange(entity_pos_t x, entity_pos_t z, entity_pos_t minRange, entity_pos_t maxRange)
-{
-	CmpPtr<ICmpPosition> cmpPosition(GetEntityHandle());
-	if (!cmpPosition || !cmpPosition->IsInWorld())
-		return false;
-
-	CFixedVector2D pos = cmpPosition->GetPosition2D();
-
-	entity_pos_t distance = (pos - CFixedVector2D(x, z)).Length();
-
-	if (distance < minRange)
-		return false;
-	else if (maxRange >= entity_pos_t::Zero() && distance > maxRange)
-		return false;
-	else
-		return true;
-}
-
-bool CCmpUnitMotion::ShouldTreatTargetAsCircle(entity_pos_t range, entity_pos_t circleRadius) const
-{
-	// Given a square, plus a target range we should reach, the shape at that distance
-	// is a round-cornered square which we can approximate as either a circle or as a square.
-	// Previously, we used the shape that minimized the worst-case error.
-	// However that is unsage in some situations. So let's be less clever and
-	// just check if our range is at least three times bigger than the circleradius
-	return (range > circleRadius*3);
-}
-
 bool CCmpUnitMotion::MoveToTargetRange(entity_id_t target, entity_pos_t minRange, entity_pos_t maxRange)
 {
+	// Must closely mirror CmpObstructionManager::IsInTargetRange
 	PROFILE("MoveToTargetRange");
 
 	DiscardMove();
@@ -1334,7 +1285,7 @@ bool CCmpUnitMotion::MoveToTargetRange(entity_id_t target, entity_pos_t minRange
 
 		entity_pos_t goalDistance = minRange + Pathfinding::GOAL_DELTA;
 
-		if (ShouldTreatTargetAsCircle(minRange, circleRadius))
+		if (Geometry::ShouldTreatTargetAsCircle(minRange, circleRadius))
 		{
 			// The target is small relative to our range, so pretend it's a circle
 			goal.type = PathGoal::INVERTED_CIRCLE;
@@ -1362,7 +1313,7 @@ bool CCmpUnitMotion::MoveToTargetRange(entity_id_t target, entity_pos_t minRange
 		// Circumscribe the square
 		entity_pos_t circleRadius = halfSize.Length();
 
-		if (ShouldTreatTargetAsCircle(maxRange, circleRadius))
+		if (Geometry::ShouldTreatTargetAsCircle(maxRange, circleRadius))
 		{
 			// The target is small relative to our range, so pretend it's a circle
 
@@ -1411,74 +1362,34 @@ bool CCmpUnitMotion::MoveToTargetRange(entity_id_t target, entity_pos_t minRange
 	return true;
 }
 
-bool CCmpUnitMotion::IsInTargetRange(entity_id_t target, entity_pos_t minRange, entity_pos_t maxRange)
+bool CCmpUnitMotion::IsInPointRange(entity_pos_t x, entity_pos_t z, entity_pos_t minRange, entity_pos_t maxRange)
 {
-	// This function closely mirrors MoveToTargetRange - it needs to return true
-	// after that Move has completed
-
 	CmpPtr<ICmpPosition> cmpPosition(GetEntityHandle());
-	if (!cmpPosition || !cmpPosition->IsInWorld())
+	if (!cmpPosition)
 		return false;
-
-	CFixedVector2D pos = cmpPosition->GetPosition2D();
 
 	CmpPtr<ICmpObstructionManager> cmpObstructionManager(GetSystemEntity());
 	if (!cmpObstructionManager)
+		return true; // what's a sane default here?
+
+	CFixedVector2D pos = cmpPosition->GetPosition2D();
+
+	return cmpObstructionManager->IsInPointRange(pos.X, pos.Y, x, z, minRange, maxRange + m_Clearance);
+}
+
+bool CCmpUnitMotion::IsInTargetRange(entity_id_t target, entity_pos_t minRange, entity_pos_t maxRange)
+{
+	CmpPtr<ICmpPosition> cmpPosition(GetEntityHandle());
+	if (!cmpPosition)
 		return false;
 
-	bool hasObstruction = false;
-	ICmpObstructionManager::ObstructionSquare obstruction;
-	CmpPtr<ICmpObstruction> cmpObstruction(GetSimContext(), target);
-	if (cmpObstruction)
-		hasObstruction = cmpObstruction->GetObstructionSquare(obstruction);
+	CmpPtr<ICmpObstructionManager> cmpObstructionManager(GetSystemEntity());
+	if (!cmpObstructionManager)
+		return true; // what's a sane default here?
 
-	if (hasObstruction)
-	{
-		CFixedVector2D halfSize(obstruction.hw, obstruction.hh);
-		entity_pos_t distance = Geometry::DistanceToSquare(pos - CFixedVector2D(obstruction.x, obstruction.z), obstruction.u, obstruction.v, halfSize, true);
+	CFixedVector2D pos = cmpPosition->GetPosition2D();
 
-		// Compare with previous obstruction
-		ICmpObstructionManager::ObstructionSquare previousObstruction;
-		cmpObstruction->GetPreviousObstructionSquare(previousObstruction);
-		entity_pos_t previousDistance = Geometry::DistanceToSquare(pos - CFixedVector2D(previousObstruction.x, previousObstruction.z), obstruction.u, obstruction.v, halfSize, true);
-
-		// See if we're too close to the target square
-		bool inside = distance.IsZero() && !Geometry::DistanceToSquare(pos - CFixedVector2D(obstruction.x, obstruction.z), obstruction.u, obstruction.v, halfSize).IsZero();
-		if ((distance < minRange && previousDistance < minRange) || inside)
-			return false;
-
-		// See if we're close enough to the target square
-		if (maxRange < entity_pos_t::Zero() || distance <= maxRange || previousDistance <= maxRange)
-			return true;
-
-		entity_pos_t circleRadius = halfSize.Length();
-
-		if (ShouldTreatTargetAsCircle(maxRange, circleRadius))
-		{
-			// The target is small relative to our range, so pretend it's a circle
-			// and see if we're close enough to that.
-			// Also check circle around previous position.
-			entity_pos_t circleDistance = (pos - CFixedVector2D(obstruction.x, obstruction.z)).Length() - circleRadius;
-			entity_pos_t previousCircleDistance = (pos - CFixedVector2D(previousObstruction.x, previousObstruction.z)).Length() - circleRadius;
-
-			return circleDistance <= maxRange || previousCircleDistance <= maxRange;
-		}
-
-		// take minimal clearance required in MoveToTargetRange into account, multiplying by 3/2 for diagonals
-		entity_pos_t maxDist = std::max(maxRange, (m_Clearance + entity_pos_t::FromInt(TERRAIN_TILE_SIZE)/16)*3/2);
-		return distance <= maxDist || previousDistance <= maxDist;
-	}
-	else
-	{
-		CmpPtr<ICmpPosition> cmpTargetPosition(GetSimContext(), target);
-		if (!cmpTargetPosition || !cmpTargetPosition->IsInWorld())
-			return false;
-
-		CFixedVector2D targetPos = cmpTargetPosition->GetPreviousPosition2D();
-		entity_pos_t distance = (pos - targetPos).Length();
-
-		return minRange <= distance && (maxRange < entity_pos_t::Zero() || distance <= maxRange);
-	}
+	return cmpObstructionManager->IsInTargetRange(pos.X, pos.Y, target, minRange, maxRange + m_Clearance);
 }
 
 

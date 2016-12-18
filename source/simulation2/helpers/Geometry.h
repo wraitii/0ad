@@ -30,6 +30,21 @@
 namespace Geometry
 {
 
+/*
+ * Check if we should treat a square as a circle, given the radius
+ * of the resulting circle and a distance to it
+ * used by UnitMotion and ObstructionManager
+ */
+inline bool ShouldTreatTargetAsCircle(const fixed& range, const fixed& circleRadius)
+{
+	// Given a square, plus a target range we should reach, the shape at that distance
+	// is a round-cornered square which we can approximate as either a circle or as a square.
+	// Previously, we used the shape that minimized the worst-case error.
+	// However that is unsage in some situations. So let's be less clever and
+	// just check if our range is at least three times bigger than the circleradius
+	return (range > circleRadius*3);
+}
+
 /**
  * Checks if a point is inside the given rotated rectangle.
  * Points precisely on an edge are considered to be inside.

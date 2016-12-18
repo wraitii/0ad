@@ -159,6 +159,16 @@ public:
 	virtual void RemoveShape(tag_t tag) = 0;
 
 	/**
+	 * Check if the given point is in range of the other point given those parameters
+	 */
+	virtual bool IsInPointRange(entity_pos_t x, entity_pos_t z, entity_pos_t px, entity_pos_t pz, entity_pos_t minRange, entity_pos_t maxRange) = 0;
+
+	/**
+	 * Check if the given point is in range of the target given those parameters
+	 */
+	virtual bool IsInTargetRange(entity_pos_t x, entity_pos_t z, entity_id_t target, entity_pos_t minRange, entity_pos_t maxRange) = 0;
+
+	/**
 	 * Collision test a flat-ended thick line against the current set of shapes.
 	 * The line caps extend by @p r beyond the end points.
 	 * Only intersections going from outside to inside a shape are counted.
