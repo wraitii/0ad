@@ -4341,12 +4341,14 @@ UnitAI.prototype.StopMoving = function()
 UnitAI.prototype.MoveToPoint = function(x, z)
 {
 	var cmpUnitMotion = Engine.QueryInterface(this.entity, IID_UnitMotion);
+	cmpUnitMotion.SetAbortIfStuck(3);
 	return cmpUnitMotion.MoveToPointRange(x, z, 0, 0);
 };
 
 UnitAI.prototype.MoveToPointRange = function(x, z, rangeMin, rangeMax)
 {
 	var cmpUnitMotion = Engine.QueryInterface(this.entity, IID_UnitMotion);
+	cmpUnitMotion.SetAbortIfStuck(3);
 	return cmpUnitMotion.MoveToPointRange(x, z, rangeMin, rangeMax);
 };
 
@@ -4356,6 +4358,7 @@ UnitAI.prototype.MoveToTarget = function(target)
 		return false;
 
 	var cmpUnitMotion = Engine.QueryInterface(this.entity, IID_UnitMotion);
+	cmpUnitMotion.SetAbortIfStuck(5);
 	return cmpUnitMotion.MoveToTargetRange(target, 0, 0);
 };
 
@@ -4370,6 +4373,7 @@ UnitAI.prototype.MoveToTargetRange = function(target, iid, type)
 	var range = cmpRanged.GetRange(type);
 
 	var cmpUnitMotion = Engine.QueryInterface(this.entity, IID_UnitMotion);
+	cmpUnitMotion.SetAbortIfStuck(5);
 	return cmpUnitMotion.MoveToTargetRange(target, range.min, range.max);
 };
 
@@ -4426,6 +4430,7 @@ UnitAI.prototype.MoveToTargetAttackRange = function(target, type)
 	var guessedMaxRange = (range.max + parabolicMaxRange)/2;
 
 	var cmpUnitMotion = Engine.QueryInterface(this.entity, IID_UnitMotion);
+	cmpUnitMotion.SetAbortIfStuck(9);
 	if (cmpUnitMotion.MoveToTargetRange(target, range.min, guessedMaxRange))
 		return true;
 
@@ -4439,6 +4444,7 @@ UnitAI.prototype.MoveToTargetRangeExplicit = function(target, min, max)
 		return false;
 
 	var cmpUnitMotion = Engine.QueryInterface(this.entity, IID_UnitMotion);
+	cmpUnitMotion.SetAbortIfStuck(5);
 	return cmpUnitMotion.MoveToTargetRange(target, min, max);
 };
 
@@ -4453,6 +4459,7 @@ UnitAI.prototype.MoveToGarrisonRange = function(target)
 	var range = cmpGarrisonHolder.GetLoadingRange();
 
 	var cmpUnitMotion = Engine.QueryInterface(this.entity, IID_UnitMotion);
+	cmpUnitMotion.SetAbortIfStuck(5);
 	return cmpUnitMotion.MoveToTargetRange(target, range.min, range.max);
 };
 

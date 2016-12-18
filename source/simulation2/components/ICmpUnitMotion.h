@@ -76,10 +76,10 @@ public:
 	virtual void FaceTowardsPoint(entity_pos_t x, entity_pos_t z) = 0;
 
 	/**
-	 * Determine whether to abort or retry infinitely if pathing fails.
+	 * Determine whether to abort or retry X times if pathing fails.
 	 * Generally safer to let it abort and inform us.
 	 */
-	virtual void SetAbortIfStuck(bool shouldAbort) = 0;
+	virtual void SetAbortIfStuck(u8 shouldAbort) = 0;
 
 	/**
 	 * Stop moving immediately, don't send messages.

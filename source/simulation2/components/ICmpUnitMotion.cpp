@@ -28,7 +28,7 @@ DEFINE_INTERFACE_METHOD_4("IsInPointRange", bool, ICmpUnitMotion, IsInPointRange
 DEFINE_INTERFACE_METHOD_3("IsInTargetRange", bool, ICmpUnitMotion, IsInTargetRange, entity_id_t, entity_pos_t, entity_pos_t)
 DEFINE_INTERFACE_METHOD_3("MoveToTargetRange", bool, ICmpUnitMotion, MoveToTargetRange, entity_id_t, entity_pos_t, entity_pos_t)
 DEFINE_INTERFACE_METHOD_2("FaceTowardsPoint", void, ICmpUnitMotion, FaceTowardsPoint, entity_pos_t, entity_pos_t)
-DEFINE_INTERFACE_METHOD_1("SetAbordIfStuck", void, ICmpUnitMotion, SetAbortIfStuck, bool)
+DEFINE_INTERFACE_METHOD_1("SetAbortIfStuck", void, ICmpUnitMotion, SetAbortIfStuck, u8)
 DEFINE_INTERFACE_METHOD_0("DiscardMove", void, ICmpUnitMotion, DiscardMove)
 DEFINE_INTERFACE_METHOD_0("CompleteMove", void, ICmpUnitMotion, CompleteMove)
 DEFINE_INTERFACE_METHOD_0("GetActualSpeed", fixed, ICmpUnitMotion, GetActualSpeed)
@@ -84,7 +84,7 @@ public:
 		m_Script.CallVoid("CompleteMove");
 	}
 
-	virtual void SetAbortIfStuck(bool shouldAbort)
+	virtual void SetAbortIfStuck(u8 shouldAbort)
 	{
 		m_Script.CallVoid("SetAbortIfStuck", shouldAbort);
 	}

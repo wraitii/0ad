@@ -40,9 +40,9 @@ Trigger.prototype.setupTests = function()
 		"186" : {"target":359, "expectfail" : true},	// inside forest - dense
 		"372" : {"target":359, "continuous":true, "expectfail" : true},	// inside forest - dense
 		"187" : {"target":360},	// inside forest - sparse
-		"50" : {"target":352, "underTime" : 44000},	// super long trip
+		"50" : {"target":352},	// super long trip
 		"46" : {"target":363},	// trip inside hills
-		"53" : {"target":362, "underTime" : 20000},	// labyrinth: with hole for small
+		"53" : {"target":362},	// labyrinth: with hole for small
 		"54" : {"target":365},	// labyrinth: with hole for small - this is the elephant
 		"85" : {"target":362},	// labyrinth: with hole for small - this is the ram
 		"390" : {"target":391, "type" : "build"},	// build a house

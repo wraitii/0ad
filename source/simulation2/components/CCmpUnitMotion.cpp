@@ -218,8 +218,8 @@ public:
 	SMotionGoal m_FinalGoal;
 	
 	// MOTION PLANNING
-	// We will abort if we are stuck instead of forever retrying.
-	bool m_AbortIfStuck;
+	// We will abort if we are stuck instead after X tries.
+	u8 m_AbortIfStuck;
 	// turn towards our target at the end
 	bool m_FacePointAfterMove;
 	// actual unit speed, after technology and ratio
@@ -304,7 +304,7 @@ public:
 		m_WaitingTurns = 0;
 
 		m_DebugOverlayEnabled = false;
-		m_AbortIfStuck = true;
+		m_AbortIfStuck = 0;
 	}
 
 	virtual void Deinit()
@@ -503,7 +503,7 @@ public:
 
 	virtual void FaceTowardsPoint(entity_pos_t x, entity_pos_t z);
 
-	virtual void SetAbortIfStuck(bool shouldAbort)
+	virtual void SetAbortIfStuck(u8 shouldAbort)
 	{
 		m_AbortIfStuck = shouldAbort;
 	}
@@ -945,11 +945,13 @@ void CCmpUnitMotion::Move(fixed dt)
 	// m_waitingTurns == 1 here
 
 	// we tried getting a renewed path and still got stuck
-	if (m_AbortIfStuck)
+	if (m_AbortIfStuck == 0)
 	{
 		MoveFailed();
 		return;
 	}
+
+	--m_AbortIfStuck;
 
 	// Recompute a new path, but wait a dozen turns.
 	m_WaitingTurns = 12 + MAX_PATH_REATTEMPS;
