@@ -213,12 +213,11 @@ public:
 
 	// TARGET
 	// As long as we have a valid target, the unit is considered "on the move".
-	// It may not be actually moving for a variety of reasons (no path, blocked path)… but it will after.
-	// Cached "improved" version of our final goal.
+	// It may not be actually moving for a variety of reasons (no path, blocked path)… but it will shortly.
 	SMotionGoal m_FinalGoal;
 	
 	// MOTION PLANNING
-	// We will abort if we are stuck instead after X tries.
+	// We will abort if we are stuck after X tries.
 	u8 m_AbortIfStuck;
 	// turn towards our target at the end
 	bool m_FacePointAfterMove;
@@ -365,8 +364,6 @@ public:
 		{
 		case MT_Update_MotionUnit:
 		{
-			//		if (!m_FormationController)
-
 			fixed dt = static_cast<const CMessageUpdate_MotionUnit&> (msg).turnLength;
 			Move(dt);
 			break;
@@ -555,7 +552,6 @@ private:
 		return !m_Path.m_Waypoints.empty();
 	}
 
-	// TODO: warn visual actor
 	void StopMovingQuietly()
 	{
 		// sanity
@@ -577,7 +573,6 @@ private:
 			cmpVisualActor->SetMoving(true);
 	}
 
-	// TODO: warn visual actor
 	void MoveFailed()
 	{
 		StopMovingQuietly();
@@ -589,7 +584,6 @@ private:
 			cmpVisualActor->SetMoving(false);
 	}
 
-	// TODO: warn visual actor
 	void MovePaused()
 	{
 		m_StartedMoving = false;
@@ -601,7 +595,6 @@ private:
 			cmpVisualActor->SetMoving(false);
 	}
 
-	// TODO: warn visual actor
 	void MoveStarted()
 	{
 		m_StartedMoving = true;
@@ -654,11 +647,6 @@ private:
 	 * last path computations, and we're close enough to it to care.
 	 */
 	bool CheckTargetMovement(const CFixedVector2D& from, entity_pos_t minDelta);
-
-	/**
-	 * Update goal position if moving target
-	 */
-	//	void UpdateFinalGoal();
 
 	/**
 	 * Returns whether we are close enough to the target to assume it's a good enough
@@ -742,14 +730,10 @@ void CCmpUnitMotion::Move(fixed dt)
 {
 	PROFILE("Move");
 
-	/*
-	 TODO: figure this out again.
-	if (m_State == STATE_STOPPING)
-	{
-		m_State = STATE_IDLE;
-		MoveSucceeded();
-		return;
-	}
+	/**
+	 * TODO: the visual actor doesn't interpolate, it merely changes things on update
+	 * This means if a unit wants to change animation between turns (because it stops…)
+	 * It will look slightly glitchy for a very short while
 	 */
 
 	if (!IsTryingToMove())
@@ -895,7 +879,7 @@ void CCmpUnitMotion::Move(fixed dt)
 		// wait until we get our path to see where that leads us.
 		return;
 
-	// give us 2 turns to recover.
+	// give us some turns to recover.
 	// TODO: only do this if we ran into a moving unit and not something else, because something else won't move
 	if (m_WaitingTurns == 0)
 	{
@@ -958,31 +942,6 @@ void CCmpUnitMotion::Move(fixed dt)
 
 	return;
 }
-/*
-bool CCmpUnitMotion::ComputeTargetPosition(CFixedVector2D& out)
-{
-	if (!m_FinalGoal.TargetIsEntity())
-		return false;
-
-	CmpPtr<ICmpPosition> cmpPosition(GetSimContext(), m_TargetEntity);
-	if (!cmpPosition || !cmpPosition->IsInWorld())
-		return false;
-
-	if (m_TargetOffset.IsZero())
-	{
-		// No offset, just return the position directly
-		out = cmpPosition->GetPosition2D();
-	}
-	else
-	{
-		// There is an offset, so compute it relative to orientation
-		entity_angle_t angle = cmpPosition->GetRotation().Y;
-		CFixedVector2D offset = m_TargetOffset.Rotate(angle);
-		out = cmpPosition->GetPosition2D() + offset;
-	}
-	return true;
-}
-*/
 
 // TODO: this should care about target movement
 bool CCmpUnitMotion::CheckTargetMovement(const CFixedVector2D& from, entity_pos_t minDelta)
@@ -1034,6 +993,7 @@ bool CCmpUnitMotion::CheckTargetMovement(const CFixedVector2D& from, entity_pos_
 }
 
 // TODO: ought to be cleverer here.
+// In particular maybe we should support some "margin" for error.
 bool CCmpUnitMotion::ShouldConsiderOurselvesAtDestination()
 {
 	if (m_FinalGoal.TargetIsEntity())
@@ -1098,6 +1058,7 @@ ControlGroupMovementObstructionFilter CCmpUnitMotion::GetObstructionFilter(bool 
 
 // TODO: this should be improved, it's a little limited
 // EG use of hierarchical pathfinder,…
+// also it should probably make the goal passable directly, to avoid conflict with the paths returned.
 void CCmpUnitMotion::RequestNewPath()
 {
 	ENSURE(m_ExpectedPathTicket == 0);
@@ -1126,6 +1087,7 @@ void CCmpUnitMotion::RequestNewPath()
 	// TODO: If it's close on the opposite side of a river then we really
 	// need a long path, so we shouldn't simply check linear distance
 	// the check is arbitrary but should be a reasonably small distance.
+	// Maybe use PathIsShort?
 	if (m_FinalGoal.Goal().DistanceToPoint(position) < LONG_PATH_MIN_DIST)
 		RequestShortPath(position, m_FinalGoal.Goal(), true);
 	else

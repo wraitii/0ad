@@ -143,7 +143,7 @@ function testWalk(test)
 	let MyCmpPos = Engine.QueryInterface(+test, IID_Position);
 	let MyPos = new Vector2D(MyCmpPos.GetPosition2D().x,MyCmpPos.GetPosition2D().y);
 	
-	cmpTesterAI.Stop(); // turns out sometimes we go in idle mode in the middle of our path incorrectly.
+	cmpTesterAI.Stop();
 
 	if (MyPos.distanceTo(TgPos) > 8 || (tests[test].underTime && time > tests[test].underTime))
 		if (!tests[test].expectfail)
