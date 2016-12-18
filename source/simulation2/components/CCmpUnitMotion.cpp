@@ -183,9 +183,9 @@ private:
 			m_Goal.z = cmpPosition->GetPosition2D().Y;
 		}
 
-		bool IsAPoint() const
+		bool IsNotAPoint() const
 		{
-			return m_Goal.type == PathGoal::POINT && !TargetIsEntity();
+			return m_TargetMaxRange > fixed::Zero() || m_Goal.type != PathGoal::POINT;
 		}
 	};
 
@@ -880,6 +880,22 @@ void CCmpUnitMotion::Move(fixed dt)
 		// wait until we get our path to see where that leads us.
 		return;
 
+	// if our next waypoint is close enough to our goal and our goal isn't a point, drop our path and recompute directly.
+	if (m_FinalGoal.IsNotAPoint() && !m_Path.m_Waypoints.empty())
+	{
+		CFixedVector2D nextWP(m_Path.m_Waypoints.back().x, m_Path.m_Waypoints.back().z);
+		bool inRange = false;
+		if (m_FinalGoal.TargetIsEntity())
+			inRange = IsInTargetRange(nextWP, m_FinalGoal.GetEntity(), m_FinalGoal.MinRange(), m_FinalGoal.MaxRange());
+		else
+			inRange = IsInPointRange(nextWP, m_FinalGoal.X(),m_FinalGoal.Z(), m_FinalGoal.MinRange(), m_FinalGoal.MaxRange());
+		if (inRange)
+		{
+			m_Path.m_Waypoints.clear();
+			m_WaitingTurns = MAX_PATH_REATTEMPS; // short path
+		}
+	}
+
 	// give us some turns to recover.
 	// TODO: only do this if we ran into a moving unit and not something else, because something else won't move
 	// specifically: if we ran into a moving unit, we should wait a turn and see what happens
@@ -1001,10 +1017,15 @@ bool CCmpUnitMotion::CheckTargetMovement(const CFixedVector2D& from, entity_pos_
 // In particular maybe we should support some "margin" for error.
 bool CCmpUnitMotion::ShouldConsiderOurselvesAtDestination()
 {
+	CmpPtr<ICmpPosition> cmpPosition(GetEntityHandle());
+	if (!cmpPosition || !cmpPosition->IsInWorld())
+		return false;
+	CFixedVector2D pos = cmpPosition->GetPosition2D();
+
 	if (m_FinalGoal.TargetIsEntity())
-		return IsInTargetRange(m_FinalGoal.GetEntity(), m_FinalGoal.MinRange(), m_FinalGoal.MaxRange());
+		return IsInTargetRange(pos, m_FinalGoal.GetEntity(), m_FinalGoal.MinRange(), m_FinalGoal.MaxRange());
 	else
-		return IsInPointRange(m_FinalGoal.X(),m_FinalGoal.Z(), m_FinalGoal.MinRange(), m_FinalGoal.MaxRange());
+		return IsInPointRange(pos, m_FinalGoal.X(),m_FinalGoal.Z(), m_FinalGoal.MinRange(), m_FinalGoal.MaxRange());
 }
 
 bool CCmpUnitMotion::PathIsShort(const WaypointPath& path, const CFixedVector2D& from, entity_pos_t minDistance) const
@@ -1122,7 +1143,7 @@ void CCmpUnitMotion::RequestShortPath(const CFixedVector2D &from, const PathGoal
 		return;
 
 	// wrapping around on m_Tries isn't really a problem so don't check for overflow.
-	fixed searchRange = std::max(SHORT_PATH_MIN_SEARCH_RANGE * ++m_Tries, goal.DistanceToPoint(from));
+	fixed searchRange = std::max(SHORT_PATH_MIN_SEARCH_RANGE * (++m_Tries + 1), goal.DistanceToPoint(from));
 	if (goal.type != PathGoal::POINT && searchRange < goal.hw && searchRange < SHORT_PATH_MIN_SEARCH_RANGE * 2)
 		searchRange = std::min(goal.hw, SHORT_PATH_MIN_SEARCH_RANGE * 2);
 	if (searchRange > SHORT_PATH_MAX_SEARCH_RANGE)
