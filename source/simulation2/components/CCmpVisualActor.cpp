@@ -436,9 +436,9 @@ public:
 
 		// TODO: change this once we support walk/run-anims
 		std::string animName = name;
-		if (!m_MovingPrefix.empty() && m_AnimName != "idle")
+		/*if (!m_MovingPrefix.empty() && m_AnimName != "idle")
 			animName = m_MovingPrefix + "-" + m_AnimName;
-		else if (!m_MovingPrefix.empty())
+		else */if (!m_MovingPrefix.empty())
 			animName = m_MovingPrefix;
 
 		SetVariant("animation", animName);
