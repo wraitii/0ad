@@ -882,10 +882,14 @@ void CCmpUnitMotion::Move(fixed dt)
 
 	// give us some turns to recover.
 	// TODO: only do this if we ran into a moving unit and not something else, because something else won't move
+	// specifically: if we ran into a moving unit, we should wait a turn and see what happens
+	// if we ran into a static unit, recompute a short-path directly
+	// if we ran into a static obstruction, recompute long-path directly
+	// And then maybe we could add some finetuning based on target.
 	if (m_WaitingTurns == 0)
 	{
 		if (HasValidPath())
-			m_WaitingTurns = MAX_PATH_REATTEMPS + 1;
+			m_WaitingTurns = MAX_PATH_REATTEMPS;
 		else
 			m_WaitingTurns = 3;
 	}
@@ -938,8 +942,8 @@ void CCmpUnitMotion::Move(fixed dt)
 
 	--m_AbortIfStuck;
 
-	// Recompute a new path, but wait a dozen turns.
-	m_WaitingTurns = 12 + MAX_PATH_REATTEMPS;
+	// Recompute a new path, but wait a few turns first
+	m_WaitingTurns = 4 + MAX_PATH_REATTEMPS;
 
 	return;
 }
