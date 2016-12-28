@@ -32,8 +32,5 @@
   </Loot>
   <UnitMotion>
     <WalkSpeed>8.5</WalkSpeed>
-    <Run>
-      <Speed>15.0</Speed>
-    </Run>
   </UnitMotion>
 </Entity>

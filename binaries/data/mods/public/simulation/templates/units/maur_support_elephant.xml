@@ -66,9 +66,6 @@
   <UnitMotion>
     <PassabilityClass>large</PassabilityClass>
     <WalkSpeed>5.5</WalkSpeed>
-    <Run>
-      <Speed>10.0</Speed>
-    </Run>
   </UnitMotion>
   <Vision>
     <Range>50</Range>

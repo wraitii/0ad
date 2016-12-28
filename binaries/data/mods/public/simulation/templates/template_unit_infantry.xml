@@ -119,9 +119,6 @@
   </Sound>
   <UnitMotion>
     <WalkSpeed>9</WalkSpeed>
-    <Run>
-      <Speed>18.75</Speed>
-    </Run>
   </UnitMotion>
   <Vision>
     <Range>80</Range>

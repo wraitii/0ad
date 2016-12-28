@@ -69,9 +69,6 @@
   </StatusBars>
   <UnitMotion>
     <WalkSpeed>7</WalkSpeed>
-    <Run>
-      <Speed>10.0</Speed>
-    </Run>
   </UnitMotion>
   <Vision>
     <Range>120</Range>

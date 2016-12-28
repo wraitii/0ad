@@ -45,9 +45,6 @@
   <UnitMotion>
     <PassabilityClass>ship-small</PassabilityClass>
     <WalkSpeed>17.5</WalkSpeed>
-    <Run>
-      <Speed>22.0</Speed>
-    </Run>
   </UnitMotion>
   <Vision>
     <Range>60</Range>

@@ -34,10 +34,5 @@
   </Sound>
   <UnitMotion>
     <WalkSpeed>20.5</WalkSpeed>
-    <Run>
-      <Speed>28.0</Speed>
-      <Range>1000.0</Range>
-      <RangeMin>10.0</RangeMin>
-    </Run>
   </UnitMotion>
 </Entity>

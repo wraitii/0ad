@@ -50,11 +50,6 @@
   </StatusBars>
   <UnitMotion>
     <WalkSpeed>16.5</WalkSpeed>
-    <Run>
-      <Speed>26.0</Speed>
-      <Range>1000.0</Range>
-      <RangeMin>16.0</RangeMin>
-    </Run>
   </UnitMotion>
   <Vision>
     <Range>100</Range>

@@ -38,8 +38,5 @@
   </Sound>
   <UnitMotion>
     <WalkSpeed>8.0</WalkSpeed>
-    <Run>
-      <Speed>18.0</Speed>
-    </Run>
   </UnitMotion>
 </Entity>

@@ -32,8 +32,5 @@
   </Identity>
   <UnitMotion>
     <WalkSpeed>8.5</WalkSpeed>
-    <Run>
-      <Speed>17.5</Speed>
-    </Run>
   </UnitMotion>
 </Entity>

@@ -69,8 +69,5 @@
   </StatusBars>
   <UnitMotion>
     <WalkSpeed>14</WalkSpeed>
-    <Run>
-      <Speed>18.0</Speed>
-    </Run>
   </UnitMotion>
 </Entity>

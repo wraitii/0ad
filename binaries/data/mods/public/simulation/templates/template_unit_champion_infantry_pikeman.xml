@@ -42,10 +42,5 @@
   </Identity>
   <UnitMotion>
     <WalkSpeed>7.0</WalkSpeed>
-    <Run>
-      <Speed>13.0</Speed>
-      <Range>600.0</Range>
-      <RangeMin>5.0</RangeMin>
-    </Run>
   </UnitMotion>
 </Entity>
