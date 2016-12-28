@@ -271,14 +271,8 @@ public:
 				"<ref name='positiveDecimal'/>"
 			"</element>"
 			"<optional>"
-				"<element name='Run'>"
-					"<interleave>"
-						"<element name='Speed'><ref name='positiveDecimal'/></element>"
-						"<element name='Range'><ref name='positiveDecimal'/></element>"
-						"<element name='RangeMin'><ref name='nonNegativeDecimal'/></element>"
-						"<element name='RegenTime'><ref name='positiveDecimal'/></element>"
-						"<element name='DecayTime'><ref name='positiveDecimal'/></element>"
-					"</interleave>"
+				"<element name='RunMultiplier' a:help='How much faster the unit goes when running (as a multiple of walk speed)'>"
+					"<ref name='positiveDecimal'/>"
 				"</element>"
 			"</optional>"
 			"<element name='PassabilityClass' a:help='Identifies the terrain passability class (values are defined in special/pathfinder.xml)'>"
@@ -296,7 +290,7 @@ public:
 
 		m_TopSpeedRatio = fixed::FromInt(1);
 		if (paramNode.GetChild("RunMultiplier").IsOk())
-			m_TopSpeedRatio = paramNode.GetChild("WalkSpeed").ToFixed();
+			m_TopSpeedRatio = paramNode.GetChild("RunMultiplier").ToFixed();
 
 		CmpPtr<ICmpPathfinder> cmpPathfinder(GetSystemEntity());
 		if (cmpPathfinder)
