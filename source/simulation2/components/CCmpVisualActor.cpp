@@ -54,7 +54,6 @@ class CCmpVisualActor : public ICmpVisual
 public:
 	static void ClassInit(CComponentManager& componentManager)
 	{
-		componentManager.SubscribeToMessageType(MT_Update_Final);
 		componentManager.SubscribeToMessageType(MT_InterpolatedPositionChanged);
 		componentManager.SubscribeToMessageType(MT_OwnershipChanged);
 		componentManager.SubscribeToMessageType(MT_ValueModification);
@@ -82,7 +81,6 @@ private:
 
 	std::string m_MovingPrefix;
 	fixed m_MovingSpeed;
-	bool m_MovingNow, m_MovingLastTurn;
 
 	std::map<CStr, CStr> m_VariantSelections;
 
@@ -207,8 +205,6 @@ public:
 
 		InitModel(paramNode);
 
-		m_MovingLastTurn = m_MovingNow = false;
-
 		SelectAnimation("idle", false, fixed::FromInt(1), L"");
 	}
 
@@ -235,9 +231,6 @@ public:
 		serialize.NumberFixed_Unbounded("anim desync", m_AnimDesync);
 		serialize.NumberFixed_Unbounded("anim sync repeat time", m_AnimSyncRepeatTime);
 		serialize.NumberFixed_Unbounded("anim sync offset time", m_AnimSyncOffsetTime);
-
-		serialize.Bool("moving now", m_MovingNow);
-		serialize.Bool("moving last turn", m_MovingLastTurn);
 
 		SerializeMap<SerializeString, SerializeString>()(serialize, "variation", m_VariantSelections);
 
@@ -285,12 +278,6 @@ public:
 	{
 		switch (msg.GetType())
 		{
-		case MT_Update_Final:
-		{
-			const CMessageUpdate_Final& msgData = static_cast<const CMessageUpdate_Final&> (msg);
-			Update(msgData.turnLength);
-			break;
-		}
 		case MT_OwnershipChanged:
 		{
 			if (!m_Unit)
@@ -447,9 +434,23 @@ public:
 			m_Unit->GetAnimation()->SetAnimationState(animName, m_AnimOnce, m_MovingSpeed.Multiply(m_AnimSpeed).ToFloat(), m_AnimDesync.ToFloat(), m_SoundGroup.c_str());
 	}
 
-	virtual void SetMoving(bool moving)
+	virtual void SetMovingSpeed(fixed movingSpeed)
 	{
-		m_MovingNow = moving;
+		// TODO: don't copy strings for fun.
+		std::string prefix;
+		if (movingSpeed.IsZero())
+			prefix = "";
+		else
+		{
+			CmpPtr<ICmpUnitMotion> cmpUnitMotion(GetEntityHandle());
+			if (!cmpUnitMotion)
+				return;
+			prefix = cmpUnitMotion->GetSpeedRatio() <= fixed::FromInt(1) ? "walk" : "run";
+		}
+		m_MovingPrefix = prefix;
+		m_MovingSpeed = movingSpeed;
+
+		SelectAnimation(m_AnimName, m_AnimOnce, m_AnimSpeed, m_SoundGroup);
 	}
 
 	virtual void SetAnimationSyncRepeat(fixed repeattime)
@@ -530,8 +531,6 @@ private:
 	// ReloadUnitAnimation is used for a minimal reloading upon deserialization, when the actor and seed are identical.
 	// It is also used by ReloadActor.
 	void ReloadUnitAnimation();
-
-	void Update(fixed turnLength);
 };
 
 REGISTER_COMPONENT_TYPE(VisualActor)
@@ -737,44 +736,3 @@ void CCmpVisualActor::ReloadUnitAnimation()
 		m_Unit->GetAnimation()->SetAnimationSyncOffset(m_AnimSyncOffsetTime.ToFloat());
 }
 
-void CCmpVisualActor::Update(fixed UNUSED(turnLength))
-{
-	// This function is currently only used to update the animation if the speed in
-	// CCmpUnitMotion changes. This also only happens in the "special movement mode"
-	// triggered by SelectMovementAnimation.
-
-	// TODO: This should become event based, in order to save performance and to make the code
-	// far less hacky. We should also take into account the speed when the animation is different
-	// from the "special movement mode" walking animation.
-
-	//if (!m_MovingNow && !m_MovingLastTurn)
-	//	return;
-
-	CmpPtr<ICmpPosition> cmpPosition(GetEntityHandle());
-	if (!cmpPosition || !cmpPosition->IsInWorld())
-		return;
-
-	CmpPtr<ICmpUnitMotion> cmpUnitMotion(GetEntityHandle());
-	if (!cmpUnitMotion)
-		return;
-
-	// TODO: change this to make us run as fast but stop earlier instead of this hack.
-	// Probably should subscribe dynamically too.
-	fixed speed = cmpUnitMotion->GetActualSpeed();
-	std::string prefix;
-
-	if (!m_MovingNow || speed.IsZero())
-	{
-		speed = fixed::FromFloat(1.f);
-		prefix = "";
-	}
-	else
-		prefix = cmpUnitMotion->GetSpeedRatio() <= fixed::FromInt(1) ? "walk" : "run";
-
-	m_MovingPrefix = prefix;
-	m_MovingSpeed = speed;
-
-	SelectAnimation(m_AnimName, m_AnimOnce, m_AnimSpeed, m_SoundGroup);
-
-	m_MovingLastTurn = m_MovingNow;
-}

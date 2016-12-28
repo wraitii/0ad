@@ -31,7 +31,6 @@ DEFINE_INTERFACE_METHOD_2("FaceTowardsPoint", void, ICmpUnitMotion, FaceTowardsP
 DEFINE_INTERFACE_METHOD_1("SetAbortIfStuck", void, ICmpUnitMotion, SetAbortIfStuck, u8)
 DEFINE_INTERFACE_METHOD_0("DiscardMove", void, ICmpUnitMotion, DiscardMove)
 DEFINE_INTERFACE_METHOD_0("CompleteMove", void, ICmpUnitMotion, CompleteMove)
-DEFINE_INTERFACE_METHOD_0("GetActualSpeed", fixed, ICmpUnitMotion, GetActualSpeed)
 DEFINE_INTERFACE_METHOD_0("GetTopSpeedRatio", fixed, ICmpUnitMotion, GetTopSpeedRatio)
 DEFINE_INTERFACE_METHOD_1("SetSpeed", void, ICmpUnitMotion, SetSpeed, fixed)
 DEFINE_INTERFACE_METHOD_0("IsActuallyMoving", bool, ICmpUnitMotion, IsActuallyMoving)

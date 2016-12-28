@@ -240,7 +240,7 @@ public:
 	bool m_StartedMoving;
 
 	// Speed over the last turn
-	// cached for components that want it
+	// cached so we can tell the visual actor when it changes
 	fixed m_ActualSpeed;
 
 	static std::string GetSchema()
@@ -429,11 +429,6 @@ public:
 		return m_Speed;
 	}
 
-	virtual fixed GetActualSpeed()
-	{
-		return m_ActualSpeed;
-	}
-
 	virtual fixed GetSpeedRatio()
 	{
 		return m_SpeedRatio;
@@ -457,6 +452,18 @@ public:
 		}
 
 		m_Speed = m_SpeedRatio.Multiply(m_TemplateSpeed);
+	}
+
+	// convenience wrapper
+	void SetActualSpeed(fixed newRealSpeed)
+	{
+		if (m_ActualSpeed == newRealSpeed)
+			return;
+
+		m_ActualSpeed = newRealSpeed;
+		CmpPtr<ICmpVisual> cmpVisualActor(GetEntityHandle());
+		if (cmpVisualActor)
+			cmpVisualActor->SetMovingSpeed(m_ActualSpeed);
 	}
 
 	virtual pass_class_t GetPassabilityClass()
@@ -567,10 +574,6 @@ private:
 		CmpPtr<ICmpObstruction> cmpObstruction(GetEntityHandle());
 		if (cmpObstruction)
 			cmpObstruction->SetMovingFlag(false);
-
-		CmpPtr<ICmpVisual> cmpVisualActor(GetEntityHandle());
-		if (cmpVisualActor)
-			cmpVisualActor->SetMoving(true);
 	}
 
 	void MoveFailed()
@@ -579,9 +582,6 @@ private:
 
 		CMessageFinishedMove msg(true);
 		GetSimContext().GetComponentManager().PostMessage(GetEntityId(), msg);
-		CmpPtr<ICmpVisual> cmpVisualActor(GetEntityHandle());
-		if (cmpVisualActor)
-			cmpVisualActor->SetMoving(false);
 	}
 
 	void MovePaused()
@@ -590,9 +590,6 @@ private:
 
 		CMessagePausedMove msg;
 		GetSimContext().GetComponentManager().PostMessage(GetEntityId(), msg);
-		CmpPtr<ICmpVisual> cmpVisualActor(GetEntityHandle());
-		if (cmpVisualActor)
-			cmpVisualActor->SetMoving(false);
 	}
 
 	void MoveStarted()
@@ -601,9 +598,6 @@ private:
 
 		CMessageBeginMove msg;
 		GetSimContext().GetComponentManager().PostMessage(GetEntityId(), msg);
-		CmpPtr<ICmpVisual> cmpVisualActor(GetEntityHandle());
-		if (cmpVisualActor)
-			cmpVisualActor->SetMoving(true);
 	}
 
 	bool MoveToPointRange(entity_pos_t x, entity_pos_t z, entity_pos_t minRange, entity_pos_t maxRange, entity_id_t target);
@@ -714,7 +708,7 @@ void CCmpUnitMotion::Move(fixed dt)
 
 	if (!IsTryingToMove())
 	{
-		m_ActualSpeed = fixed::Zero();
+		SetActualSpeed(fixed::Zero());
 		return;
 	}
 
@@ -820,7 +814,7 @@ void CCmpUnitMotion::Move(fixed dt)
 		cmpPosition->MoveAndTurnTo(pos.X,pos.Y, angle);
 
 		// Calculate the mean speed over this past turn.
-		m_ActualSpeed = cmpPosition->GetDistanceTravelled() / dt;
+		SetActualSpeed(cmpPosition->GetDistanceTravelled() / dt);
 
 		// tell other components and visual actor we are moving.
 		if (!m_StartedMoving)
@@ -843,6 +837,9 @@ void CCmpUnitMotion::Move(fixed dt)
 			return;
 		}
 	}
+	else
+		SetActualSpeed(fixed::Zero());
+
 
 	// tell relevant components we have paused if necessary
 	if (m_StartedMoving)

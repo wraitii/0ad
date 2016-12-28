@@ -95,14 +95,6 @@ public:
 	virtual void CompleteMove() = 0;
 
 	/**
-	 * Get the movement speed from last turn to this turn
-	 * This is effectively historical data
-	 * And not a good indicator of whether we are actually moving,
-	 * Prefer IsActuallyMoving
-	 */
-	virtual fixed GetActualSpeed() = 0;
-
-	/**
 	 * Get how much faster/slower we are at than normal.
 	 */
 	virtual fixed GetSpeedRatio() = 0;

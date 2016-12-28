@@ -99,9 +99,10 @@ public:
 	virtual void SelectAnimation(const std::string& name, bool once, fixed speed, const std::wstring& soundgroup) = 0;
 
 	/**
-	 * if moving is true, start playing the walk/run animations, scaled to the unit's movement speed.
+	 * Tell the visual actor that the unit is currently moving at the given speed.
+	 * If speed is 0, the unit will become idle.
 	 */
-	virtual void SetMoving(bool moving) = 0;
+	virtual void SetMovingSpeed(fixed movingSpeed) = 0;
 
 	/**
 	 * Adjust the speed of the current animation, so it can match simulation events.
