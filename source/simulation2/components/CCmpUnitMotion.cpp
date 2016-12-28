@@ -155,6 +155,19 @@ private:
 			UpdateTargetPosition(context);
 		}
 
+		template<typename S>
+		void SerializeCommon(S& serialize)
+		{
+			serialize.Bool("valid", m_Valid);
+
+			serialize.NumberFixed_Unbounded("target min range", m_TargetMinRange);
+			serialize.NumberFixed_Unbounded("target max range", m_TargetMaxRange);
+
+			serialize.NumberU32_Unbounded("target entity", m_TargetEntity);
+
+			SerializeGoal()(serialize, "goal", m_Goal);
+		}
+
 		const PathGoal& Goal() const { return m_Goal; };
 
 		bool TargetIsEntity() const { return m_TargetEntity != INVALID_ENTITY; }
@@ -313,33 +326,24 @@ public:
 	template<typename S>
 	void SerializeCommon(S& serialize)
 	{
-		/*serialize.NumberU8("state", m_State, 0, STATE_MAX-1);
-		serialize.NumberU8("path state", m_PathState, 0, PATHSTATE_MAX-1);
-
-		serialize.StringASCII("pass class", m_PassClassName, 0, 64);
+		serialize.NumberU8("abort if stuck", m_AbortIfStuck, 0, 255);
+		serialize.Bool("face point after move", m_FacePointAfterMove);
+		serialize.NumberFixed_Unbounded("speed", m_Speed);
+		serialize.NumberFixed_Unbounded("speed ratio", m_SpeedRatio);
 
 		serialize.NumberU32_Unbounded("ticket", m_ExpectedPathTicket);
 
-		serialize.NumberU32_Unbounded("target entity", m_TargetEntity);
-		serialize.NumberFixed_Unbounded("target pos x", m_TargetPos.X);
-		serialize.NumberFixed_Unbounded("target pos y", m_TargetPos.Y);
-		serialize.NumberFixed_Unbounded("target offset x", m_TargetOffset.X);
-		serialize.NumberFixed_Unbounded("target offset y", m_TargetOffset.Y);
-		serialize.NumberFixed_Unbounded("target min range", m_TargetMinRange);
-		serialize.NumberFixed_Unbounded("target max range", m_TargetMaxRange);
-
-		serialize.NumberFixed_Unbounded("speed", m_Speed);
-		serialize.NumberFixed_Unbounded("current speed", m_ActualSpeed);
-
-		serialize.Bool("moving", m_Moving);
-		serialize.Bool("facePointAfterMove", m_FacePointAfterMove);
+		SerializeVector<SerializeWaypoint>()(serialize, "path", m_Path.m_Waypoints);
 
 		serialize.NumberU8("tries", m_Tries, 0, 255);
+		serialize.NumberU8("waiting turns", m_WaitingTurns, 0, 255);
 
-		SerializeVector<SerializeWaypoint>()(serialize, "long path", m_LongPath.m_Waypoints);
-		SerializeVector<SerializeWaypoint>()(serialize, "short path", m_ShortPath.m_Waypoints);
+		serialize.Bool("started moving", m_StartedMoving);
 
-		SerializeGoal()(serialize, "goal", m_FinalGoal);*/
+		// strictly speaking this doesn't need to be serialized since it's graphics-only, but it's nicer to.
+		serialize.NumberFixed_Unbounded("actual speed", m_ActualSpeed);
+
+		m_FinalGoal.SerializeCommon(serialize);
 	}
 
 	virtual void Serialize(ISerializer& serialize)
@@ -349,13 +353,13 @@ public:
 
 	virtual void Deserialize(const CParamNode& paramNode, IDeserializer& deserialize)
 	{
-		/*Init(paramNode);
+		Init(paramNode);
 
 		SerializeCommon(deserialize);
 
 		CmpPtr<ICmpPathfinder> cmpPathfinder(GetSystemEntity());
 		if (cmpPathfinder)
-			m_PassClass = cmpPathfinder->GetPassabilityClass(m_PassClassName);*/
+			m_PassClass = cmpPathfinder->GetPassabilityClass(m_PassClassName);
 	}
 
 	virtual void HandleMessage(const CMessage& msg, bool UNUSED(global))
@@ -388,8 +392,15 @@ public:
 				break;
 		}
 		// fall-through
-		case MT_OwnershipChanged:
 		case MT_Deserialized:
+		{
+			// tell the visual actor our speed.
+			// don't call setactualspeed since the if check will return immediately.
+			CmpPtr<ICmpVisual> cmpVisualActor(GetEntityHandle());
+			if (cmpVisualActor)
+				cmpVisualActor->SetMovingSpeed(m_ActualSpeed);
+		}
+		case MT_OwnershipChanged:
 		{
 			CmpPtr<ICmpValueModificationManager> cmpValueModificationManager(GetSystemEntity());
 			if (!cmpValueModificationManager)
