@@ -251,6 +251,11 @@ UnitMotionFlying.prototype.MoveToPointRange = function(x, z, minRange, maxRange)
 	this.targetMinRange = minRange;
 	this.targetMaxRange = maxRange;
 
+	// we'll tell the visual actor to set our animation here.
+	let cmpVisual = Engine.QueryInterface(this.entity, IID_Visual);
+	if (cmpVisual)
+		cmpVisual.SetMovingSpeed(this.speed);
+
 	return true;
 };
 
@@ -259,6 +264,11 @@ UnitMotionFlying.prototype.MoveToTargetRange = function(target, minRange, maxRan
 	var cmpTargetPosition = Engine.QueryInterface(target, IID_Position);
 	if (!cmpTargetPosition || !cmpTargetPosition.IsInWorld())
 		return false;
+
+	// we'll tell the visual actor to set our animation here.
+	let cmpVisual = Engine.QueryInterface(this.entity, IID_Visual);
+	if (cmpVisual)
+		cmpVisual.SetMovingSpeed(this.speed);
 
 	var targetPos = cmpTargetPosition.GetPosition2D();
 
@@ -325,7 +335,7 @@ UnitMotionFlying.prototype.SetFacePointAfterMove = function()
 	// Ignore this - angle is controlled by the target-seeking code instead
 };
 
-UnitMotionFlying.prototype.StopMoving = function()
+UnitMotionFlying.prototype.DiscardMove = function()
 {
 	//Invert
 	if (!this.waterDeath)
