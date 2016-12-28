@@ -31,4 +31,7 @@
   <UnitAI>
     <DefaultStance>passive</DefaultStance>
   </UnitAI>
+  <UnitMotion>
+    <RunMultiplier>2.0</RunMultiplier>
+  </UnitMotion>
 </Entity>

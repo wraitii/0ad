@@ -50,6 +50,7 @@
   </StatusBars>
   <UnitMotion>
     <WalkSpeed>16.5</WalkSpeed>
+    <RunMultiplier>2.5</RunMultiplier>
   </UnitMotion>
   <Vision>
     <Range>100</Range>

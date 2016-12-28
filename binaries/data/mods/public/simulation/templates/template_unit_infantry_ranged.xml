@@ -34,4 +34,7 @@
       <attack>attack/weapon/arrowfly.xml</attack>
     </SoundGroups>
   </Sound>
+  <UnitMotion>
+    <RunMultiplier>2.0</RunMultiplier>
+  </UnitMotion>
 </Entity>

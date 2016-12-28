@@ -38,4 +38,7 @@
       <death>actor/human/death/{gender}_death.xml</death>
     </SoundGroups>
   </Sound>
+  <UnitMotion>
+    <RunMultiplier>1.6</RunMultiplier>
+  </UnitMotion>
 </Entity>
