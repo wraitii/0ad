@@ -1399,7 +1399,6 @@ UnitAI.prototype.UnitFsmSpec = {
 					cmpVisual.ReplaceMoveAnimation("run", cmpFormation.GetFormationAnimation(this.entity, "run"));
 				}
 				*/
-				this.SelectAnimation("move");
 			},
 
 			// Occurs when the unit has reached its destination and the controller
@@ -1427,7 +1426,6 @@ UnitAI.prototype.UnitFsmSpec = {
 				var cmpFormation = Engine.QueryInterface(this.formationController, IID_Formation);
 				if (cmpFormation)
 					cmpFormation.UnsetInPosition(this.entity);
-				this.SelectAnimation("move");
 			},
 
 			"MoveCompleted": function() {
@@ -1588,7 +1586,6 @@ UnitAI.prototype.UnitFsmSpec = {
 			},
 
 			"MoveStarted": function() {
-				this.SelectAnimation("move");
 			},
 
 			"MoveCompleted": function() {
@@ -1606,7 +1603,6 @@ UnitAI.prototype.UnitFsmSpec = {
 
 		"WALKING": {
 			"enter": function () {
-				this.SelectAnimation("move");
 			},
 
 			"MoveCompleted": function() {
@@ -1620,7 +1616,6 @@ UnitAI.prototype.UnitFsmSpec = {
 				this.SetGathererAnimationOverride(true);
 
 				this.StartTimer(0, 1000);
-				this.SelectAnimation("move");
 			},
 
 			"Timer": function(msg) {
@@ -1652,7 +1647,6 @@ UnitAI.prototype.UnitFsmSpec = {
 				}
 
 				this.StartTimer(0, 1000);
-				this.SelectAnimation("move");
 			},
 
 			"leave": function() {
@@ -1685,7 +1679,6 @@ UnitAI.prototype.UnitFsmSpec = {
 					this.SetGathererAnimationOverride(true);
 
 					this.StartTimer(0, 1000);
-					this.SelectAnimation("move");
 					this.SetHeldPositionOnEntity(this.isGuardOf);
 					return false;
 				},
@@ -1811,7 +1804,6 @@ UnitAI.prototype.UnitFsmSpec = {
 					// Show weapons rather than carried resources.
 					this.SetGathererAnimationOverride(true);
 
-					this.SelectAnimation("move");
 					this.StartTimer(1000, 1000);
 				},
 
@@ -2096,7 +2088,6 @@ UnitAI.prototype.UnitFsmSpec = {
 					// Show weapons rather than carried resources.
 					this.SetGathererAnimationOverride(true);
 
-					this.SelectAnimation("move");
 					var cmpUnitAI = Engine.QueryInterface(this.order.data.target, IID_UnitAI);
 					// Run after a fleeing target
 					if (cmpUnitAI && cmpUnitAI.IsFleeing())
@@ -2143,7 +2134,6 @@ UnitAI.prototype.UnitFsmSpec = {
 		"GATHER": {
 			"APPROACHING": {
 				"enter": function() {
-					this.SelectAnimation("move");
 
 					this.gatheringTarget = this.order.data.target;	// temporary, deleted in "leave".
 
@@ -2267,7 +2257,6 @@ UnitAI.prototype.UnitFsmSpec = {
 			// Walking to a good place to gather resources near, used by GatherNearPosition
 			"WALKING": {
 				"enter": function() {
-					this.SelectAnimation("move");
 				},
 
 				"MoveCompleted": function(msg) {
@@ -2529,7 +2518,6 @@ UnitAI.prototype.UnitFsmSpec = {
 
 			"APPROACHING": {
 				"enter": function () {
-					this.SelectAnimation("move");
 					this.StartTimer(1000, 1000);
 				},
 
@@ -2630,7 +2618,6 @@ UnitAI.prototype.UnitFsmSpec = {
 			},
 			"CHASING": {
 				"enter": function () {
-					this.SelectAnimation("move");
 					this.StartTimer(1000, 1000);
 				},
 
@@ -2658,7 +2645,6 @@ UnitAI.prototype.UnitFsmSpec = {
 		"RETURNRESOURCE": {
 			"APPROACHING": {
 				"enter": function () {
-					this.SelectAnimation("move");
 				},
 
 				"MoveCompleted": function() {
@@ -2716,7 +2702,6 @@ UnitAI.prototype.UnitFsmSpec = {
 
 			"APPROACHINGMARKET": {
 				"enter": function () {
-					this.SelectAnimation("move");
 				},
 
 				"MoveCompleted": function() {
@@ -2744,7 +2729,6 @@ UnitAI.prototype.UnitFsmSpec = {
 		"REPAIR": {
 			"APPROACHING": {
 				"enter": function () {
-					this.SelectAnimation("move");
 				},
 
 				"MoveCompleted": function() {
@@ -2941,7 +2925,6 @@ UnitAI.prototype.UnitFsmSpec = {
 
 			"APPROACHING": {
 				"enter": function() {
-					this.SelectAnimation("move");
 				},
 
 				"MoveCompleted": function() {
@@ -3144,7 +3127,6 @@ UnitAI.prototype.UnitFsmSpec = {
 		"PICKUP": {
 			"APPROACHING": {
 				"enter": function() {
-					this.SelectAnimation("move");
 				},
 
 				"MoveCompleted": function() {
