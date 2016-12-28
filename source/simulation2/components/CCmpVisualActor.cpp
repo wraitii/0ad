@@ -448,7 +448,7 @@ public:
 			prefix = cmpUnitMotion->GetSpeedRatio() <= fixed::FromInt(1) ? "walk" : "run";
 		}
 		m_MovingPrefix = prefix;
-		m_MovingSpeed = movingSpeed;
+		m_MovingSpeed = movingSpeed.IsZero() ? fixed::FromInt(1) : movingSpeed;
 
 		SelectAnimation(m_AnimName, m_AnimOnce, m_AnimSpeed, m_SoundGroup);
 	}
