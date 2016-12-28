@@ -448,7 +448,7 @@ public:
 	// it's voluntarily too slow, because you shouldn't be doing this.
 	virtual void SetSpeed(fixed ratio)
 	{
-		m_SpeedRatio = ratio;
+		m_SpeedRatio = std::max(ratio, GetTopSpeedRatio());
 		CmpPtr<ICmpValueModificationManager> cmpValueModificationManager(GetSystemEntity());
 		if (cmpValueModificationManager)
 		{
