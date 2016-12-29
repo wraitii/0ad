@@ -705,12 +705,6 @@ void CCmpUnitMotion::Move(fixed dt)
 {
 	PROFILE("Move");
 
-	/**
-	 * TODO: the visual actor doesn't interpolate, it merely changes things on update
-	 * This means if a unit wants to change animation between turns (because it stops…)
-	 * It will look slightly glitchy for a very short while
-	 */
-
 	if (!IsTryingToMove())
 	{
 		SetActualSpeed(fixed::Zero());
@@ -819,6 +813,8 @@ void CCmpUnitMotion::Move(fixed dt)
 		cmpPosition->MoveAndTurnTo(pos.X,pos.Y, angle);
 
 		// Calculate the mean speed over this past turn.
+		// TODO: this is often just a little different from our actual top speed
+		// so we end up changing the actual speed quite often, which is a little silly.
 		SetActualSpeed(cmpPosition->GetDistanceTravelled() / dt);
 
 		// tell other components and visual actor we are moving.
@@ -1093,6 +1089,8 @@ void CCmpUnitMotion::RequestNewPath()
 	// need a long path, so we shouldn't simply check linear distance
 	// the check is arbitrary but should be a reasonably small distance.
 	// Maybe use PathIsShort?
+
+	// TODO: note by wraitii: figure out if the above comment is still true. It seems false.
 	if (m_FinalGoal.Goal().DistanceToPoint(position) < LONG_PATH_MIN_DIST)
 		RequestShortPath(position, m_FinalGoal.Goal(), true);
 	else
