@@ -568,6 +568,8 @@ private:
 		m_WaitingTurns = 0;
 		m_StartedMoving = false;
 
+		SetActualSpeed(fixed::Zero());
+
 		// reset state.
 		m_ExpectedPathTicket = 0;
 		m_FinalGoal.Clear();
@@ -723,7 +725,9 @@ void CCmpUnitMotion::Move(fixed dt)
 
 	CFixedVector2D initialPos = cmpPosition->GetPosition2D();
 
-	// Preliminary check: our target may be an entity and may have moved before us
+	// Check wether we are at our destination.
+	// This must be done only at the beginning of a turn, if we do at the end of a turn (after a unit position has changed)
+	// the unit's position will interpolate but the unit will already be doing the next thing, so it looks like it's gliding.
 	if (ShouldConsiderOurselvesAtDestination())
 	{
 		CompleteMove();
@@ -817,15 +821,6 @@ void CCmpUnitMotion::Move(fixed dt)
 		// tell other components and visual actor we are moving.
 		if (!m_StartedMoving)
 			MoveStarted();
-
-		// Check if we are at our destination
-		// since we're already checking in the general case at the beginning of this function,
-		// no need to do this outside this if block.
-		if (ShouldConsiderOurselvesAtDestination())
-		{
-			CompleteMove();
-			return;
-		}
 
 		if (!wasObstructed)
 		{
