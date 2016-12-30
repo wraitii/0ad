@@ -36,7 +36,7 @@ DEFINE_INTERFACE_METHOD_1("SetSpeed", void, ICmpUnitMotion, SetSpeed, fixed)
 DEFINE_INTERFACE_METHOD_0("IsActuallyMoving", bool, ICmpUnitMotion, IsActuallyMoving)
 DEFINE_INTERFACE_METHOD_0("IsTryingToMove", bool, ICmpUnitMotion, IsTryingToMove)
 DEFINE_INTERFACE_METHOD_0("GetSpeed", fixed, ICmpUnitMotion, GetSpeed)
-DEFINE_INTERFACE_METHOD_0("GetTemplateSpeed", fixed, ICmpUnitMotion, GetTemplateSpeed)
+DEFINE_INTERFACE_METHOD_0("GetBaseSpeed", fixed, ICmpUnitMotion, GetBaseSpeed)
 DEFINE_INTERFACE_METHOD_0("GetPassabilityClassName", std::string, ICmpUnitMotion, GetPassabilityClassName)
 DEFINE_INTERFACE_METHOD_0("GetUnitClearance", entity_pos_t, ICmpUnitMotion, GetUnitClearance)
 DEFINE_INTERFACE_METHOD_1("SetFacePointAfterMove", void, ICmpUnitMotion, SetFacePointAfterMove, bool)
@@ -118,9 +118,9 @@ public:
 		return m_Script.Call<fixed>("GetSpeed");
 	}
 
-	virtual fixed GetTemplateSpeed()
+	virtual fixed GetBaseSpeed()
 	{
-		return m_Script.Call<fixed>("GetTemplateSpeed");
+		return m_Script.Call<fixed>("GetBaseSpeed");
 	}
 
 	virtual void SetFacePointAfterMove(bool facePointAfterMove)

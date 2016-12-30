@@ -219,10 +219,13 @@ public:
 	std::vector<SOverlayLine> m_DebugOverlayShortPathLines;
 
 	// Template state, never changed after init.
-	fixed m_TemplateSpeed, m_TopSpeedRatio;
+	fixed m_TemplateWalkSpeed, m_TemplateTopSpeedRatio;
 	pass_class_t m_PassClass;
 	std::string m_PassClassName;
 	entity_pos_t m_Clearance;
+
+	// cached for efficiency
+	fixed m_TechModifiedWalkSpeed, m_TechModifiedTopSpeedRatio;
 
 	// TARGET
 	// As long as we have a valid target, the unit is considered "on the move".
@@ -284,13 +287,13 @@ public:
 	{
 		m_FacePointAfterMove = true;
 
-		m_TemplateSpeed = m_Speed = paramNode.GetChild("WalkSpeed").ToFixed();
+		m_TechModifiedWalkSpeed = m_TemplateWalkSpeed = m_Speed = paramNode.GetChild("WalkSpeed").ToFixed();
 		m_ActualSpeed = fixed::Zero();
 		m_SpeedRatio = fixed::FromInt(1);
 
-		m_TopSpeedRatio = fixed::FromInt(1);
+		m_TechModifiedTopSpeedRatio = m_TemplateTopSpeedRatio = fixed::FromInt(1);
 		if (paramNode.GetChild("RunMultiplier").IsOk())
-			m_TopSpeedRatio = paramNode.GetChild("RunMultiplier").ToFixed();
+			m_TechModifiedTopSpeedRatio = m_TemplateTopSpeedRatio = paramNode.GetChild("RunMultiplier").ToFixed();
 
 		CmpPtr<ICmpPathfinder> cmpPathfinder(GetSystemEntity());
 		if (cmpPathfinder)
@@ -400,7 +403,10 @@ public:
 			if (!cmpValueModificationManager)
 				break;
 
-			m_Speed = m_SpeedRatio.Multiply(cmpValueModificationManager->ApplyModifications(L"UnitMotion/WalkSpeed", m_TemplateSpeed, GetEntityId()));
+			m_TechModifiedWalkSpeed = cmpValueModificationManager->ApplyModifications(L"UnitMotion/WalkSpeed", m_TemplateWalkSpeed, GetEntityId());
+			m_TechModifiedTopSpeedRatio = cmpValueModificationManager->ApplyModifications(L"UnitMotion/RunMultiplier", m_TemplateTopSpeedRatio, GetEntityId());
+
+			m_Speed = m_SpeedRatio.Multiply(GetBaseSpeed());
 
 			break;
 		}
@@ -424,9 +430,9 @@ public:
 		return m_FinalGoal.Valid() && m_Speed > fixed::Zero();
 	}
 
-	virtual fixed GetTemplateSpeed()
+	virtual fixed GetBaseSpeed()
 	{
-		return m_TemplateSpeed;
+		return m_TechModifiedWalkSpeed;
 	}
 
 	virtual fixed GetSpeed()
@@ -441,22 +447,13 @@ public:
 
 	virtual fixed GetTopSpeedRatio()
 	{
-		return m_TopSpeedRatio;
+		return m_TechModifiedTopSpeedRatio;
 	}
 
-	// don't call this all the time
-	// it's voluntarily too slow, because you shouldn't be doing this.
 	virtual void SetSpeed(fixed ratio)
 	{
-		m_SpeedRatio = std::max(ratio, GetTopSpeedRatio());
-		CmpPtr<ICmpValueModificationManager> cmpValueModificationManager(GetSystemEntity());
-		if (cmpValueModificationManager)
-		{
-			m_Speed = m_SpeedRatio.Multiply(cmpValueModificationManager->ApplyModifications(L"UnitMotion/WalkSpeed", m_TemplateSpeed, GetEntityId()));
-			return;
-		}
-
-		m_Speed = m_SpeedRatio.Multiply(m_TemplateSpeed);
+		m_SpeedRatio = std::min(ratio, GetTopSpeedRatio());
+		m_Speed = m_SpeedRatio.Multiply(GetBaseSpeed());
 	}
 
 	// convenience wrapper

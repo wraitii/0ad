@@ -129,10 +129,10 @@ public:
 	virtual fixed GetSpeed() = 0;
 
 	/**
-	 * Get the unit template speed in metres per second.
+	 * Get the unit base/walk speed in metres per second.
 	 * This is NOT affected by SetSpeed.
 	 */
-	virtual fixed GetTemplateSpeed() = 0;
+	virtual fixed GetBaseSpeed() = 0;
 
 	/**
 	 * Set whether the unit will turn to face the target point after finishing moving.
