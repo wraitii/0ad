@@ -189,6 +189,7 @@ public:
 	{
 		m_Unit = NULL;
 		m_R = m_G = m_B = fixed::FromInt(1);
+		m_MovingSpeed = fixed::FromInt(1);
 
 		m_ConstructionPreview = paramNode.GetChild("ConstructionPreview").IsOk();
 
