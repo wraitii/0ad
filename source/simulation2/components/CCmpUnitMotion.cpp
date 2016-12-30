@@ -1374,7 +1374,7 @@ bool CCmpUnitMotion::IsInPointRange(entity_pos_t x, entity_pos_t z, entity_pos_t
 
 	CFixedVector2D pos = cmpPosition->GetPosition2D();
 
-	return cmpObstructionManager->IsInPointRange(pos.X, pos.Y, x, z, minRange, maxRange + m_Clearance);
+	return cmpObstructionManager->IsInPointRange(pos.X, pos.Y, x, z, minRange, maxRange + m_Clearance.Multiply(fixed::FromInt(3)/2));
 }
 
 bool CCmpUnitMotion::IsInTargetRange(entity_id_t target, entity_pos_t minRange, entity_pos_t maxRange)
@@ -1389,7 +1389,7 @@ bool CCmpUnitMotion::IsInTargetRange(entity_id_t target, entity_pos_t minRange, 
 
 	CFixedVector2D pos = cmpPosition->GetPosition2D();
 
-	return cmpObstructionManager->IsInTargetRange(pos.X, pos.Y, target, minRange, maxRange + m_Clearance);
+	return cmpObstructionManager->IsInTargetRange(pos.X, pos.Y, target, minRange, maxRange + m_Clearance.Multiply(fixed::FromInt(3)/2));
 }
 
 
