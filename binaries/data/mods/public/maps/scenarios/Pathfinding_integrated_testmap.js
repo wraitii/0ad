@@ -10,9 +10,6 @@ Trigger.prototype.setupTests = function()
 	let cmpTimer = Engine.QueryInterface(SYSTEM_ENTITY, IID_Timer);
 	start = cmpTimer.GetTime();
 
-	// set up all units
-	let units = Engine.GetEntitiesWithInterface(IID_UnitAI);
-
 	let cmpTechMgr = QueryPlayerIDInterface(1, IID_TechnologyManager);
 
 	//XXXtreme hack: create a fake technology to drastically limit the range of everybody in place.
@@ -85,6 +82,14 @@ Trigger.prototype.setupTests = function()
 				cmpTesterAI.Walk(position.x, position.y, true);
 			}
 		}
+	}
+
+	// set up traders, they're not tested but their behavior should be looked at.
+	let traders = Engine.GetEntitiesWithInterface(IID_Trader);
+	for (let tID of traders)
+	{
+		let cmpTraderAI = Engine.QueryInterface(+tID, IID_UnitAI);
+		cmpTraderAI.SetupTradeRoute(401, 402, undefined, false);
 	}
 
 	let cmpTrigger = Engine.QueryInterface(SYSTEM_ENTITY, IID_Trigger);

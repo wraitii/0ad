@@ -33,7 +33,7 @@
 		</Postproc>
 	</Environment>
 	<Camera>
-		<Position x="184.825" y="247.272" z="237.34"/>
+		<Position x="318.107" y="322.521" z="82.4104"/>
 		<Rotation angle="0"/>
 		<Declination angle="0.610865"/>
 	</Camera>
@@ -2767,6 +2767,153 @@
 			<Position x="156.80604" z="360.47648"/>
 			<Orientation y="2.35621"/>
 			<Actor seed="8778"/>
+		</Entity>
+		<Entity uid="401">
+			<Template>structures/maur_market</Template>
+			<Player>1</Player>
+			<Position x="247.78837" z="465.83191"/>
+			<Orientation y="2.35621"/>
+			<Actor seed="56973"/>
+		</Entity>
+		<Entity uid="402">
+			<Template>structures/maur_market</Template>
+			<Player>1</Player>
+			<Position x="343.0363" z="266.44574"/>
+			<Orientation y="2.35621"/>
+			<Actor seed="10021"/>
+		</Entity>
+		<Entity uid="403">
+			<Template>units/maur_support_trader</Template>
+			<Player>1</Player>
+			<Position x="298.7859" z="308.2422"/>
+			<Orientation y="2.35621"/>
+			<Actor seed="49433"/>
+		</Entity>
+		<Entity uid="404">
+			<Template>units/maur_support_trader</Template>
+			<Player>1</Player>
+			<Position x="309.3412" z="317.75733"/>
+			<Orientation y="2.35621"/>
+			<Actor seed="64150"/>
+		</Entity>
+		<Entity uid="405">
+			<Template>units/maur_support_trader</Template>
+			<Player>1</Player>
+			<Position x="317.88569" z="329.58295"/>
+			<Orientation y="2.35621"/>
+			<Actor seed="43442"/>
+		</Entity>
+		<Entity uid="406">
+			<Template>units/maur_support_trader</Template>
+			<Player>1</Player>
+			<Position x="324.30011" z="342.27"/>
+			<Orientation y="2.35621"/>
+			<Actor seed="9142"/>
+		</Entity>
+		<Entity uid="407">
+			<Template>units/maur_support_trader</Template>
+			<Player>1</Player>
+			<Position x="311.73139" z="352.90595"/>
+			<Orientation y="2.35621"/>
+			<Actor seed="58990"/>
+		</Entity>
+		<Entity uid="408">
+			<Template>units/maur_support_trader</Template>
+			<Player>1</Player>
+			<Position x="305.42536" z="344.1583"/>
+			<Orientation y="2.35621"/>
+			<Actor seed="26360"/>
+		</Entity>
+		<Entity uid="409">
+			<Template>units/maur_support_trader</Template>
+			<Player>1</Player>
+			<Position x="292.84614" z="326.97944"/>
+			<Orientation y="2.35621"/>
+			<Actor seed="25688"/>
+		</Entity>
+		<Entity uid="410">
+			<Template>units/maur_support_trader</Template>
+			<Player>1</Player>
+			<Position x="287.36478" z="324.41456"/>
+			<Orientation y="2.35621"/>
+			<Actor seed="20565"/>
+		</Entity>
+		<Entity uid="411">
+			<Template>units/maur_support_trader</Template>
+			<Player>1</Player>
+			<Position x="282.82917" z="339.47413"/>
+			<Orientation y="2.35621"/>
+			<Actor seed="16200"/>
+		</Entity>
+		<Entity uid="412">
+			<Template>units/maur_support_trader</Template>
+			<Player>1</Player>
+			<Position x="291.91498" z="346.06644"/>
+			<Orientation y="2.35621"/>
+			<Actor seed="33488"/>
+		</Entity>
+		<Entity uid="413">
+			<Template>units/maur_support_trader</Template>
+			<Player>1</Player>
+			<Position x="296.02833" z="354.90741"/>
+			<Orientation y="2.35621"/>
+			<Actor seed="41461"/>
+		</Entity>
+		<Entity uid="414">
+			<Template>units/maur_support_trader</Template>
+			<Player>1</Player>
+			<Position x="300.1566" z="357.95047"/>
+			<Orientation y="2.35621"/>
+			<Actor seed="19518"/>
+		</Entity>
+		<Entity uid="415">
+			<Template>units/maur_support_trader</Template>
+			<Player>1</Player>
+			<Position x="303.1753" z="379.5766"/>
+			<Orientation y="2.35621"/>
+			<Actor seed="34917"/>
+		</Entity>
+		<Entity uid="416">
+			<Template>units/maur_support_trader</Template>
+			<Player>1</Player>
+			<Position x="290.7129" z="384.20331"/>
+			<Orientation y="2.35621"/>
+			<Actor seed="35097"/>
+		</Entity>
+		<Entity uid="417">
+			<Template>units/maur_support_trader</Template>
+			<Player>1</Player>
+			<Position x="289.07398" z="365.24726"/>
+			<Orientation y="2.35621"/>
+			<Actor seed="24110"/>
+		</Entity>
+		<Entity uid="418">
+			<Template>units/maur_support_trader</Template>
+			<Player>1</Player>
+			<Position x="270.73581" z="355.9163"/>
+			<Orientation y="2.35621"/>
+			<Actor seed="16268"/>
+		</Entity>
+		<Entity uid="419">
+			<Template>units/maur_support_trader</Template>
+			<Player>1</Player>
+			<Position x="269.77643" z="367.38431"/>
+			<Orientation y="2.35621"/>
+			<Actor seed="63088"/>
+		</Entity>
+		<Entity uid="420">
+			<Template>units/maur_support_trader</Template>
+			<Player>1</Player>
+			<Position x="275.44272" z="373.9405"/>
+			<Orientation y="2.35621"/>
+			<Actor seed="8770"/>
+		</Entity>
+		<Entity uid="421">
+			<Template>units/maur_support_trader</Template>
+			<Player>1</Player>
+			<Position x="281.0394" z="395.01688"/>
+			<Orientation y="2.35621"/>
+			<Actor seed="23073"/>
 		</Entity>
 	</Entities>
 	<Paths/>
