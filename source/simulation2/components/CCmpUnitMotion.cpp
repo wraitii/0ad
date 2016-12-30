@@ -131,7 +131,7 @@ private:
 		PathGoal m_Goal;
 	public:
 		SMotionGoal() : m_Valid(false) {};
-		
+
 		SMotionGoal(PathGoal& goal, entity_pos_t minRange, entity_pos_t maxRange)
 		{
 			m_TargetEntity = INVALID_ENTITY;
@@ -228,7 +228,7 @@ public:
 	// As long as we have a valid target, the unit is considered "on the move".
 	// It may not be actually moving for a variety of reasons (no path, blocked path)… but it will shortly.
 	SMotionGoal m_FinalGoal;
-	
+
 	// MOTION PLANNING
 	// We will abort if we are stuck after X tries.
 	u8 m_AbortIfStuck;

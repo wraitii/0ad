@@ -3989,12 +3989,12 @@ UnitAI.prototype.StopTimer = function()
 
 UnitAI.prototype.OnBeginMove = function(msg)
 {
-	this.UnitFsm.ProcessMessage(this, {"type": "MoveStarted", "data": msg});
+	this.UnitFsm.ProcessMessage(this, { "type": "MoveStarted", "data": msg });
 };
 
 UnitAI.prototype.OnFinishedMove = function(msg)
 {
-	this.UnitFsm.ProcessMessage(this, {"type": "MoveCompleted", "data": msg});
+	this.UnitFsm.ProcessMessage(this, { "type": "MoveCompleted", "data": msg });
 };
 
 UnitAI.prototype.OnGlobalConstructionFinished = function(msg)
