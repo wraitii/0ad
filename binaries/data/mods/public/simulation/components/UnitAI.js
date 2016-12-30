@@ -5661,8 +5661,8 @@ UnitAI.prototype.GetStanceName = function()
 
 UnitAI.prototype.SetMoveSpeed = function(speed)
 {
-	var cmpMotion = Engine.QueryInterface(this.entity, IID_UnitMotion);
-	cmpMotion.SetSpeed(1.0);
+	var cmpUnitMotion = Engine.QueryInterface(this.entity, IID_UnitMotion);
+	cmpUnitMotion.SetSpeed(WALKING_SPEED);
 };
 
 UnitAI.prototype.SetHeldPosition = function(x, z)
