@@ -308,8 +308,8 @@ function GetTemplateDataHelper(template, player, auraTemplates, resources)
 		ret.speed = {
 			"walk": getEntityValue("UnitMotion/WalkSpeed"),
 		};
-		if (template.UnitMotion.Run)
-			ret.speed.run = getEntityValue("UnitMotion/Run/Speed");
+		if (template.UnitMotion.RunMultiplier)
+			ret.speed.run = getEntityValue("UnitMotion/WalkSpeed") * getEntityValue("UnitMotion/RunMultiplier");
 	}
 
 	if (template.ProductionQueue)
