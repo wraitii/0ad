@@ -1960,6 +1960,7 @@ UnitAI.prototype.UnitFsmSpec = {
 					if (cmpBuildingAI)
 						cmpBuildingAI.SetUnitAITarget(0);
 					this.StopTimer();
+					this.SelectAnimation("idle");
 				},
 
 				"Timer": function(msg) {
@@ -2370,6 +2371,7 @@ UnitAI.prototype.UnitFsmSpec = {
 					delete this.gatheringTarget;
 
 					// Show the carried resource, if we've gathered anything.
+					this.SelectAnimation("idle");
 					this.SetAnimationVariant();
 				},
 
@@ -2568,6 +2570,7 @@ UnitAI.prototype.UnitFsmSpec = {
 				},
 
 				"leave": function() {
+					this.SelectAnimation("idle");
 					this.StopTimer();
 				},
 
@@ -2786,6 +2789,7 @@ UnitAI.prototype.UnitFsmSpec = {
 					if (cmpBuilderList)
 						cmpBuilderList.RemoveBuilder(this.entity);
 					delete this.repairTarget;
+					this.SelectAnimation("idle");
 					this.StopTimer();
 				},
 
@@ -3081,6 +3085,7 @@ UnitAI.prototype.UnitFsmSpec = {
 				this.StopTimer();
 				var cmpDamageReceiver = Engine.QueryInterface(this.entity, IID_DamageReceiver);
 				cmpDamageReceiver.SetInvulnerability(false);
+				this.SelectAnimation("idle");
 			},
 
 			"Timer": function(msg) {
