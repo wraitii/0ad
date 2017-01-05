@@ -706,6 +706,7 @@ void CCmpUnitMotion::Move(fixed dt)
 			MoveHasSucceeded();
 
 		// TODO: change this
+		SetActualSpeed(fixed::Zero());
 		DiscardMove();
 		return;
 	}
@@ -789,14 +790,14 @@ void CCmpUnitMotion::Move(fixed dt)
 		if (!m_StartedMoving)
 			StartMoving();
 
+		// Face towards the target
+		entity_angle_t angle = atan2_approx(offset.X, offset.Y);
+		cmpPosition->MoveAndTurnTo(pos.X,pos.Y, angle);
+
 		// Calculate the mean speed over this past turn.
 		// TODO: this is often just a little different from our actual top speed
 		// so we end up changing the actual speed quite often, which is a little silly.
 		SetActualSpeed(cmpPosition->GetDistanceTravelled() / dt);
-
-		// Face towards the target
-		entity_angle_t angle = atan2_approx(offset.X, offset.Y);
-		cmpPosition->MoveAndTurnTo(pos.X,pos.Y, angle);
 
 		if (!wasObstructed)
 		{
@@ -808,7 +809,7 @@ void CCmpUnitMotion::Move(fixed dt)
 	}
 	else
 		// TODO: this could probably be moved before the if entirely, check rounding.
-		SetActualSpeed(cmpPosition->GetDistanceTravelled() / dt);
+		SetActualSpeed(fixed::Zero());
 
 	// we've had to stop at the end of the turn.
 	StopMoving();
