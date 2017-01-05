@@ -230,7 +230,7 @@ public:
 	// TARGET
 	// As long as we have a valid target, the unit is considered "on the move".
 	// It may not be actually moving for a variety of reasons (no path, blocked path)… but it will shortly.
-	SMotionGoal m_FinalGoal;
+	SMotionGoal m_Destination;
 
 	// MOTION PLANNING
 	// We will abort if we are stuck after X tries.
@@ -340,7 +340,7 @@ public:
 		// strictly speaking this doesn't need to be serialized since it's graphics-only, but it's nicer to.
 		serialize.NumberFixed_Unbounded("actual speed", m_ActualSpeed);
 
-		m_FinalGoal.SerializeCommon(serialize);
+		m_Destination.SerializeCommon(serialize);
 	}
 
 	virtual void Serialize(ISerializer& serialize)
@@ -427,7 +427,7 @@ public:
 	virtual bool IsTryingToMove()
 	{
 		// speed check as sanity check to avoid infinite loops.
-		return m_FinalGoal.Valid() && m_Speed > fixed::Zero();
+		return m_Destination.Valid() && m_Speed > fixed::Zero();
 	}
 
 	virtual fixed GetBaseSpeed()
@@ -535,7 +535,7 @@ public:
 		{
 			CmpPtr<ICmpPosition> cmpPosition(GetEntityHandle());
 			if (cmpPosition && cmpPosition->IsInWorld())
-				FaceTowardsPointFromPos(cmpPosition->GetPosition2D(), m_FinalGoal.X(), m_FinalGoal.Z());
+				FaceTowardsPointFromPos(cmpPosition->GetPosition2D(), m_Destination.X(), m_Destination.Z());
 		}
 
 		CMessageFinishedMove msg(false);
@@ -572,7 +572,7 @@ private:
 
 		// reset state.
 		m_ExpectedPathTicket = 0;
-		m_FinalGoal.Clear();
+		m_Destination.Clear();
 		m_Path.m_Waypoints.clear();
 
 		CmpPtr<ICmpObstruction> cmpObstruction(GetEntityHandle());
@@ -681,7 +681,7 @@ void CCmpUnitMotion::PathResult(u32 ticket, const WaypointPath& path)
 
 	m_ExpectedPathTicket = 0; // we don't expect to get this result again
 
-	if (!m_FinalGoal.Valid())
+	if (!m_Destination.Valid())
 		return;
 
 	if (path.m_Waypoints.empty())
@@ -710,7 +710,7 @@ void CCmpUnitMotion::Move(fixed dt)
 		return;
 	}
 
-	m_FinalGoal.UpdateTargetPosition(GetSimContext());
+	m_Destination.UpdateTargetPosition(GetSimContext());
 
 	// TODO: units will look at each other's position in an arbitrary order that must be the same for any simulation
 	// In particular this means no threading. Maybe we should update this someday if it's possible.
@@ -847,19 +847,19 @@ void CCmpUnitMotion::Move(fixed dt)
 		return;
 
 	// if our next waypoint is close enough to our goal and our goal isn't a point, drop our path and recompute directly.
-	if (m_FinalGoal.IsNotAPoint() && !m_Path.m_Waypoints.empty())
+	if (m_Destination.IsNotAPoint() && !m_Path.m_Waypoints.empty())
 	{
 
 		CmpPtr<ICmpObstructionManager> cmpObstructionManager(GetSystemEntity());
 		if (cmpObstructionManager)
 		{
 			bool inRange = false;
-			if (m_FinalGoal.TargetIsEntity())
+			if (m_Destination.TargetIsEntity())
 				inRange = cmpObstructionManager->IsInTargetRange(m_Path.m_Waypoints.back().x, m_Path.m_Waypoints.back().z,
-																 m_FinalGoal.GetEntity(), m_FinalGoal.MinRange(), m_FinalGoal.MaxRange());
+																 m_Destination.GetEntity(), m_Destination.MinRange(), m_Destination.MaxRange());
 			else
 				inRange = cmpObstructionManager->IsInPointRange(m_Path.m_Waypoints.back().x, m_Path.m_Waypoints.back().z,
-																m_FinalGoal.X(), m_FinalGoal.Z(), m_FinalGoal.MinRange(), m_FinalGoal.MaxRange());
+																m_Destination.X(), m_Destination.Z(), m_Destination.MinRange(), m_Destination.MaxRange());
 			if (inRange)
 			{
 				m_Path.m_Waypoints.clear();
@@ -893,7 +893,7 @@ void CCmpUnitMotion::Move(fixed dt)
 	{
 		PathGoal goal;
 		if (m_Path.m_Waypoints.empty())
-			goal = { PathGoal::POINT, m_FinalGoal.X(), m_FinalGoal.Z() };
+			goal = { PathGoal::POINT, m_Destination.X(), m_Destination.Z() };
 		else
 		{
 			goal = { PathGoal::POINT, m_Path.m_Waypoints.back().x, m_Path.m_Waypoints.back().z };
@@ -908,7 +908,7 @@ void CCmpUnitMotion::Move(fixed dt)
 	{
 		PathGoal goal;
 		if (m_Path.m_Waypoints.empty())
-			goal = { PathGoal::POINT, m_FinalGoal.X(), m_FinalGoal.Z() };
+			goal = { PathGoal::POINT, m_Destination.X(), m_Destination.Z() };
 		else
 		{
 			goal = { PathGoal::POINT, m_Path.m_Waypoints.back().x, m_Path.m_Waypoints.back().z };
@@ -939,7 +939,7 @@ void CCmpUnitMotion::Move(fixed dt)
 // TODO: this should care about target movement
 bool CCmpUnitMotion::CheckTargetMovement(const CFixedVector2D& from, entity_pos_t minDelta)
 {
-	if (!m_FinalGoal.TargetIsEntity())
+	if (!m_Destination.TargetIsEntity())
 		return false;
 
 	if (!HasValidPath())
@@ -948,7 +948,7 @@ bool CCmpUnitMotion::CheckTargetMovement(const CFixedVector2D& from, entity_pos_
 	// Fail unless the target has moved enough
 	CFixedVector2D oldTargetPos = CFixedVector2D(m_Path.m_Waypoints[0].x,m_Path.m_Waypoints[0].z);
 
-	if ((m_FinalGoal.Pos() - oldTargetPos).CompareLength(minDelta) < 0)
+	if ((m_Destination.Pos() - oldTargetPos).CompareLength(minDelta) < 0)
 		return false;
 
 
@@ -957,7 +957,7 @@ bool CCmpUnitMotion::CheckTargetMovement(const CFixedVector2D& from, entity_pos_
 		return false;
 	CFixedVector2D pos = cmpPosition->GetPosition2D();
 	CFixedVector2D oldDir = (oldTargetPos - pos);
-	CFixedVector2D newDir = (m_FinalGoal.Pos() - pos);
+	CFixedVector2D newDir = (m_Destination.Pos() - pos);
 	oldDir.Normalize();
 	newDir.Normalize();
 
@@ -973,7 +973,7 @@ bool CCmpUnitMotion::CheckTargetMovement(const CFixedVector2D& from, entity_pos_
 	if (cmpOwnership)
 	{
 		CmpPtr<ICmpRangeManager> cmpRangeManager(GetSystemEntity());
-		if (cmpRangeManager && cmpRangeManager->GetLosVisibility(m_FinalGoal.GetEntity(), cmpOwnership->GetOwner()) == ICmpRangeManager::VIS_HIDDEN)
+		if (cmpRangeManager && cmpRangeManager->GetLosVisibility(m_Destination.GetEntity(), cmpOwnership->GetOwner()) == ICmpRangeManager::VIS_HIDDEN)
 			return false;
 	}
 
@@ -989,10 +989,10 @@ bool CCmpUnitMotion::CheckTargetMovement(const CFixedVector2D& from, entity_pos_
 // In particular maybe we should support some "margin" for error.
 bool CCmpUnitMotion::ShouldConsiderOurselvesAtDestination()
 {
-	if (m_FinalGoal.TargetIsEntity())
-		return IsInTargetRange(m_FinalGoal.GetEntity(), m_FinalGoal.MinRange(), m_FinalGoal.MaxRange());
+	if (m_Destination.TargetIsEntity())
+		return IsInTargetRange(m_Destination.GetEntity(), m_Destination.MinRange(), m_Destination.MaxRange());
 	else
-		return IsInPointRange(m_FinalGoal.X(),m_FinalGoal.Z(), m_FinalGoal.MinRange(), m_FinalGoal.MaxRange());
+		return IsInPointRange(m_Destination.X(),m_Destination.Z(), m_Destination.MinRange(), m_Destination.MaxRange());
 }
 
 bool CCmpUnitMotion::PathIsShort(const WaypointPath& path, const CFixedVector2D& from, entity_pos_t minDistance) const
@@ -1044,7 +1044,7 @@ void CCmpUnitMotion::FaceTowardsPointFromPos(const CFixedVector2D& pos, entity_p
 
 ControlGroupMovementObstructionFilter CCmpUnitMotion::GetObstructionFilter(bool noTarget) const
 {
-	entity_id_t group = noTarget ? m_FinalGoal.GetEntity() : GetGroup();
+	entity_id_t group = noTarget ? m_Destination.GetEntity() : GetGroup();
 	// TODO: if we sometimes want to consider moving units, change here.
 	return ControlGroupMovementObstructionFilter(false, group);
 }
@@ -1068,7 +1068,7 @@ void CCmpUnitMotion::RequestNewPath()
 #if DISABLE_PATHFINDER
 	{
 		CmpPtr<ICmpPathfinder> cmpPathfinder (GetSimContext(), SYSTEM_ENTITY);
-		CFixedVector2D goalPos = m_FinalGoal.Goal().NearestPointOnGoal(position);
+		CFixedVector2D goalPos = m_Destination.Goal().NearestPointOnGoal(position);
 		m_LongPath.m_Waypoints.clear();
 		m_ShortPath.m_Waypoints.clear();
 		m_ShortPath.m_Waypoints.emplace_back(Waypoint{ goalPos.X, goalPos.Y });
@@ -1083,10 +1083,10 @@ void CCmpUnitMotion::RequestNewPath()
 	// Maybe use PathIsShort?
 
 	// TODO: note by wraitii: figure out if the above comment is still true. It seems false.
-	if (m_FinalGoal.Goal().DistanceToPoint(position) < LONG_PATH_MIN_DIST)
-		RequestShortPath(position, m_FinalGoal.Goal(), true);
+	if (m_Destination.Goal().DistanceToPoint(position) < LONG_PATH_MIN_DIST)
+		RequestShortPath(position, m_Destination.Goal(), true);
 	else
-		RequestLongPath(position, m_FinalGoal.Goal());
+		RequestLongPath(position, m_Destination.Goal());
 }
 
 void CCmpUnitMotion::RequestLongPath(const CFixedVector2D& from, const PathGoal& goal)
@@ -1185,9 +1185,9 @@ bool CCmpUnitMotion::MoveToPointRange(entity_pos_t x, entity_pos_t z, entity_pos
 	}
 
 	if (target == INVALID_ENTITY)
-		m_FinalGoal = SMotionGoal(goal, minRange, maxRange);
+		m_Destination = SMotionGoal(goal, minRange, maxRange);
 	else
-		m_FinalGoal = SMotionGoal(GetSimContext(), target, goal, minRange, maxRange);
+		m_Destination = SMotionGoal(GetSimContext(), target, goal, minRange, maxRange);
 
 	RequestNewPath();
 
@@ -1345,9 +1345,9 @@ bool CCmpUnitMotion::MoveToTargetRange(entity_id_t target, entity_pos_t minRange
 	}
 
 	if (target == INVALID_ENTITY)
-		m_FinalGoal = SMotionGoal(goal, minRange, maxRange);
+		m_Destination = SMotionGoal(goal, minRange, maxRange);
 	else
-		m_FinalGoal = SMotionGoal(GetSimContext(), target, goal, minRange, maxRange);
+		m_Destination = SMotionGoal(GetSimContext(), target, goal, minRange, maxRange);
 
 	RequestNewPath();
 
