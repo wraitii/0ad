@@ -554,7 +554,14 @@ public:
 
 	void MoveWillFail()
 	{
+		CMessageMoveFailure msg;
+		GetSimContext().GetComponentManager().PostMessage(GetEntityId(), msg);
+	}
 
+	void MoveHasSucceeded()
+	{
+		CMessageMoveSuccess msg;
+		GetSimContext().GetComponentManager().PostMessage(GetEntityId(), msg);
 	}
 
 	virtual bool HasValidPath()
@@ -592,7 +599,7 @@ private:
 	 * Returns whether we are close enough to the target to assume it's a good enough
 	 * position to stop.
 	 */
-	bool ShouldConsiderOurselvesAtDestination();
+	bool ShouldConsiderOurselvesAtDestination(SMotionGoal& goal);
 
 	/**
 	 * Returns whether the length of the given path, plus the distance from
@@ -692,8 +699,12 @@ void CCmpUnitMotion::Move(fixed dt)
 	// Check wether we are at our destination.
 	// This must be done only at the beginning of a turn, if we do at the end of a turn (after a unit position has changed)
 	// the unit's position will interpolate but the unit will already be doing the next thing, so it looks like it's gliding.
-	if (ShouldConsiderOurselvesAtDestination())
+	if (ShouldConsiderOurselvesAtDestination(m_CurrentGoal))
 	{
+		if (ShouldConsiderOurselvesAtDestination(m_Destination))
+			// send a hint to unitAI to maintain compatibility.
+			MoveHasSucceeded();
+
 		// TODO: change this
 		DiscardMove();
 		return;
@@ -902,12 +913,12 @@ void CCmpUnitMotion::Move(fixed dt)
 
 // TODO: ought to be cleverer here.
 // In particular maybe we should support some "margin" for error.
-bool CCmpUnitMotion::ShouldConsiderOurselvesAtDestination()
+bool CCmpUnitMotion::ShouldConsiderOurselvesAtDestination(SMotionGoal& goal)
 {
-	if (m_CurrentGoal.TargetIsEntity())
-		return IsInTargetRange(m_CurrentGoal.GetEntity(), m_CurrentGoal.MinRange(), m_CurrentGoal.MaxRange());
+	if (goal.TargetIsEntity())
+		return IsInTargetRange(goal.GetEntity(), goal.MinRange(), goal.MaxRange());
 	else
-		return IsInPointRange(m_CurrentGoal.X(),m_CurrentGoal.Z(), m_CurrentGoal.MinRange(), m_CurrentGoal.MaxRange());
+		return IsInPointRange(goal.X(), goal.Z(), goal.MinRange(), goal.MaxRange());
 }
 
 bool CCmpUnitMotion::PathIsShort(const WaypointPath& path, const CFixedVector2D& from, entity_pos_t minDistance) const

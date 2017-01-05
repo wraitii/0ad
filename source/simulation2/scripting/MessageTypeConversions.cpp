@@ -311,6 +311,34 @@ CMessage* CMessageFinishedMove::FromJSVal(ScriptInterface& scriptInterface, JS::
 
 ////////////////////////////////
 
+JS::Value CMessageMoveSuccess::ToJSVal(ScriptInterface& scriptInterface) const
+{
+	TOJSVAL_SETUP();
+	return JS::ObjectValue(*obj);
+}
+
+CMessage* CMessageMoveSuccess::FromJSVal(ScriptInterface& scriptInterface, JS::HandleValue val)
+{
+	FROMJSVAL_SETUP();
+	return new CMessageMoveSuccess();
+}
+
+////////////////////////////////
+
+JS::Value CMessageMoveFailure::ToJSVal(ScriptInterface& scriptInterface) const
+{
+	TOJSVAL_SETUP();
+	return JS::ObjectValue(*obj);
+}
+
+CMessage* CMessageMoveFailure::FromJSVal(ScriptInterface& scriptInterface, JS::HandleValue val)
+{
+	FROMJSVAL_SETUP();
+	return new CMessageMoveFailure();
+}
+
+////////////////////////////////
+
 JS::Value CMessageTerrainChanged::ToJSVal(ScriptInterface& scriptInterface) const
 {
 	TOJSVAL_SETUP();

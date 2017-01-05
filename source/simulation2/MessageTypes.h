@@ -351,6 +351,34 @@ public:
 };
 
 /**
+ * Sent by CCmpUnitMotion as a hint when we have reached our destination
+ * The unit may start moving again on its own despite this message being sent.
+ */
+class CMessageMoveSuccess : public CMessage
+{
+public:
+	DEFAULT_MESSAGE_IMPL(MoveSuccess)
+
+	CMessageMoveSuccess()
+	{
+	}
+};
+
+/**
+ * Sent by CCmpUnitMotion when a unit has determined it has no chance
+ * of ever reaching its assigned destination. This is a catastrophic error.
+ */
+class CMessageMoveFailure : public CMessage
+{
+public:
+	DEFAULT_MESSAGE_IMPL(MoveFailure)
+
+	CMessageMoveFailure()
+	{
+	}
+};
+
+/**
  * Sent by CCmpUnitMotion during Update,
  * whenever we were actually moving before, and now stopped
  * In this case, we will retry moving/pathing in the future on our own

@@ -1073,7 +1073,7 @@ UnitAI.prototype.UnitFsmSpec = {
 				cmpFormation.MoveMembersIntoFormation(true, true);
 			},
 
-			"MoveCompleted": function(msg) {
+			"MoveSucess": function(msg) {
 				if (this.FinishOrder())
 					this.CallMemberFunction("ResetFinishOrder", []);
 			},
@@ -1692,14 +1692,7 @@ UnitAI.prototype.UnitFsmSpec = {
 						return;
 					}
 					this.SetHeldPositionOnEntity(this.isGuardOf);
-				},
 
-				"leave": function(msg) {
-					this.SetMoveSpeed(WALKING_SPEED);
-					this.StopTimer();
-				},
-
-				"MoveStarted": function(msg) {
 					// Adapt the speed to the one of the target if needed
 					let cmpUnitMotion = Engine.QueryInterface(this.entity, IID_UnitMotion);
 					if (cmpUnitMotion.IsInTargetRange(this.isGuardOf, 0, 3*this.guardRange))
@@ -1714,6 +1707,11 @@ UnitAI.prototype.UnitFsmSpec = {
 								this.SetMoveSpeed(speed);
 						}
 					}
+				},
+
+				"leave": function(msg) {
+					this.SetMoveSpeed(WALKING_SPEED);
+					this.StopTimer();
 				},
 
 				"MoveCompleted": function() {
@@ -3992,14 +3990,14 @@ UnitAI.prototype.StopTimer = function()
 
 //// Message handlers /////
 
-UnitAI.prototype.OnBeginMove = function(msg)
+UnitAI.prototype.OnMoveSuccess = function(msg)
 {
-	this.UnitFsm.ProcessMessage(this, { "type": "MoveStarted", "data": msg });
+	this.UnitFsm.ProcessMessage(this, { "type": "MoveCompleted", "data": { "error" : false }});
 };
 
-UnitAI.prototype.OnFinishedMove = function(msg)
+UnitAI.prototype.OnMoveFailure = function(msg)
 {
-	this.UnitFsm.ProcessMessage(this, { "type": "MoveCompleted", "data": msg });
+	this.UnitFsm.ProcessMessage(this, { "type": "MoveCompleted", "data": { "error" : true }});
 };
 
 UnitAI.prototype.OnGlobalConstructionFinished = function(msg)
