@@ -508,10 +508,8 @@ public:
 		return m_Clearance;
 	}
 
-	virtual bool MoveToPointRange(entity_pos_t x, entity_pos_t z, entity_pos_t minRange, entity_pos_t maxRange);
-	virtual bool IsInPointRange(entity_pos_t x, entity_pos_t z, entity_pos_t minRange, entity_pos_t maxRange);
-	virtual bool MoveToTargetRange(entity_id_t target, entity_pos_t minRange, entity_pos_t maxRange);
-	virtual bool IsInTargetRange(entity_id_t target, entity_pos_t minRange, entity_pos_t maxRange);
+	virtual bool SetNewDestinationAsPosition(entity_pos_t x, entity_pos_t z, entity_pos_t range);
+	virtual bool SetNewDestinationAsEntity(entity_id_t target, entity_pos_t range);
 
 	virtual void FaceTowardsPoint(entity_pos_t x, entity_pos_t z);
 
@@ -582,8 +580,6 @@ private:
 		//return IsFormationMember() ? m_TargetEntity : GetEntityId();
 		return GetEntityId();
 	}
-
-	bool MoveToPointRange(entity_pos_t x, entity_pos_t z, entity_pos_t minRange, entity_pos_t maxRange, entity_id_t target);
 
 	/**
 	 * Handle the result of an asynchronous path query.
@@ -1048,16 +1044,20 @@ void CCmpUnitMotion::RequestShortPath(const CFixedVector2D &from, const PathGoal
 	m_ExpectedPathTicket = cmpPathfinder->ComputeShortPathAsync(from.X, from.Y, m_Clearance, searchRange, goal, m_PassClass, avoidMovingUnits, GetGroup(), GetEntityId());
 }
 
-bool CCmpUnitMotion::MoveToPointRange(entity_pos_t x, entity_pos_t z, entity_pos_t minRange, entity_pos_t maxRange)
+// TODO: in both setnewdestination functions, we prep our goal and let the pathfinder get us an "acceptable"
+// navcell. This is sub-optimal in general: first of all it means we must sync obstructionmanager, this file, and pathfinding
+// but the pathfinder may not actually return a navcell in range and we will accept it.
+// It may be more efficient to get a passable, reachable, in-range navcell in this function directly and then path to that instead.
+// Since this comes last in a turn, presumably that navcell will still be reachable for the pathfinder
+// and this would allow us to return "false" immediately if there is no such navcell which may be useful.
+// this would increase the performance cost a little though if we thread the pathfinder, so beware.
+bool CCmpUnitMotion::SetNewDestinationAsPosition(entity_pos_t x, entity_pos_t z, entity_pos_t range)
 {
-	return MoveToPointRange(x, z, minRange, maxRange, INVALID_ENTITY);
-}
+	// We will be in range if ICmpObstructionManager::IsInPointRange says we are
+	// So this function should try to be accurate in that respect.
+	PROFILE("SetNewDestinationAsPosition");
 
-bool CCmpUnitMotion::MoveToPointRange(entity_pos_t x, entity_pos_t z, entity_pos_t minRange, entity_pos_t maxRange, entity_id_t target)
-{
-	// Must closely mirror CmpObstructionManager::IsInPointRange
-	PROFILE("MoveToPointRange");
-
+	// This sets up a new destination, scrap whatever came before.
 	DiscardMove();
 
 	CmpPtr<ICmpPosition> cmpPosition(GetEntityHandle());
@@ -1070,38 +1070,25 @@ bool CCmpUnitMotion::MoveToPointRange(entity_pos_t x, entity_pos_t z, entity_pos
 	goal.x = x;
 	goal.z = z;
 
-	if (minRange.IsZero() && maxRange.IsZero())
+	if (range.IsZero())
 	{
-		// Non-ranged movement:
-
-		// Head directly for the goal
+		// head for the goal itself
 		goal.type = PathGoal::POINT;
 	}
 	else
 	{
-		// Ranged movement:
-
+		// We want to be inside a certain range from our Target
+		// target is a point, use euclidian distance
 		entity_pos_t distance = (pos - CFixedVector2D(x, z)).Length();
 
-		if (distance < minRange)
-		{
-			// Too close to target - move outwards to a circle
-			// that's slightly larger than the min range
-			goal.type = PathGoal::INVERTED_CIRCLE;
-			goal.hw = minRange + Pathfinding::GOAL_DELTA;
-		}
-		else if (maxRange >= entity_pos_t::Zero() && distance > maxRange)
-		{
-			// Too far from target - move inwards to a circle
-			// that's slightly smaller than the max range
-			goal.type = PathGoal::CIRCLE;
-			goal.hw = maxRange - Pathfinding::GOAL_DELTA;
+		goal.hw = range;
 
-			// If maxRange was abnormally small,
-			// collapse the circle into a point
-			if (goal.hw <= entity_pos_t::Zero())
-				goal.type = PathGoal::POINT;
-		}
+		if (distance < range)
+			// Too close to target - move outwards to a circle
+			goal.type = PathGoal::INVERTED_CIRCLE;
+		else if (distance > range)
+			// Too far from target - move inwards to a circle
+			goal.type = PathGoal::CIRCLE;
 		else
 		{
 			// We're already in range - no need to move anywhere
@@ -1111,17 +1098,15 @@ bool CCmpUnitMotion::MoveToPointRange(entity_pos_t x, entity_pos_t z, entity_pos
 		}
 	}
 
-	if (target == INVALID_ENTITY)
-		m_Destination = SMotionGoal(goal, minRange, maxRange);
-	else
-		m_Destination = SMotionGoal(GetSimContext(), target, goal, minRange, maxRange);
-
+	m_Destination = SMotionGoal(goal, range);
 	m_CurrentGoal = m_Destination;
 
 	RequestNewPath();
 
 	return true;
 }
+
+//TODO: I stopped here for now
 
 bool CCmpUnitMotion::MoveToTargetRange(entity_id_t target, entity_pos_t minRange, entity_pos_t maxRange)
 {

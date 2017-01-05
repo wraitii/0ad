@@ -129,6 +129,7 @@ namespace Pathfinding
 	 *	between translation units.
 	 * TODO: figure out whether this is actually needed. It was added back in r8751 (in 2010) for unclear reasons
 	 * and it does not seem to really improve behavior today
+	 * Note by Wraitii to wraitii: you just removed this in UnitMotion, delete it if it ends up being unecessary as expected.
 	 */
 	const entity_pos_t GOAL_DELTA = NAVCELL_SIZE/8;
 

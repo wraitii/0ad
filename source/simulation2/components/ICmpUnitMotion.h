@@ -36,37 +36,26 @@ class ICmpUnitMotion : public IComponent
 public:
 
 	/**
-	 * Attempt to walk into range of a to a given point, or as close as possible.
-	 * The range is measured from the center of the unit.
+	 * Sets our destination and current goal to be the given range from the given position.
+	 * As in IsInPointRange, the range is measured from the center of the unit.
 	 * If the unit is already in range, or cannot move anywhere at all, or if there is
 	 * some other error, then returns false.
-	 * Otherwise, returns true and sends a MotionChanged message after starting to move,
-	 * and sends another MotionChanged after finishing moving.
-	 * If maxRange is negative, then the maximum range is treated as infinity.
+	 * Otherwise, returns true.
+	 * Note that the caller may want to regularly check if it is in range, but UnitMotion will try to stay
+	 * at "Range" away from the point.
 	 */
-	virtual bool MoveToPointRange(entity_pos_t x, entity_pos_t z, entity_pos_t minRange, entity_pos_t maxRange) = 0;
+	virtual bool SetNewDestinationAsPosition(entity_pos_t x, entity_pos_t z, entity_pos_t range) = 0;
 
 	/**
-	 * Wrapper around ObstructionManager::IsInPointRange with unit position
-	 */
-	virtual bool IsInPointRange(entity_pos_t x, entity_pos_t z, entity_pos_t minRange, entity_pos_t maxRange) = 0;
-
-	/**
-	 * Wrapper around ObstructionManager::IsInTargetRange with unit position
-	 */
-	virtual bool IsInTargetRange(entity_id_t target, entity_pos_t minRange, entity_pos_t maxRange) = 0;
-
-	/**
-	 * Attempt to walk into range of a given target entity, or as close as possible.
-	 * The range is measured between approximately the edges of the unit and the target, so that
-	 * maxRange=0 is not unreachably close to the target.
+	 * Sets our destination and current goal to be the given range from the given entity.
+	 * Distance is measured as in IsInTargetRange (edge to edge, as much as possible)
 	 * If the unit is already in range, or cannot move anywhere at all, or if there is
 	 * some other error, then returns false.
-	 * Otherwise, returns true and sends a MotionChanged message after starting to move,
-	 * and sends another MotionChanged after finishing moving.
-	 * If maxRange is negative, then the maximum range is treated as infinity.
+	 * Otherwise, returns true.
+	 * Note that the caller may want to regularly check if it is in range, but UnitMotion will try to stay
+	 * at "Range" away from the entity. It may stop and start moving again on its own if the target moves
 	 */
-	virtual bool MoveToTargetRange(entity_id_t target, entity_pos_t minRange, entity_pos_t maxRange) = 0;
+	virtual bool SetNewDestinationAsEntity(entity_id_t target, entity_pos_t range) = 0;
 
 	/**
 	 * Turn to look towards the given point.

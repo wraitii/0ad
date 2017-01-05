@@ -23,10 +23,8 @@
 #include "simulation2/scripting/ScriptComponent.h"
 
 BEGIN_INTERFACE_WRAPPER(UnitMotion)
-DEFINE_INTERFACE_METHOD_4("MoveToPointRange", bool, ICmpUnitMotion, MoveToPointRange, entity_pos_t, entity_pos_t, entity_pos_t, entity_pos_t)
-DEFINE_INTERFACE_METHOD_4("IsInPointRange", bool, ICmpUnitMotion, IsInPointRange, entity_pos_t, entity_pos_t, entity_pos_t, entity_pos_t)
-DEFINE_INTERFACE_METHOD_3("IsInTargetRange", bool, ICmpUnitMotion, IsInTargetRange, entity_id_t, entity_pos_t, entity_pos_t)
-DEFINE_INTERFACE_METHOD_3("MoveToTargetRange", bool, ICmpUnitMotion, MoveToTargetRange, entity_id_t, entity_pos_t, entity_pos_t)
+DEFINE_INTERFACE_METHOD_3("SetNewDestinationAsPosition", bool, ICmpUnitMotion, SetNewDestinationAsPosition, entity_pos_t, entity_pos_t, entity_pos_t)
+DEFINE_INTERFACE_METHOD_2("SetNewDestinationAsEntity", bool, ICmpUnitMotion, SetNewDestinationAsEntity, entity_id_t, entity_pos_t)
 DEFINE_INTERFACE_METHOD_2("FaceTowardsPoint", void, ICmpUnitMotion, FaceTowardsPoint, entity_pos_t, entity_pos_t)
 DEFINE_INTERFACE_METHOD_1("SetAbortIfStuck", void, ICmpUnitMotion, SetAbortIfStuck, u8)
 DEFINE_INTERFACE_METHOD_0("StopMoving", void, ICmpUnitMotion, StopMoving)
