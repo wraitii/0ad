@@ -29,8 +29,9 @@ DEFINE_INTERFACE_METHOD_3("IsInTargetRange", bool, ICmpUnitMotion, IsInTargetRan
 DEFINE_INTERFACE_METHOD_3("MoveToTargetRange", bool, ICmpUnitMotion, MoveToTargetRange, entity_id_t, entity_pos_t, entity_pos_t)
 DEFINE_INTERFACE_METHOD_2("FaceTowardsPoint", void, ICmpUnitMotion, FaceTowardsPoint, entity_pos_t, entity_pos_t)
 DEFINE_INTERFACE_METHOD_1("SetAbortIfStuck", void, ICmpUnitMotion, SetAbortIfStuck, u8)
+DEFINE_INTERFACE_METHOD_0("StopMoving", void, ICmpUnitMotion, StopMoving)
 DEFINE_INTERFACE_METHOD_0("DiscardMove", void, ICmpUnitMotion, DiscardMove)
-DEFINE_INTERFACE_METHOD_0("CompleteMove", void, ICmpUnitMotion, CompleteMove)
+DEFINE_INTERFACE_METHOD_0("HasValidPath", bool, ICmpUnitMotion, HasValidPath)
 DEFINE_INTERFACE_METHOD_0("GetTopSpeedRatio", fixed, ICmpUnitMotion, GetTopSpeedRatio)
 DEFINE_INTERFACE_METHOD_1("SetSpeed", void, ICmpUnitMotion, SetSpeed, fixed)
 DEFINE_INTERFACE_METHOD_0("IsActuallyMoving", bool, ICmpUnitMotion, IsActuallyMoving)
@@ -43,6 +44,7 @@ DEFINE_INTERFACE_METHOD_1("SetFacePointAfterMove", void, ICmpUnitMotion, SetFace
 DEFINE_INTERFACE_METHOD_1("SetDebugOverlay", void, ICmpUnitMotion, SetDebugOverlay, bool)
 END_INTERFACE_WRAPPER(UnitMotion)
 
+/*
 class CCmpUnitMotionScripted : public ICmpUnitMotion
 {
 public:
@@ -156,3 +158,4 @@ public:
 };
 
 REGISTER_COMPONENT_SCRIPT_WRAPPER(UnitMotionScripted)
+*/

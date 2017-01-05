@@ -520,7 +520,6 @@ public:
 		m_AbortIfStuck = shouldAbort;
 	}
 
-	// TODO: virtualize those
 	void StartMoving()
 	{
 		m_StartedMoving = true;
@@ -530,7 +529,7 @@ public:
 			cmpObstruction->SetMovingFlag(true);
 	}
 
-	void StopMoving()
+	virtual void StopMoving()
 	{
 		m_StartedMoving = false;
 
@@ -553,12 +552,12 @@ public:
 		m_Destination.Clear();
 	}
 
-	virtual void MoveWillFail()
+	void MoveWillFail()
 	{
 
 	}
 
-	bool HasValidPath() const
+	virtual bool HasValidPath()
 	{
 		return !m_Path.m_Waypoints.empty();
 	}
@@ -695,7 +694,8 @@ void CCmpUnitMotion::Move(fixed dt)
 	// the unit's position will interpolate but the unit will already be doing the next thing, so it looks like it's gliding.
 	if (ShouldConsiderOurselvesAtDestination())
 	{
-		CompleteMove();
+		// TODO: change this
+		DiscardMove();
 		return;
 	}
 

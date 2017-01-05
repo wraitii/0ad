@@ -80,19 +80,23 @@ public:
 	virtual void SetAbortIfStuck(u8 shouldAbort) = 0;
 
 	/**
-	 * Stop moving immediately, don't send messages.
-	 * This should be used if you are going to ask for a new path,
-	 * in the same function, for example.
-	 * In doubt, UnitAI should probably call this.
-	 * Use with caution.
+	 * Stops the unit. Does not clear the destination
+	 * so the unit may start moving again next turn.
+	 * Mostly used internally but exposed if anybody wants to stop for whatever reason.
+	 */
+	virtual void StopMoving() = 0;
+
+	/**
+	 * Stop moving, clear any destination, path, and ticket pending.
+	 * Basically resets the unit's motion.
+	 * Won't send any message.
 	 */
 	virtual void DiscardMove() = 0;
 
 	/**
-	 * Stop moving immediately, send messages.
-	 * In doubt, components that are not UnitIA should probably call this.
+	 * Asks wether the unit has a path to follow
 	 */
-	virtual void CompleteMove() = 0;
+	virtual bool HasValidPath() = 0;
 
 	/**
 	 * Get how much faster/slower we are at than normal.
