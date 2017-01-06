@@ -1045,8 +1045,8 @@ void CCmpUnitMotion::RequestShortPath(const CFixedVector2D &from, const PathGoal
 }
 
 // TODO: in both setnewdestination functions, we prep our goal and let the pathfinder get us an "acceptable"
-// navcell. This is sub-optimal in general: first of all it means we must sync obstructionmanager, this file, and pathfinding
-// but the pathfinder may not actually return a navcell in range and we will accept it.
+// navcell. This is sub-optimal in general: first of all it means we must sync obstructionmanager, this file, and pathfinding,
+// secondly the pathfinder may not actually return a navcell in range and we will accept it.
 // It may be more efficient to get a passable, reachable, in-range navcell in this function directly and then path to that instead.
 // Since this comes last in a turn, presumably that navcell will still be reachable for the pathfinder
 // and this would allow us to return "false" immediately if there is no such navcell which may be useful.
@@ -1106,12 +1106,10 @@ bool CCmpUnitMotion::SetNewDestinationAsPosition(entity_pos_t x, entity_pos_t z,
 	return true;
 }
 
-//TODO: I stopped here for now
-
-bool CCmpUnitMotion::MoveToTargetRange(entity_id_t target, entity_pos_t minRange, entity_pos_t maxRange)
+bool CCmpUnitMotion::SetNewDestinationAsEntity(entity_id_t target, entity_pos_t range)
 {
-	// Must closely mirror CmpObstructionManager::IsInTargetRange
-	PROFILE("MoveToTargetRange");
+	// Same warnings as above apply here
+	PROFILE("SetNewDestinationAsEntity");
 
 	DiscardMove();
 
@@ -1135,22 +1133,23 @@ bool CCmpUnitMotion::MoveToTargetRange(entity_id_t target, entity_pos_t minRange
 	{
 		// The target didn't have an obstruction or obstruction shape, so treat it as a point instead
 
+		// TODO: this is actually somewhat incorrect since it ignores that we're tracking an entity, even though most
+		// entities nowadays have an obstruction so the bug is probably not too obvious.
 		CmpPtr<ICmpPosition> cmpTargetPosition(GetSimContext(), target);
 		if (!cmpTargetPosition || !cmpTargetPosition->IsInWorld())
 			return false;
 
 		CFixedVector2D targetPos = cmpTargetPosition->GetPosition2D();
 
-		return MoveToPointRange(targetPos.X, targetPos.Y, minRange, maxRange);
+		return MoveToPointRange(targetPos.X, targetPos.Y, range);
 	}
 
 	/*
-	* If we're starting outside the maxRange, we need to move closer in.
-	* If we're starting inside the minRange, we need to move further out.
-	* These ranges are measured from the center of this entity to the edge of the target;
+	* If we're starting outside range, we need to move closer in.
+	* If we're starting inside range, we need to move further out.
+	*
+	* These ranges are measured from the edge of this entity (treated as a circle) to the edge of the target (treated as whatever it is);
 	* we add the goal range onto the size of the target shape to get the goal shape.
-	* (Then we extend it outwards/inwards by a little bit to be sure we'll end up
-	* within the right range, in case of minor numerical inaccuracies.)
 	*
 	* There's a bit of a problem with large square targets:
 	* the pathfinder only lets us move to goals that are squares, but the points an equal
