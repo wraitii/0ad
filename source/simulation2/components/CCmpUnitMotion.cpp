@@ -123,8 +123,7 @@ private:
 	private:
 		bool m_Valid = false;
 
-		entity_pos_t m_TargetMinRange;
-		entity_pos_t m_TargetMaxRange;
+		entity_pos_t m_TargetRange;
 
 		entity_id_t m_TargetEntity;
 		// pathfinder-compliant goal.
@@ -132,22 +131,19 @@ private:
 	public:
 		SMotionGoal() : m_Valid(false) {};
 
-		SMotionGoal(PathGoal& goal, entity_pos_t minRange, entity_pos_t maxRange)
+		SMotionGoal(PathGoal& goal, entity_pos_t range)
 		{
 			m_TargetEntity = INVALID_ENTITY;
-
-			m_TargetMinRange = minRange;
-			m_TargetMaxRange = maxRange;
+			m_TargetRange = range;
 
 			m_Goal = goal;
 			m_Valid = true;
 		}
 
-		SMotionGoal(const CSimContext& context, entity_id_t target, PathGoal& goal, entity_pos_t minRange, entity_pos_t maxRange)
+		SMotionGoal(const CSimContext& context, entity_id_t target, PathGoal& goal, entity_pos_t range)
 		{
 			m_TargetEntity = target;
-			m_TargetMinRange = minRange;
-			m_TargetMaxRange = maxRange;
+			m_TargetRange = range;
 
 			m_Goal = goal;
 			m_Valid = true;
@@ -160,8 +156,7 @@ private:
 		{
 			serialize.Bool("valid", m_Valid);
 
-			serialize.NumberFixed_Unbounded("target min range", m_TargetMinRange);
-			serialize.NumberFixed_Unbounded("target max range", m_TargetMaxRange);
+			serialize.NumberFixed_Unbounded("target range", m_TargetRange);
 
 			serialize.NumberU32_Unbounded("target entity", m_TargetEntity);
 
@@ -176,8 +171,7 @@ private:
 		bool Valid() const { return m_Valid; }
 		void Clear() { m_Valid = false; }
 
-		entity_pos_t MinRange() const { return m_TargetMinRange; };
-		entity_pos_t MaxRange() const { return m_TargetMaxRange; };
+		entity_pos_t Range() const { return m_TargetRange; };
 
 		CFixedVector2D Pos() const { return CFixedVector2D(m_Goal.x, m_Goal.z); }
 		entity_pos_t X() const { return m_Goal.x; }
@@ -198,7 +192,7 @@ private:
 
 		bool IsNotAPoint() const
 		{
-			return m_TargetMaxRange > fixed::Zero() || m_Goal.type != PathGoal::POINT;
+			return m_TargetRange > fixed::Zero() || m_Goal.type != PathGoal::POINT;
 		}
 	};
 
@@ -827,10 +821,10 @@ void CCmpUnitMotion::Move(fixed dt)
 			bool inRange = false;
 			if (m_CurrentGoal.TargetIsEntity())
 				inRange = cmpObstructionManager->IsInTargetRange(m_Path.m_Waypoints.back().x, m_Path.m_Waypoints.back().z,
-																 m_CurrentGoal.GetEntity(), m_CurrentGoal.MinRange(), m_CurrentGoal.MaxRange());
+																 m_CurrentGoal.GetEntity(), m_CurrentGoal.Range(), m_CurrentGoal.Range());
 			else
 				inRange = cmpObstructionManager->IsInPointRange(m_Path.m_Waypoints.back().x, m_Path.m_Waypoints.back().z,
-																m_CurrentGoal.X(), m_CurrentGoal.Z(), m_CurrentGoal.MinRange(), m_CurrentGoal.MaxRange());
+																m_CurrentGoal.X(), m_CurrentGoal.Z(), m_CurrentGoal.Range(), m_CurrentGoal.Range());
 			if (inRange)
 			{
 				m_Path.m_Waypoints.clear();
@@ -912,10 +906,20 @@ void CCmpUnitMotion::Move(fixed dt)
 // In particular maybe we should support some "margin" for error.
 bool CCmpUnitMotion::ShouldConsiderOurselvesAtDestination(SMotionGoal& goal)
 {
+	CmpPtr<ICmpPosition> cmpPosition(GetEntityHandle());
+	if (!cmpPosition)
+		return false;
+
+	CmpPtr<ICmpObstructionManager> cmpObstructionManager(GetSystemEntity());
+	if (!cmpObstructionManager)
+		return true; // what's a sane default here?
+
+	CFixedVector2D pos = cmpPosition->GetPosition2D();
+
 	if (goal.TargetIsEntity())
-		return IsInTargetRange(goal.GetEntity(), goal.MinRange(), goal.MaxRange());
+		return cmpObstructionManager->IsInTargetRange(pos.X, pos.Y, goal.GetEntity(), goal.Range(), goal.Range() + m_Clearance.Multiply(fixed::FromInt(3)/2));
 	else
-		return IsInPointRange(goal.X(), goal.Z(), goal.MinRange(), goal.MaxRange());
+		return cmpObstructionManager->IsInPointRange(pos.X, pos.Y, goal.X(), goal.Z(), goal.Range(), goal.Range() + m_Clearance.Multiply(fixed::FromInt(3)/2));
 }
 
 bool CCmpUnitMotion::PathIsShort(const WaypointPath& path, const CFixedVector2D& from, entity_pos_t minDistance) const
@@ -1141,7 +1145,7 @@ bool CCmpUnitMotion::SetNewDestinationAsEntity(entity_id_t target, entity_pos_t 
 
 		CFixedVector2D targetPos = cmpTargetPosition->GetPosition2D();
 
-		return MoveToPointRange(targetPos.X, targetPos.Y, range);
+		return SetNewDestinationAsPosition(targetPos.X, targetPos.Y, range);
 	}
 
 	/*
@@ -1181,16 +1185,16 @@ bool CCmpUnitMotion::SetNewDestinationAsEntity(entity_id_t target, entity_pos_t 
 	entity_pos_t previousDistance = Geometry::DistanceToSquare(pos - CFixedVector2D(previousObstruction.x, previousObstruction.z), obstruction.u, obstruction.v, halfSize, true);
 
 	bool inside = distance.IsZero() && !Geometry::DistanceToSquare(pos - CFixedVector2D(obstruction.x, obstruction.z), obstruction.u, obstruction.v, halfSize).IsZero();
-	if ((distance < minRange && previousDistance < minRange) || inside)
+	if ((distance < range && previousDistance < range) || inside)
 	{
 		// Too close to the square - need to move away
 
 		// Circumscribe the square
 		entity_pos_t circleRadius = halfSize.Length();
 
-		entity_pos_t goalDistance = minRange + Pathfinding::GOAL_DELTA;
+		entity_pos_t goalDistance = range;
 
-		if (Geometry::ShouldTreatTargetAsCircle(minRange, circleRadius))
+		if (Geometry::ShouldTreatTargetAsCircle(range, circleRadius))
 		{
 			// The target is small relative to our range, so pretend it's a circle
 			goal.type = PathGoal::INVERTED_CIRCLE;
@@ -1205,7 +1209,7 @@ bool CCmpUnitMotion::SetNewDestinationAsEntity(entity_id_t target, entity_pos_t 
 			goal.hh = obstruction.hh + goalDistance;
 		}
 	}
-	else if (maxRange < entity_pos_t::Zero() || distance < maxRange || previousDistance < maxRange)
+	else if (range < entity_pos_t::Zero() || distance < range || previousDistance < range)
 	{
 		// We're already in range - no need to move anywhere
 		FaceTowardsPointFromPos(pos, goal.x, goal.z);
@@ -1218,7 +1222,7 @@ bool CCmpUnitMotion::SetNewDestinationAsEntity(entity_id_t target, entity_pos_t 
 		// Circumscribe the square
 		entity_pos_t circleRadius = halfSize.Length();
 
-		if (Geometry::ShouldTreatTargetAsCircle(maxRange, circleRadius))
+		if (Geometry::ShouldTreatTargetAsCircle(range, circleRadius))
 		{
 			// The target is small relative to our range, so pretend it's a circle
 
@@ -1228,7 +1232,7 @@ bool CCmpUnitMotion::SetNewDestinationAsEntity(entity_id_t target, entity_pos_t 
 			entity_pos_t circleDistance = (pos - CFixedVector2D(obstruction.x, obstruction.z)).Length() - circleRadius;
 			entity_pos_t previousCircleDistance = (pos - CFixedVector2D(previousObstruction.x, previousObstruction.z)).Length() - circleRadius;
 
-			if (circleDistance < maxRange || previousCircleDistance < maxRange)
+			if (circleDistance < range || previousCircleDistance < range)
 			{
 				// We're already in range - no need to move anywhere
 				if (m_FacePointAfterMove)
@@ -1236,7 +1240,7 @@ bool CCmpUnitMotion::SetNewDestinationAsEntity(entity_id_t target, entity_pos_t 
 				return false;
 			}
 
-			entity_pos_t goalDistance = maxRange - Pathfinding::GOAL_DELTA;
+			entity_pos_t goalDistance = range;
 
 			goal.type = PathGoal::CIRCLE;
 			goal.hw = circleRadius + goalDistance;
@@ -1246,7 +1250,7 @@ bool CCmpUnitMotion::SetNewDestinationAsEntity(entity_id_t target, entity_pos_t 
 			// The target is large relative to our range, so treat it as a square and
 			// get close enough that the diagonals come within range
 
-			entity_pos_t goalDistance = (maxRange - Pathfinding::GOAL_DELTA)*2 / 3; // multiply by slightly less than 1/sqrt(2)
+			entity_pos_t goalDistance = (range)*2 / 3; // multiply by slightly less than 1/sqrt(2)
 
 			goal.type = PathGoal::SQUARE;
 			goal.u = obstruction.u;
@@ -1258,9 +1262,9 @@ bool CCmpUnitMotion::SetNewDestinationAsEntity(entity_id_t target, entity_pos_t 
 	}
 
 	if (target == INVALID_ENTITY)
-		m_Destination = SMotionGoal(goal, minRange, maxRange);
+		m_Destination = SMotionGoal(goal, range);
 	else
-		m_Destination = SMotionGoal(GetSimContext(), target, goal, minRange, maxRange);
+		m_Destination = SMotionGoal(GetSimContext(), target, goal, range);
 
 	m_CurrentGoal = m_Destination;
 
@@ -1268,37 +1272,6 @@ bool CCmpUnitMotion::SetNewDestinationAsEntity(entity_id_t target, entity_pos_t 
 
 	return true;
 }
-
-bool CCmpUnitMotion::IsInPointRange(entity_pos_t x, entity_pos_t z, entity_pos_t minRange, entity_pos_t maxRange)
-{
-	CmpPtr<ICmpPosition> cmpPosition(GetEntityHandle());
-	if (!cmpPosition)
-		return false;
-
-	CmpPtr<ICmpObstructionManager> cmpObstructionManager(GetSystemEntity());
-	if (!cmpObstructionManager)
-		return true; // what's a sane default here?
-
-	CFixedVector2D pos = cmpPosition->GetPosition2D();
-
-	return cmpObstructionManager->IsInPointRange(pos.X, pos.Y, x, z, minRange, maxRange + m_Clearance.Multiply(fixed::FromInt(3)/2));
-}
-
-bool CCmpUnitMotion::IsInTargetRange(entity_id_t target, entity_pos_t minRange, entity_pos_t maxRange)
-{
-	CmpPtr<ICmpPosition> cmpPosition(GetEntityHandle());
-	if (!cmpPosition)
-		return false;
-
-	CmpPtr<ICmpObstructionManager> cmpObstructionManager(GetSystemEntity());
-	if (!cmpObstructionManager)
-		return true; // what's a sane default here?
-
-	CFixedVector2D pos = cmpPosition->GetPosition2D();
-
-	return cmpObstructionManager->IsInTargetRange(pos.X, pos.Y, target, minRange, maxRange + m_Clearance.Multiply(fixed::FromInt(3)/2));
-}
-
 
 void CCmpUnitMotion::RenderPath(const WaypointPath& path, std::vector<SOverlayLine>& lines, CColor color)
 {
