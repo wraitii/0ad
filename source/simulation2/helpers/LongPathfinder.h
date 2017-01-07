@@ -164,6 +164,10 @@ public:
 	LongPathfinder();
 	~LongPathfinder();
 
+#ifdef TEST
+	HierarchicalPathfinder& GetHierarchicalPathfinder() { return m_PathfinderHier; }
+#endif
+
 	void SetDebugOverlay(bool enabled);
 
 	void SetHierDebugOverlay(bool enabled, const CSimContext *simContext)

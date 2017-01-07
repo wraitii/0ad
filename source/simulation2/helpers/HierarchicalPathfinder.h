@@ -24,6 +24,9 @@
 #include "Render.h"
 #include "graphics/SColor.h"
 
+#include <boost/container/flat_map.hpp>
+#include <boost/container/flat_set.hpp>
+
 /**
  * Hierarchical pathfinder.
  *
@@ -42,19 +45,29 @@
  * region and then doing a relatively small graph search.
  */
 
+#ifdef TEST
+class TestCmpPathfinder;
+#endif
+
 class HierarchicalOverlay;
 
 class HierarchicalPathfinder
 {
+#ifdef TEST
+	friend class TestCmpPathfinder;
+#endif
 public:
+	typedef u32 GlobalRegionID;
+
 	struct RegionID
 	{
 		u8 ci, cj; // chunk ID
 		u16 r; // unique-per-chunk local region ID
 
+		RegionID() : ci(0), cj(0), r(0) { }
 		RegionID(u8 ci, u8 cj, u16 r) : ci(ci), cj(cj), r(r) { }
 
-		bool operator<(RegionID b) const
+		bool operator<(const RegionID& b) const
 		{
 			// Sort by chunk ID, then by per-chunk region ID
 			if (ci < b.ci)
@@ -68,7 +81,21 @@ public:
 			return r < b.r;
 		}
 
-		bool operator==(RegionID b) const
+		bool operator>(const RegionID& b) const
+		{
+			// Sort by chunk ID, then by per-chunk region ID
+			if (ci < b.ci)
+				return false;
+			if (b.ci < ci)
+				return true;
+			if (cj < b.cj)
+				return false;
+			if (b.cj < cj)
+				return true;
+			return r > b.r;
+		}
+
+		bool operator==(const RegionID& b) const
 		{
 			return ((ci == b.ci) && (cj == b.cj) && (r == b.r));
 		}
@@ -89,6 +116,7 @@ public:
 	bool IsChunkDirty(int ci, int cj, const Grid<u8>& dirtinessGrid) const;
 
 	RegionID Get(u16 i, u16 j, pass_class_t passClass);
+	GlobalRegionID GetGlobalRegion(u16 i, u16 j, pass_class_t passClass);
 
 	/**
 	 * Updates @p goal so that it's guaranteed to be reachable from the navcell
@@ -101,6 +129,8 @@ public:
 	 * at the reachable navcell of the goal which is nearest to the starting navcell.
 	 */
 	void MakeGoalReachable(u16 i0, u16 j0, PathGoal& goal, pass_class_t passClass);
+	// TODO: remove this and rename it MakeGoalReachable
+	void MakeGoalReachable_Astar(u16 i0, u16 j0, PathGoal& goal, pass_class_t passClass);
 
 	/**
 	 * Updates @p i, @p j (which is assumed to be an impassable navcell)
@@ -154,6 +184,24 @@ private:
 
 	void FindPassableRegions(std::set<RegionID>& regions, pass_class_t passClass);
 
+	void FindGoalRegions(u16 gi, u16 gj, const PathGoal& goal, std::set<RegionID>& regions, pass_class_t passClass);
+
+	/*
+	 * Implementations of A* to make a goal reachable. Called by MakeGoalReachable
+	 * There are two cases: if the goal is known to be reachable, and if the goal is known to be unreachable (but we can try to get close).
+	 * We reuse flat_XX containers so as to have good cache locality and avoid the cost of allocating memory. Flat_XX implementa  map/set as a sorted vector
+	 */
+	boost::container::flat_map<RegionID, HierarchicalPathfinder::RegionID> m_Astar_Predecessor;
+	boost::container::flat_map<RegionID, int> m_Astar_GScore;
+	boost::container::flat_map<RegionID, int> m_Astar_FScore;
+	boost::container::flat_set<RegionID> m_Astar_ClosedNodes;
+	boost::container::flat_set<RegionID> m_Astar_OpenNodes;
+
+	inline int DistBetween(const RegionID& a, const RegionID& b)
+	{
+		return (abs(a.ci - b.ci) + abs(a.cj - b.cj)) * CHUNK_SIZE - 30;
+	};
+
 	/**
 	 * Updates @p iGoal and @p jGoal to the navcell that is the nearest to the
 	 * initial goal coordinates, in one of the given @p regions.
@@ -173,6 +221,9 @@ private:
 	std::map<pass_class_t, std::vector<Chunk> > m_Chunks;
 
 	std::map<pass_class_t, EdgesMap> m_Edges;
+
+	std::map<pass_class_t, std::map<RegionID, GlobalRegionID>> m_GlobalRegions;
+	std::vector<GlobalRegionID> m_AvailableGlobalRegionIDs;
 
 	// Passability classes for which grids will be updated when calling Update
 	std::map<std::string, pass_class_t> m_PassClassMasks;

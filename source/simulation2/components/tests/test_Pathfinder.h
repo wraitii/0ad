@@ -19,6 +19,7 @@
 
 #include "simulation2/components/ICmpObstructionManager.h"
 #include "simulation2/components/ICmpPathfinder.h"
+#include "simulation2/components/CCmpPathfinder_Common.h"
 
 #include "graphics/MapReader.h"
 #include "graphics/Terrain.h"
@@ -283,6 +284,367 @@ public:
 		stream << "<rect fill='url(#grid)' width='100%' height='100%'/>\n";
 		stream << "</g>\n";
 		stream << "</svg>\n";
+	}
+
+	static const size_t scale = 1;
+
+	void MakeGoalReachable_testIteration(CStr& map, u16 sx, u16 sz, u16 gx, u16 gz)
+	{
+		int colors[26][3] = {
+			{ 255, 0, 0 },
+			{ 0, 255, 0 },
+			{ 0, 0, 255 },
+			{ 255, 255, 0 },
+			{ 255, 0, 255 },
+			{ 0, 255, 255 },
+			{ 255, 255, 255 },
+
+			{ 127, 0, 0 },
+			{ 0, 127, 0 },
+			{ 0, 0, 127 },
+			{ 127, 127, 0 },
+			{ 127, 0, 127 },
+			{ 0, 127, 127 },
+			{ 127, 127, 127},
+
+			{ 255, 127, 0 },
+			{ 127, 255, 0 },
+			{ 255, 0, 127 },
+			{ 127, 0, 255},
+			{ 0, 255, 127 },
+			{ 0, 127, 255},
+			{ 255, 127, 127},
+			{ 127, 255, 127},
+			{ 127, 127, 255},
+
+			{ 127, 255, 255 },
+			{ 255, 127, 255 },
+			{ 255, 255, 127 },
+		};
+
+		// Load up a map, dump hierarchical regions
+		// From a few positions test making a few positions reachable.
+		// Check performance and output results as svg files so user can verify sanity.
+
+		CTerrain terrain;
+
+		CSimulation2 sim2(NULL, g_ScriptRuntime, &terrain);
+		sim2.LoadDefaultScripts();
+		sim2.ResetState();
+
+		CMapReader* mapReader = new CMapReader(); // it'll call "delete this" itself
+
+		LDR_BeginRegistering();
+		mapReader->LoadMap(map.FromUTF8(),
+						   sim2.GetScriptInterface().GetJSRuntime(), JS::UndefinedHandleValue,
+						   &terrain, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+						   &sim2, &sim2.GetSimContext(), -1, false);
+		LDR_EndRegistering();
+		TS_ASSERT_OK(LDR_NonprogressiveLoad());
+
+		sim2.Update(0);
+
+		map.Replace(".pmp",""); map.Replace("/","");
+		CStr path("MGR_" + map + "_"  + CStr::FromUInt(sx) + "_"   + CStr::FromUInt(sz) + "_" + CStr::FromUInt(gx) + "_" + CStr::FromUInt(gz) + ".html");
+		std::cout << path << std::endl;
+		std::ofstream stream(OsString(path).c_str(), std::ofstream::out | std::ofstream::trunc);
+
+		CmpPtr<ICmpObstructionManager> cmpObstructionManager(sim2, SYSTEM_ENTITY);
+		CmpPtr<ICmpPathfinder> cmpPathfinder(sim2, SYSTEM_ENTITY);
+
+		pass_class_t obstructionsMask = cmpPathfinder->GetPassabilityClass("default");
+		const Grid<NavcellData>& obstructions = cmpPathfinder->GetPassabilityGrid();
+
+		// Dump as canvas. This is terrible code but who cares.
+		stream << "<!DOCTYPE html>\n";
+		stream << "<head>\n"
+					"<style>\n"
+						"canvas { position:absolute; left:0px; top: 0px; }"
+						"canvas #hier { opacity:0.5; }"
+						"input[type=\"checkbox\"] { height: 50px; width:50px; background:red; -webkit-appearance:none; }input[type=\"checkbox\"]:checked { background:blue; }"
+						"p.pixel { z-index:20000; display:block; position:absolute; width: " << scale << "px; height: " << scale << "px;}"
+					"</style>\n"
+				  "</head>\n"
+				  "<body>";
+
+		stream << "<p style='z-index: 200; background: white; position: absolute;transform:scale(2); transform-origin:0 0;'>\n";
+		stream << "<input type='checkbox' checked='true' id='gridcb' onchange=\"var checked = document.getElementById('gridcb').checked; document.getElementById('grid').style.display = checked ? 'block' :' none';\">Display Grid</input>";
+		stream << "<input type='checkbox' checked='true' id='hiercb' onchange=\"var checked = document.getElementById('hiercb').checked; document.getElementById('hier').style.display = checked ? 'block' :' none';\">Display Hierarchical grid </input>";
+		stream << "<input type='checkbox' checked='true' id='hier2cb' onchange=\"var checked = document.getElementById('hier2cb').checked; document.getElementById('hier2').style.display = checked ? 'block' :' none';\">Display Global Regions </input>";
+		stream << "<input type='checkbox' checked='true' id='pathcb' onchange=\"var checked = document.getElementById('pathcb').checked; document.getElementById('path').style.display = checked ? 'block' :' none';\">Display Path search </input>";
+		stream << "<input type='checkbox' checked='true' id='path2cb' onchange=\"var checked = document.getElementById('path2cb').checked; document.getElementById('path2').style.display = checked ? 'block' :' none';\">Display path lookups </input>";
+		stream << "<input id='scaleinput' type='number' value='1' onchange=\"var nscale = +document.getElementById('scaleinput').value; scale=nscale; printGrid(scale);printHier(scale);\">";
+		stream << "<input id='totoro' type='range' min='0' max='100' value='1' oninput=\"var nscale = +document.getElementById('totoro').value; printPath(scale, nscale);\">\n";
+		stream << "</p>";
+
+		stream << "<canvas id='grid' width='" << obstructions.m_W*scale << "' height='" << obstructions.m_H*scale << "'></canvas>";
+
+		// set up grid
+		stream << "<script>"
+					"var scale = " << scale << ";\n"
+					"function printGrid(scale) {\n"
+					"var grid = document.getElementById('grid');\n"
+					"grid.width = scale * " << obstructions.m_W << ";"
+					"grid.height = scale * " << obstructions.m_H << ";"
+					"var context = grid.getContext('2d');"
+					"context.clearRect(0, 0, grid.width, grid.height);"
+					"context.fillStyle = '#000000';\n";
+		for (u16 j = 0; j < obstructions.m_H; ++j)
+			for (u16 i = 0; i < obstructions.m_W; i++)
+				if (obstructions.get(i, j) & obstructionsMask)
+				{
+					u16 i1 = i;
+					for (; i1 < obstructions.m_W; i1++)
+						if (!(obstructions.get(i1, j) & obstructionsMask))
+							break;
+					stream << "context.fillRect(" << i << " * scale," << j << " * scale," << (i1 - i) << " * scale, scale);\n";
+					i = i1 - 1;
+				}
+		stream << "};";
+		stream << "printGrid(scale)";
+		stream << "</script>\n";
+
+		// Dump hierarchical regions on another one.
+		stream << "<canvas id='hier' width='" << obstructions.m_W*scale << "' height='" << obstructions.m_H*scale << "'></canvas>";
+		stream << "<canvas id='hier2' width='" << obstructions.m_W*scale << "' height='" << obstructions.m_H*scale << "'></canvas>";
+
+		HierarchicalPathfinder& hier = ((CCmpPathfinder*)cmpPathfinder.operator->())->m_LongPathfinder.GetHierarchicalPathfinder();
+
+		stream << "<script>"
+		"function printHier(scale) {\n"
+		"var hier = document.getElementById('hier');\n"
+		"hier.width = scale * " << obstructions.m_W << ";"
+		"hier.height = scale * " << obstructions.m_H << ";"
+		"var context = hier.getContext('2d');"
+		"context.clearRect(0, 0, hier.width, hier.height);"
+		"context.fillStyle = '#000000';\n";
+		for (u16 j = 0; j < obstructions.m_H; ++j)
+			for (u16 i = 0; i < obstructions.m_W; i++)
+			{
+				u16 st = hier.Get(i, j, obstructionsMask).r;
+				u16 ci = i / hier.CHUNK_SIZE;
+				u16 cj = j / hier.CHUNK_SIZE;
+				u16 i1 = i;
+				for (; i1 < obstructions.m_W; ++i1)
+					if (hier.Get(i1, j, obstructionsMask).r != st || i1 / hier.CHUNK_SIZE != ci)
+						break;
+
+				if (st == 0)
+					stream << "context.fillStyle = 'rgba(0,0,0,1.0)';\n";
+				else if (st == 0xFFFF)
+					stream << "context.fillStyle = 'rgba(255,0,255,0.5)';\n";
+				else
+				{
+					size_t c = (st + ci*5 + cj*7) % ARRAY_SIZE(colors);
+					stream << "context.fillStyle = 'rgba("<<colors[c][0]<<","<<colors[c][1]<<","<<colors[c][2]<<",1.0)';\n";
+				}
+				stream << "context.fillRect(" << i << " * scale," << j << " * scale," << (i1 - i) << " * scale, scale);\n";
+				i = i1 - 1;
+			}
+		stream << "};";
+		stream << "printHier(scale);\n"
+		"function printHier2(scale) {\n"
+		"var hier2 = document.getElementById('hier2');\n"
+		"hier2.width = scale * " << obstructions.m_W << ";"
+		"hier2.height = scale * " << obstructions.m_H << ";"
+		"var context = hier2.getContext('2d');"
+		"context.clearRect(0, 0, hier2.width, hier2.height);"
+		"context.fillStyle = '#000000';\n";
+		for (u16 j = 0; j < obstructions.m_H; ++j)
+			for (u16 i = 0; i < obstructions.m_W; i++)
+			{
+				u32 globalID = hier.GetGlobalRegion(i,j,obstructionsMask);
+				u16 i1 = i;
+				for (; i1 < obstructions.m_W; ++i1)
+					if (hier.GetGlobalRegion(i1,j,obstructionsMask) != globalID)
+						break;
+
+				if (globalID == 0)
+					stream << "context.fillStyle = 'rgba(0,0,0,1.0)';\n";
+				else
+				{
+					size_t c = globalID % ARRAY_SIZE(colors);
+					stream << "context.fillStyle = 'rgba("<<colors[c][0]<<","<<colors[c][1]<<","<<colors[c][2]<<",1.0)';\n";
+				}
+				stream << "context.fillRect(" << i << " * scale," << j << " * scale," << (i1 - i) << " * scale, scale);\n";
+				i = i1 - 1;
+			}
+		stream << "};";
+		stream << "printHier2(scale)";
+		stream << "</script>\n";
+
+		// Ok let's check out MakeGoalReachable
+		// pick a point
+		fixed X,Z;
+		X = fixed::FromInt(sx);
+		Z = fixed::FromInt(sz);
+		u16 gridSize = obstructions.m_W;
+		// Convert the start coordinates to tile indexes
+		u16 i0, j0;
+		Pathfinding::NearestNavcell(X, Z, i0, j0, gridSize, gridSize);
+
+		// Dump as HTML so that it's on top and add fancy shadows so it's easy to see.
+		stream << "<p class='pixel' style='z-index:500000; border-radius:100%;box-shadow: 0 0 0 10px green, 0 0 0 12px black; left:" << i0 * scale << "px; top:" << j0 * scale << "px;'></p>";
+
+		hier.FindNearestPassableNavcell(i0, j0, obstructionsMask);
+		stream << "<p class='pixel' style='border-radius:100%;box-shadow: 0 0 0 20px blue, 0 0 0 22px red; left:" << i0 * scale << "px; top:" << j0 * scale << "px;'></p>";
+
+		// Make the goal reachable. This includes shortening the path if the goal is in a non-passable
+		// region, transforming non-point goals to reachable point goals, etc.
+
+		PathGoal goal;
+		goal.type = PathGoal::POINT;
+		goal.x = fixed::FromInt(gx);
+		goal.z = fixed::FromInt(gz);
+		goal.u = CFixedVector2D(fixed::FromInt(1), fixed::Zero());
+		goal.v = CFixedVector2D(fixed::Zero(),fixed::FromInt(1));
+		goal.hh = fixed::FromInt(0);
+		goal.hw = fixed::FromInt(0);
+
+		u16 i1, j1;
+		Pathfinding::NearestNavcell(goal.x, goal.z, i1, j1, gridSize, gridSize);
+		stream << "<p class='pixel' style='z-index:500000; border-radius:100%;box-shadow: 0 0 0 10px red, 0 0 0 12px white; left:" << i1 * scale << "px; top:" << j1 * scale << "px;'></p>";
+
+		PathGoal goalCopy = goal;
+		hier.MakeGoalReachable(i0, j0, goalCopy, obstructionsMask);
+
+		Pathfinding::NearestNavcell(goalCopy.x, goalCopy.z, i1, j1, gridSize, gridSize);
+		stream << "<p class='pixel' style='border-radius:100%;box-shadow: 0 0 0 20px blue, 0 0 0 25px red; left:" << i1 * scale << "px; top:" << j1 * scale << "px;'></p>";
+
+
+		stream << "<canvas id='path' width='" << obstructions.m_W*scale << "' height='" << obstructions.m_H*scale << "'></canvas>";
+		stream << "<canvas id='path2' width='" << obstructions.m_W*scale << "' height='" << obstructions.m_H*scale << "'></canvas>";
+
+		stream << "<script>"
+		"var maxStep = 0;"
+		"function printPath(scale, step) {\n"
+		"var path = document.getElementById('path');\n"
+		"path.width = scale * " << obstructions.m_W << ";"
+		"path.height = scale * " << obstructions.m_H << ";"
+		"var context = path.getContext('2d');"
+		"context.clearRect(0, 0, path.width, path.height);"
+		"var path2 = document.getElementById('path2');\n"
+		"path2.width = scale * " << obstructions.m_W << ";"
+		"path2.height = scale * " << obstructions.m_H << ";"
+		"var context2 = path2.getContext('2d');"
+		"context2.clearRect(0, 0, path2.width, path2.height);";
+
+		goalCopy = goal;
+		hier.MakeGoalReachable_Astar(i0, j0, goalCopy, obstructionsMask, stream);
+
+		stream << "};";
+		stream << "printPath(scale,10000);";
+		stream << "document.getElementById('totoro').max = maxStep";
+		stream << "</script>\n";
+
+		Pathfinding::NearestNavcell(goalCopy.x, goalCopy.z, i1, j1, gridSize, gridSize);
+		stream << "<p class='pixel' style='border-radius:100%;box-shadow: 0 0 0 20px green, 0 0 0 25px red; left:" << i1 * scale << "px; top:" << j1 * scale << "px;'></p>";
+
+		// Perf test. This is a little primitive, but should work well enough to give an idea of the algo.
+
+		double t = timer_Time();
+
+		srand(1234);
+		for (size_t j = 0; j < 10000; ++j)
+		{
+			PathGoal oldGoal = goal;
+			hier.MakeGoalReachable(i0, j0, goal, obstructionsMask);
+			goal = oldGoal;
+		}
+
+		t = timer_Time() - t;
+		printf("\nPoint Only  Goal old:  [%f]\n", t);
+
+		std::ofstream ostr(OsString("out.html").c_str(), std::ofstream::out | std::ofstream::trunc);
+
+		t = timer_Time();
+		for (size_t j = 0; j < 10000; ++j)
+		{
+			PathGoal oldGoal = goal;
+			hier.MakeGoalReachable_Astar(i0, j0, goal, obstructionsMask, ostr);
+			goal = oldGoal;
+		}
+
+		t = timer_Time() - t;
+		printf("\nPoint Only  Goal new:  [%f]\n", t);
+
+
+		// Replace the point with a small circle: this prevents the flood fill from early-exiting
+		// whereas A* can perform about the same.
+		goal.type = PathGoal::CIRCLE;
+		goal.hh = fixed::FromInt(1);
+		goal.hw = fixed::FromInt(1);
+
+		t = timer_Time();
+
+		srand(1234);
+		for (size_t j = 0; j < 10000; ++j)
+		{
+			PathGoal oldGoal = goal;
+			hier.MakeGoalReachable(i0, j0, goal, obstructionsMask);
+			goal = oldGoal;
+		}
+
+		t = timer_Time() - t;
+		printf("\nSmall Circle Goal old:  [%f]\n", t);
+
+		t = timer_Time();
+		for (size_t j = 0; j < 10000; ++j)
+		{
+			PathGoal oldGoal = goal;
+			hier.MakeGoalReachable_Astar(i0, j0, goal, obstructionsMask, ostr);
+			goal = oldGoal;
+		}
+
+		t = timer_Time() - t;
+		printf("\nSmall Circle Goal new:  [%f]\n\n\n", t);
+
+		stream << "</body>\n";
+	}
+
+	void test_MakeGoalReachable_performance()
+	{
+		struct test
+		{
+			CStr map;
+			u16 sx;
+			u16 sz;
+			u16 gx;
+			u16 gz;
+		};
+		/*
+		 * Compare performance on a few cases:
+		 * - short path, good case for the flood fill (it finds immediately the point/circle and stops)
+		 * - short path, bad case for the flood fill (it will not find the correct region right away, so it's literally about 100x slower than the former)
+		 * - long path around the bend, close to worst-case for A*
+		 * - Long unreachable path, but the "closest point" is reachable in almost a straight direction.
+		 * - Inverse of the former (the region to fill is much smaller)
+		 * - large island, A* still has a lot to fill here
+		 * - straight with obstructions
+		 * - straight, fewer obstructions
+		 * - bad case (U shape around the start containing A*)
+		 * - bad case: U shape + unreachable. We need to return something reasonably close, not in the first U
+		 * - bad calse: two U shapes tripping A*
+		 */
+		std::vector<test> maps = {
+			{ "maps/scenarios/Peloponnese.pmp", 600, 800, 800, 800 },
+			{ "maps/scenarios/Peloponnese.pmp", 600, 800, 600, 900 },
+			{ "maps/scenarios/Peloponnese.pmp", 600, 800, 770, 1400 },
+			{ "maps/scenarios/Peloponnese.pmp", 1000, 300, 1500, 1450 },
+			{ "maps/scenarios/Peloponnese.pmp", 1500, 1450, 1000, 300 },
+			{ "maps/skirmishes/Corsica and Sardinia (4).pmp", 300, 1300, 1300, 300 },
+			{ "maps/skirmishes/Alpine_Mountains_(3).pmp", 200, 200, 800, 800 },
+			{ "maps/skirmishes/Corinthian Isthmus (2).pmp", 200, 200, 800, 800 },
+			{ "maps/skirmishes/Mediterranean Cove (2).pmp", 200, 200, 800, 800 },
+			{ "maps/skirmishes/Dueling Cliffs (3v3).pmp", 200, 200, 800, 800 },
+			{ "maps/skirmishes/Dueling Cliffs (3v3).pmp", 350, 200, 900, 900 },
+			{ "maps/skirmishes/Dueling Cliffs (3v3).pmp", 200, 200, 950, 950 },
+		};
+
+		for (auto t : maps)
+		{
+			MakeGoalReachable_testIteration(t.map, t.sx, t.sz, t.gx, t.gz);
+		}
 	}
 
 	void DumpPath(std::ostream& stream, int i0, int j0, int i1, int j1, CmpPtr<ICmpPathfinder>& cmpPathfinder)
