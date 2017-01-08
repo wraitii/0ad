@@ -64,7 +64,6 @@ public:
 		u8 ci, cj; // chunk ID
 		u16 r; // unique-per-chunk local region ID
 
-		RegionID() : ci(0), cj(0), r(0) { }
 		RegionID(u8 ci, u8 cj, u16 r) : ci(ci), cj(cj), r(r) { }
 
 		bool operator<(const RegionID& b) const
@@ -79,20 +78,6 @@ public:
 			if (b.cj < cj)
 				return false;
 			return r < b.r;
-		}
-
-		bool operator>(const RegionID& b) const
-		{
-			// Sort by chunk ID, then by per-chunk region ID
-			if (ci < b.ci)
-				return false;
-			if (b.ci < ci)
-				return true;
-			if (cj < b.cj)
-				return false;
-			if (b.cj < cj)
-				return true;
-			return r > b.r;
 		}
 
 		bool operator==(const RegionID& b) const
@@ -160,7 +145,7 @@ private:
 	struct Chunk
 	{
 		u8 m_ChunkI, m_ChunkJ; // chunk ID
-		u16 m_NumRegions; // number of local region IDs (starting from 1)
+		std::vector<u16> m_RegionsID; // IDs of local region, without 0
 		u16 m_Regions[CHUNK_SIZE][CHUNK_SIZE]; // local region ID per navcell
 
 		cassert(CHUNK_SIZE*CHUNK_SIZE/2 < 65536); // otherwise we could overflow m_NumRegions with a checkerboard pattern
@@ -178,7 +163,8 @@ private:
 
 	typedef std::map<RegionID, std::set<RegionID> > EdgesMap;
 
-	void FindEdges(u8 ci, u8 cj, pass_class_t passClass, EdgesMap& edges);
+	void RecomputeAllEdges(pass_class_t passClass, EdgesMap& edges);
+	void UpdateEdges(u8 ci, u8 cj, pass_class_t passClass, EdgesMap& edges);
 
 	void FindReachableRegions(RegionID from, std::set<RegionID>& reachable, pass_class_t passClass);
 

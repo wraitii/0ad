@@ -111,13 +111,12 @@ void HierarchicalPathfinder::Chunk::InitRegions(int ci, int cj, Grid<NavcellData
 	}
 
 	// Directly point the root ID
-	m_NumRegions = 0;
 	for (u16 i = 1; i < regionID+1; ++i)
 	{
-		if (connect[i] == i)
-			++m_NumRegions;
-		else
+		if (connect[i] != i)
 			connect[i] = RootID(i, connect);
+		if (std::find(m_RegionsID.begin(),m_RegionsID.end(), connect[i]) == m_RegionsID.end())
+			m_RegionsID.push_back(connect[i]);
 	}
 
 	// Replace IDs by the root ID
@@ -388,21 +387,14 @@ void HierarchicalPathfinder::Recompute(Grid<NavcellData>* grid,
 
 		// Construct the search graph over the regions
 		EdgesMap& edges = m_Edges[passClass];
-
-		for (int cj = 0; cj < m_ChunksH; ++cj)
-		{
-			for (int ci = 0; ci < m_ChunksW; ++ci)
-			{
-				FindEdges(ci, cj, passClass, edges);
-			}
-		}
+		RecomputeAllEdges(passClass, edges);
 
 		// Spread global regions.
 		std::map<RegionID, GlobalRegionID>& globalRegion = m_GlobalRegions[passClass];
 		globalRegion.clear();
 		for (u8 cj = 0; cj < m_ChunksH; ++cj)
 			for (u8 ci = 0; ci < m_ChunksW; ++ci)
-				for (u16 rid = 1; rid <= GetChunk(ci, cj, passClass).m_NumRegions; ++rid)
+				for (u16 rid : GetChunk(ci, cj, passClass).m_RegionsID)
 				{
 					RegionID reg{ci,cj,rid};
 					if (globalRegion.find(reg) == globalRegion.end())
@@ -433,9 +425,10 @@ void HierarchicalPathfinder::Update(Grid<NavcellData>* grid, const Grid<u8>& dir
 {
 	PROFILE3("Hierarchical Update");
 
-	for (int cj = 0; cj <  m_ChunksH; ++cj)
+	std::vector<RegionID> updated;
+	for (u8 cj = 0; cj <  m_ChunksH; ++cj)
 	{
-		for (int ci = 0; ci < m_ChunksW; ++ci)
+		for (u8 ci = 0; ci < m_ChunksW; ++ci)
 		{
 			if (!IsChunkDirty(ci, cj, dirtinessGrid))
 				continue;
@@ -443,50 +436,76 @@ void HierarchicalPathfinder::Update(Grid<NavcellData>* grid, const Grid<u8>& dir
 			{
 				pass_class_t passClass = passClassMask.second;
 				Chunk& a = m_Chunks[passClass].at(ci + cj*m_ChunksW);
+
+				// Clean up edges and global region ID
+				EdgesMap& edgeMap = m_Edges[passClass];
+				for (u16 i : a.m_RegionsID)
+				{
+					RegionID reg{ci, cj, i};
+					m_GlobalRegions[passClass].erase(reg);
+					for (const RegionID& neighbor : edgeMap[reg])
+					{
+						edgeMap[neighbor].erase(reg);
+						if (edgeMap[neighbor].empty())
+							edgeMap.erase(neighbor);
+					}
+					edgeMap.erase(reg);
+				}
+
+				// recompute
 				a.InitRegions(ci, cj, grid, passClass);
+
+				for (u16 i : a.m_RegionsID)
+					updated.push_back(RegionID{ci, cj, i});
+
+				// add back edges
+				UpdateEdges(ci, cj, passClass, edgeMap);
 			}
 		}
 	}
 
-	// TODO: Also be clever with edges
-	m_Edges.clear();
-	m_AvailableGlobalRegionIDs.clear();
-	m_AvailableGlobalRegionIDs.push_back(1);
-	for (const std::pair<std::string, pass_class_t>& passClassMask : m_PassClassMasks)
-	{
-		pass_class_t passClass = passClassMask.second;
-		EdgesMap& edges = m_Edges[passClass];
-
-		for (int cj = 0; cj < m_ChunksH; ++cj)
+	// Add back global region ID
+	// To try and be clever we'll run a custom flood-fill that stops as soon as it runs into something we know,
+	// and if nothing then we'll create a new global region.
+	// It also keeps track of all connected regions with no IDs in case of contiguous dirtiness (likely) to be faster if possible.
+	// This probably scales poorly with a large enough update?
+	for (const RegionID& reg : updated)
+		for (const std::pair<std::string, pass_class_t>& passClassMask : m_PassClassMasks)
 		{
-			for (int ci = 0; ci < m_ChunksW; ++ci)
+			std::set<RegionID> visited;
+			std::vector<RegionID> open;
+			std::vector<RegionID> updating = { reg };
+			open.push_back(reg);
+
+			GlobalRegionID ID = 0;
+			std::map<RegionID, GlobalRegionID>& globalRegion = m_GlobalRegions[passClassMask.second];
+			EdgesMap& edgeMap = m_Edges[passClassMask.second];
+			while (!open.empty() && ID == 0)
 			{
-				FindEdges(ci, cj, passClass, edges);
-			}
-		}
-
-		// Spread global regions.
-		std::map<RegionID, GlobalRegionID>& globalRegion = m_GlobalRegions[passClass];
-		globalRegion.clear();
-		for (u8 cj = 0; cj < m_ChunksH; ++cj)
-			for (u8 ci = 0; ci < m_ChunksW; ++ci)
-				for (u16 rid = 1; rid <= GetChunk(ci, cj, passClass).m_NumRegions; ++rid)
-				{
-					RegionID reg{ci,cj,rid};
-					if (globalRegion.find(reg) == globalRegion.end())
+				RegionID curr = open.back();
+				open.pop_back();
+				for (const RegionID& region : edgeMap[curr])
+					if (visited.insert(region).second)
 					{
-						GlobalRegionID ID = m_AvailableGlobalRegionIDs.back();
-						m_AvailableGlobalRegionIDs.pop_back();
-						if (m_AvailableGlobalRegionIDs.empty())
-							m_AvailableGlobalRegionIDs.push_back(ID+1);
-
-						globalRegion.insert({ reg, ID });
-						std::set<RegionID> reachable;
-						FindReachableRegions(reg, reachable, passClass);
-						for (const RegionID& region : reachable)
-							globalRegion.insert({ region, ID });
+						open.push_back(region);
+						if (globalRegion.find(region) != globalRegion.end())
+						{
+							ID = globalRegion.at(region);
+							break;
+						}
+						else
+							updating.push_back(region);
 					}
-				}
+			}
+			if (ID == 0)
+			{
+				ID = m_AvailableGlobalRegionIDs.back();
+				m_AvailableGlobalRegionIDs.pop_back();
+				if (m_AvailableGlobalRegionIDs.empty())
+					m_AvailableGlobalRegionIDs.push_back(ID+1);
+			}
+			for (const RegionID& reg : updating)
+				globalRegion[reg] = ID;
 	}
 
 	if (m_DebugOverlay)
@@ -515,21 +534,14 @@ bool HierarchicalPathfinder::IsChunkDirty(int ci, int cj, const Grid<u8>& dirtin
 }
 
 /**
- * Find edges between regions in this chunk and the adjacent below/left chunks.
+ * Connect a chunk's regions to their neighbors. Not optimised for global recomputing.
+ * TODO: reduce code duplication with below
  */
-void HierarchicalPathfinder::FindEdges(u8 ci, u8 cj, pass_class_t passClass, EdgesMap& edges)
+void HierarchicalPathfinder::UpdateEdges(u8 ci, u8 cj, pass_class_t passClass, EdgesMap& edges)
 {
 	std::vector<Chunk>& chunks = m_Chunks[passClass];
 
 	Chunk& a = chunks.at(cj*m_ChunksW + ci);
-
-	// For each edge between chunks, we loop over every adjacent pair of
-	// navcells in the two chunks. If they are both in valid regions
-	// (i.e. are passable navcells) then add a graph edge between those regions.
-	// (We don't need to test for duplicates since EdgesMap already uses a
-	// std::set which will drop duplicate entries.)
-	// But as set.insert can be quite slow on large collection, and that we usually
-	// try to insert the same values, we cache the previous one for a fast test.
 
 	if (ci > 0)
 	{
@@ -540,6 +552,27 @@ void HierarchicalPathfinder::FindEdges(u8 ci, u8 cj, pass_class_t passClass, Edg
 		{
 			RegionID ra = a.Get(0, j);
 			RegionID rb = b.Get(CHUNK_SIZE-1, j);
+			if (ra.r && rb.r)
+			{
+				if (ra == raPrev && rb == rbPrev)
+					continue;
+				edges[ra].insert(rb);
+				edges[rb].insert(ra);
+				raPrev = ra;
+				rbPrev = rb;
+			}
+		}
+	}
+
+	if (ci < m_ChunksW-1)
+	{
+		Chunk& b = chunks.at(cj*m_ChunksW + (ci+1));
+		RegionID raPrev(0,0,0);
+		RegionID rbPrev(0,0,0);
+		for (int j = 0; j < CHUNK_SIZE; ++j)
+		{
+			RegionID ra = a.Get(CHUNK_SIZE-1, j);
+			RegionID rb = b.Get(0, j);
 			if (ra.r && rb.r)
 			{
 				if (ra == raPrev && rb == rbPrev)
@@ -569,6 +602,95 @@ void HierarchicalPathfinder::FindEdges(u8 ci, u8 cj, pass_class_t passClass, Edg
 				edges[rb].insert(ra);
 				raPrev = ra;
 				rbPrev = rb;
+			}
+		}
+	}
+
+	if (cj < m_ChunksH - 1)
+	{
+		Chunk& b = chunks.at((cj+1)*m_ChunksW + ci);
+		RegionID raPrev(0,0,0);
+		RegionID rbPrev(0,0,0);
+		for (int i = 0; i < CHUNK_SIZE; ++i)
+		{
+			RegionID ra = a.Get(i, CHUNK_SIZE-1);
+			RegionID rb = b.Get(i, 0);
+			if (ra.r && rb.r)
+			{
+				if (ra == raPrev && rb == rbPrev)
+					continue;
+				edges[ra].insert(rb);
+				edges[rb].insert(ra);
+				raPrev = ra;
+				rbPrev = rb;
+			}
+		}
+	}
+}
+
+/**
+ * Find edges between regions in all chunks, in an optimised manner (only look at top/left)
+ */
+void HierarchicalPathfinder::RecomputeAllEdges(pass_class_t passClass, EdgesMap& edges)
+{
+	std::vector<Chunk>& chunks = m_Chunks[passClass];
+
+	edges.clear();
+
+	for (int cj = 0; cj < m_ChunksH; ++cj)
+	{
+		for (int ci = 0; ci < m_ChunksW; ++ci)
+		{
+			Chunk& a = chunks.at(cj*m_ChunksW + ci);
+
+			// For each edge between chunks, we loop over every adjacent pair of
+			// navcells in the two chunks. If they are both in valid regions
+			// (i.e. are passable navcells) then add a graph edge between those regions.
+			// (We don't need to test for duplicates since EdgesMap already uses a
+			// std::set which will drop duplicate entries.)
+			// But as set.insert can be quite slow on large collection, and that we usually
+			// try to insert the same values, we cache the previous one for a fast test.
+
+			if (ci > 0)
+			{
+				Chunk& b = chunks.at(cj*m_ChunksW + (ci-1));
+				RegionID raPrev(0,0,0);
+				RegionID rbPrev(0,0,0);
+				for (int j = 0; j < CHUNK_SIZE; ++j)
+				{
+					RegionID ra = a.Get(0, j);
+					RegionID rb = b.Get(CHUNK_SIZE-1, j);
+					if (ra.r && rb.r)
+					{
+						if (ra == raPrev && rb == rbPrev)
+							continue;
+						edges[ra].insert(rb);
+						edges[rb].insert(ra);
+						raPrev = ra;
+						rbPrev = rb;
+					}
+				}
+			}
+
+			if (cj > 0)
+			{
+				Chunk& b = chunks.at((cj-1)*m_ChunksW + ci);
+				RegionID raPrev(0,0,0);
+				RegionID rbPrev(0,0,0);
+				for (int i = 0; i < CHUNK_SIZE; ++i)
+				{
+					RegionID ra = a.Get(i, 0);
+					RegionID rb = b.Get(i, CHUNK_SIZE-1);
+					if (ra.r && rb.r)
+					{
+						if (ra == raPrev && rb == rbPrev)
+							continue;
+						edges[ra].insert(rb);
+						edges[rb].insert(ra);
+						raPrev = ra;
+						rbPrev = rb;
+					}
+				}
 			}
 		}
 	}
@@ -609,7 +731,7 @@ void HierarchicalPathfinder::AddDebugEdges(pass_class_t passClass)
 			xz.push_back(b.Y.ToFloat());
 
 			m_DebugOverlayLines.emplace_back();
-			m_DebugOverlayLines.back().m_Color = CColor(1.0, 1.0, 1.0, 1.0);
+			m_DebugOverlayLines.back().m_Color = CColor(1.0, 0.0, 0.0, 1.0);
 			SimRender::ConstructLineOnGround(*m_SimContext, xz, m_DebugOverlayLines.back(), true);
 		}
 	}
@@ -743,6 +865,8 @@ void HierarchicalPathfinder::MakeGoalReachable_Astar(u16 i0, u16 j0, PathGoal& g
 	 *	- picking the best item directly from the open list when we can be sure we know which one it is (see fasttrack)
 	 *	- checking whether the goal is reachable or not, and if it isn't stopping early to avoid slowly flood-filling everything
 	 * The path isn't used for now but can reconstructed using predecessor.
+	 * NB: strictly speaking, from a reachability POV, we can skip A* entirely if the goal has the same global region ID (see below).
+	 * Haven't done so yet and having the path may be interesting but it this function ends up being too slow it would be an idea.
 	 */
 	RegionID source = Get(i0, j0, passClass);
 
@@ -1026,7 +1150,6 @@ void HierarchicalPathfinder::FindReachableRegions(RegionID from, std::set<Region
 	{
 		RegionID curr = open.back();
 		open.pop_back();
-
 		for (const RegionID& region : edgeMap[curr])
 			// Add to the reachable set; if this is the first time we added
 			// it then also add it to the open list
@@ -1040,8 +1163,7 @@ void HierarchicalPathfinder::FindPassableRegions(std::set<RegionID>& regions, pa
 	// Construct a set of all regions of all chunks for this pass class
 	for (const Chunk& chunk : m_Chunks[passClass])
 	{
-		// region 0 is impassable tiles
-		for (int r = 1; r <= chunk.m_NumRegions; ++r)
+		for (u16 r : chunk.m_RegionsID)
 			regions.insert(RegionID(chunk.m_ChunkI, chunk.m_ChunkJ, r));
 	}
 }
@@ -1063,7 +1185,7 @@ void HierarchicalPathfinder::FindGoalRegions(u16 gi, u16 gj, const PathGoal& goa
 		for (u8 sx = (gi - size) / CHUNK_SIZE; sx <= (gi + size) / CHUNK_SIZE; ++sx)
 		{
 			Chunk& chunk = GetChunk(sx, sz, passClass);
-			for (u16 i = 1; i <= chunk.m_NumRegions; ++i)
+			for (u16 i : chunk.m_RegionsID)
 				if (chunk.RegionNearestNavcellInGoal(i, 0, 0, goal, a, b, c))
 					regions.insert(RegionID{sx, sz, i});
 		}
