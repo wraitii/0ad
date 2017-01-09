@@ -17,6 +17,8 @@
 
 #include "simulation2/system/ComponentTest.h"
 
+#define TEST
+
 #include "simulation2/components/ICmpObstructionManager.h"
 #include "simulation2/components/ICmpPathfinder.h"
 #include "simulation2/components/CCmpPathfinder_Common.h"
@@ -63,6 +65,128 @@ public:
 		TS_ASSERT_EQUALS(Pathfinding::NAVCELL_SIZE.ToInt_RoundToNegInfinity(), Pathfinding::NAVCELL_SIZE.ToInt_RoundToInfinity());
 		TS_ASSERT_EQUALS(Pathfinding::NAVCELL_SIZE.ToInt_RoundToNearest(), Pathfinding::NAVCELL_SIZE_INT);
 		TS_ASSERT_EQUALS((Pathfinding::NAVCELL_SIZE >> 1).ToInt_RoundToZero(), Pathfinding::NAVCELL_SIZE_LOG2);
+	}
+
+	void hierarchical_globalRegions_testmap(std::wstring map)
+	{
+		CTerrain terrain;
+
+		CSimulation2 sim2(NULL, g_ScriptRuntime, &terrain);
+		sim2.LoadDefaultScripts();
+		sim2.ResetState();
+
+		CMapReader* mapReader = new CMapReader(); // it'll call "delete this" itself
+
+		LDR_BeginRegistering();
+		mapReader->LoadMap(map,
+						   sim2.GetScriptInterface().GetJSRuntime(), JS::UndefinedHandleValue,
+						   &terrain, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+						   &sim2, &sim2.GetSimContext(), -1, false);
+		LDR_EndRegistering();
+		TS_ASSERT_OK(LDR_NonprogressiveLoad());
+
+		sim2.Update(0);
+
+		CmpPtr<ICmpPathfinder> cmpPathfinder(sim2, SYSTEM_ENTITY);
+
+		pass_class_t obstructionsMask = cmpPathfinder->GetPassabilityClass("default");
+		HierarchicalPathfinder& hier = ((CCmpPathfinder*)cmpPathfinder.operator->())->m_LongPathfinder.GetHierarchicalPathfinder();
+
+		std::map<HierarchicalPathfinder::RegionID, HierarchicalPathfinder::GlobalRegionID> globalRegions = hier.m_GlobalRegions[obstructionsMask];
+
+#ifdef DEBUG
+		// speed things up a little for debug mode otherwise it'll take ages.
+		for (u8 cj = 4; cj < hier.m_ChunksH; cj += 16)
+			for (u8 ci = 4; ci < hier.m_ChunksW; ci += 16)
+#else
+		for (u8 cj = 0; cj < hier.m_ChunksH; cj += 2)
+			for (u8 ci = 0; ci < hier.m_ChunksW; ci += 2)
+#endif
+				for(u16 i : hier.GetChunk(ci, cj, obstructionsMask).m_RegionsID)
+				{
+					std::set<HierarchicalPathfinder::RegionID> reachables;
+					hier.FindReachableRegions(HierarchicalPathfinder::RegionID{ci, cj, i}, reachables, obstructionsMask);
+					HierarchicalPathfinder::GlobalRegionID ID = globalRegions[HierarchicalPathfinder::RegionID{ci, cj, i}];
+					for (HierarchicalPathfinder::RegionID region : reachables)
+						TS_ASSERT_EQUALS(ID, globalRegions[region]);
+				}
+	}
+
+	void test_hierarchical_globalRegions()
+	{
+		// This test validates that the hierarchical's pathfinder global regions are in accordance with its regions
+		// IE it asserts that, for any two regions A and B of the hierarchical pathfinder, if one can find a path from A to B
+		// then A and B have the same global region.
+		std::vector<std::wstring> maps = { L"maps/scenarios/Peloponnese.pmp", L"maps/skirmishes/Corinthian Isthmus (2).pmp", L"maps/skirmishes/Greek Acropolis (2).pmp" };
+
+		for (std::wstring t : maps)
+			hierarchical_globalRegions_testmap(t);
+	}
+
+	void hierarchical_update_testmap(std::wstring map)
+	{
+		CTerrain terrain;
+
+		CSimulation2 sim2(NULL, g_ScriptRuntime, &terrain);
+		sim2.LoadDefaultScripts();
+		sim2.ResetState();
+
+		CMapReader* mapReader = new CMapReader(); // it'll call "delete this" itself
+
+		LDR_BeginRegistering();
+		mapReader->LoadMap(map,
+						   sim2.GetScriptInterface().GetJSRuntime(), JS::UndefinedHandleValue,
+						   &terrain, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+						   &sim2, &sim2.GetSimContext(), -1, false);
+		LDR_EndRegistering();
+		TS_ASSERT_OK(LDR_NonprogressiveLoad());
+
+		sim2.Update(0);
+
+		CmpPtr<ICmpPathfinder> cmpPathfinder(sim2, SYSTEM_ENTITY);
+
+		pass_class_t obstructionsMask = cmpPathfinder->GetPassabilityClass("default");
+		HierarchicalPathfinder& hier = ((CCmpPathfinder*)cmpPathfinder.operator->())->m_LongPathfinder.GetHierarchicalPathfinder();
+
+		// make copies
+		const auto pristine_GR = hier.m_GlobalRegions;
+		const auto pristine_Chunks = hier.m_Chunks;
+
+		Grid<NavcellData>* pathfinderGrid = ((CCmpPathfinder*)cmpPathfinder.operator->())->m_LongPathfinder.m_Grid;
+
+		Grid<u8> dirtyGrid(hier.m_ChunksW * HierarchicalPathfinder::CHUNK_SIZE,hier.m_ChunksH * HierarchicalPathfinder::CHUNK_SIZE);
+		srand(1234);
+
+#ifdef DEBUG
+		size_t tries = 2;
+#else
+		size_t tries = 20;
+#endif
+		for (size_t i = 0; i < tries; ++i)
+		{
+			// Dirty a random one
+			dirtyGrid.reset();
+			u8 ci = rand() % (hier.m_ChunksW-10) + 8;
+			u8 cj = rand() % (hier.m_ChunksH-10) + 8;
+			dirtyGrid.set(ci * HierarchicalPathfinder::CHUNK_SIZE + 4, cj * HierarchicalPathfinder::CHUNK_SIZE + 4, 1);
+			hier.Update(pathfinderGrid, dirtyGrid);
+
+			// global regions may have changed, but we validate those in another test so that's fine.
+			// formally speaking we should rather validate that regions exist with the same pixels, but so far
+			// re-initing regions will keep the same IDs for the same pixels so this is OK.
+			TS_ASSERT_EQUALS(hier.m_Chunks.at(obstructionsMask), pristine_Chunks.at(obstructionsMask));
+			
+		}
+	}
+
+	void test_hierarchical_update()
+	{
+		// This test validates that the "Update" function of the hierarchical pathfinder
+		// ends up in a correct state (by comparing it with the clean, "Recompute"-d state).
+		std::vector<std::wstring> maps = { L"maps/scenarios/Peloponnese.pmp", L"maps/skirmishes/Corinthian Isthmus (2).pmp", L"maps/skirmishes/Greek Acropolis (2).pmp" };
+
+		for (std::wstring t : maps)
+			hierarchical_update_testmap(t);
 	}
 
 	void test_performance_DISABLED()
@@ -530,7 +654,7 @@ public:
 		"context2.clearRect(0, 0, path2.width, path2.height);";
 
 		goalCopy = goal;
-		hier.MakeGoalReachable_Astar(i0, j0, goalCopy, obstructionsMask, stream);
+		hier.MakeGoalReachable_Astar(i0, j0, goalCopy, obstructionsMask);//, stream);
 
 		stream << "};";
 		stream << "printPath(scale,10000);";
@@ -561,7 +685,7 @@ public:
 		for (size_t j = 0; j < 10000; ++j)
 		{
 			PathGoal oldGoal = goal;
-			hier.MakeGoalReachable_Astar(i0, j0, goal, obstructionsMask, ostr);
+			hier.MakeGoalReachable_Astar(i0, j0, goal, obstructionsMask);//, ostr);
 			goal = oldGoal;
 		}
 
@@ -592,7 +716,7 @@ public:
 		for (size_t j = 0; j < 10000; ++j)
 		{
 			PathGoal oldGoal = goal;
-			hier.MakeGoalReachable_Astar(i0, j0, goal, obstructionsMask, ostr);
+			hier.MakeGoalReachable_Astar(i0, j0, goal, obstructionsMask);//, ostr);
 			goal = oldGoal;
 		}
 
