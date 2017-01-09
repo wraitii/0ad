@@ -768,9 +768,9 @@ HierarchicalPathfinder::GlobalRegionID HierarchicalPathfinder::GetGlobalRegion(u
 
 #if OUTPUT
 // also change the header
-void HierarchicalPathfinder::MakeGoalReachable(u16 i0, u16 j0, PathGoal& goal, pass_class_t passClass, std::ofstream& stream)
+bool HierarchicalPathfinder::MakeGoalReachable(u16 i0, u16 j0, PathGoal& goal, pass_class_t passClass, std::ofstream& stream)
 #else
-void HierarchicalPathfinder::MakeGoalReachable(u16 i0, u16 j0, PathGoal& goal, pass_class_t passClass)
+bool HierarchicalPathfinder::MakeGoalReachable(u16 i0, u16 j0, PathGoal& goal, pass_class_t passClass)
 #endif
 {
 	/*
@@ -984,6 +984,8 @@ void HierarchicalPathfinder::MakeGoalReachable(u16 i0, u16 j0, PathGoal& goal, p
 	newGoal.type = PathGoal::POINT;
 	Pathfinding::NavcellCenter(bestI, bestJ, newGoal.x, newGoal.z);
 	goal = newGoal;
+	
+	return reachable;
 }
 
 

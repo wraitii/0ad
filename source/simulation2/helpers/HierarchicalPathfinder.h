@@ -120,8 +120,10 @@ public:
 	 * at the reachable navcell of the goal which is nearest to the starting navcell.
 	 * TODO: since A* is used, it could return the reachable navcell nearest to the penultimate region visited.
 	 * which is probably better (imagine a path that must bend around).
+	 *
+	 * @returns true if the goal was reachable, false otherwise.
 	 */
-	void MakeGoalReachable(u16 i0, u16 j0, PathGoal& goal, pass_class_t passClass);
+	bool MakeGoalReachable(u16 i0, u16 j0, PathGoal& goal, pass_class_t passClass);
 
 	/**
 	 * Updates @p i, @p j (which is assumed to be an impassable navcell)
