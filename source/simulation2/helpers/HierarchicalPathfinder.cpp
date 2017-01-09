@@ -405,10 +405,14 @@ void HierarchicalPathfinder::Recompute(Grid<NavcellData>* grid,
 							m_AvailableGlobalRegionIDs.push_back(ID+1);
 
 						globalRegion.insert({ reg, ID });
-						std::set<RegionID> reachable;
-						FindReachableRegions(reg, reachable, passClass);
-						for (const RegionID& region : reachable)
-							globalRegion.insert({ region, ID });
+						// avoid creating an empty link if possible, FindReachableRegions uses [] which calls the default constructor
+						if (edges.find(reg) != edges.end())
+						{
+							std::set<RegionID> reachable;
+							FindReachableRegions(reg, reachable, passClass);
+							for (const RegionID& region : reachable)
+								globalRegion.insert({ region, ID });
+						}
 					}
 				}
 	}
@@ -469,6 +473,7 @@ void HierarchicalPathfinder::Update(Grid<NavcellData>* grid, const Grid<u8>& dir
 	// and if nothing then we'll create a new global region.
 	// It also keeps track of all connected regions with no IDs in case of contiguous dirtiness (likely) to be faster if possible.
 	// This probably scales poorly with a large enough update?
+
 	for (const RegionID& reg : updated)
 		for (const std::pair<std::string, pass_class_t>& passClassMask : m_PassClassMasks)
 		{
@@ -480,7 +485,9 @@ void HierarchicalPathfinder::Update(Grid<NavcellData>* grid, const Grid<u8>& dir
 			GlobalRegionID ID = 0;
 			std::map<RegionID, GlobalRegionID>& globalRegion = m_GlobalRegions[passClassMask.second];
 			EdgesMap& edgeMap = m_Edges[passClassMask.second];
-			while (!open.empty() && ID == 0)
+			// avoid creating empty edges.
+			bool unlinked = edgeMap.find(reg) == edgeMap.end();
+			while (!open.empty() && ID == 0 && !unlinked)
 			{
 				RegionID curr = open.back();
 				open.pop_back();

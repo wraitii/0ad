@@ -151,6 +151,7 @@ public:
 		// make copies
 		const auto pristine_GR = hier.m_GlobalRegions;
 		const auto pristine_Chunks = hier.m_Chunks;
+		const HierarchicalPathfinder::EdgesMap pristine_Edges = hier.m_Edges.at(obstructionsMask);
 
 		Grid<NavcellData>* pathfinderGrid = ((CCmpPathfinder*)cmpPathfinder.operator->())->m_LongPathfinder.m_Grid;
 
@@ -169,13 +170,17 @@ public:
 			u8 ci = rand() % (hier.m_ChunksW-10) + 8;
 			u8 cj = rand() % (hier.m_ChunksH-10) + 8;
 			dirtyGrid.set(ci * HierarchicalPathfinder::CHUNK_SIZE + 4, cj * HierarchicalPathfinder::CHUNK_SIZE + 4, 1);
+
 			hier.Update(pathfinderGrid, dirtyGrid);
 
-			// global regions may have changed, but we validate those in another test so that's fine.
-			// formally speaking we should rather validate that regions exist with the same pixels, but so far
+			// Formally speaking we should rather validate that regions exist with the same pixels, but so far
 			// re-initing regions will keep the same IDs for the same pixels so this is OK.
 			TS_ASSERT_EQUALS(hier.m_Chunks.at(obstructionsMask), pristine_Chunks.at(obstructionsMask));
-			
+			// same here
+			TS_ASSERT_EQUALS(pristine_Edges, hier.m_Edges.at(obstructionsMask));
+
+			// TODO: ought to test global regions, but those should be OK if the connections are OK
+			// and glboal regions ID can change on update making it annoying.
 		}
 	}
 
@@ -726,7 +731,7 @@ public:
 		stream << "</body>\n";
 	}
 
-	void test_MakeGoalReachable_performance()
+	void test_MakeGoalReachable_performance_DISABLED()
 	{
 		struct test
 		{
