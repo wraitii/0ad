@@ -696,13 +696,17 @@ void CCmpUnitMotion::Move(fixed dt)
 	// the unit's position will interpolate but the unit will already be doing the next thing, so it looks like it's gliding.
 	if (ShouldConsiderOurselvesAtDestination(m_CurrentGoal))
 	{
+		bool sendMessage = false;
 		if (ShouldConsiderOurselvesAtDestination(m_Destination))
 			// send a hint to unitAI to maintain compatibility.
-			MoveHasSucceeded();
+			sendMessage = true;
 
 		// TODO: change this
 		SetActualSpeed(fixed::Zero());
 		DiscardMove();
+
+		if (sendMessage)
+			MoveHasSucceeded();
 		return;
 	}
 
