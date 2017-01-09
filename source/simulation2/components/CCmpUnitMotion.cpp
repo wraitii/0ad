@@ -611,10 +611,8 @@ private:
 
 	/**
 	 * Returns an appropriate obstruction filter for use with path requests.
-	 * noTarget is true only when used inside tryGoingStraightToTargetEntity,
-	 * in which case we do not want the target obstruction otherwise it would always fail
 	 */
-	ControlGroupMovementObstructionFilter GetObstructionFilter(bool noTarget = false) const;
+	ControlGroupMovementObstructionFilter GetObstructionFilter() const;
 
 	/**
 	 * Dump current paths and request a new one.
@@ -973,11 +971,10 @@ void CCmpUnitMotion::FaceTowardsPointFromPos(const CFixedVector2D& pos, entity_p
 	}
 }
 
-ControlGroupMovementObstructionFilter CCmpUnitMotion::GetObstructionFilter(bool noTarget) const
+ControlGroupMovementObstructionFilter CCmpUnitMotion::GetObstructionFilter() const
 {
-	entity_id_t group = noTarget ? m_Destination.GetEntity() : GetGroup();
 	// TODO: if we sometimes want to consider moving units, change here.
-	return ControlGroupMovementObstructionFilter(false, group);
+	return ControlGroupMovementObstructionFilter(true, GetGroup());
 }
 
 // TODO: this can be improved, it's a little limited
