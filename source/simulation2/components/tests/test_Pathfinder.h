@@ -634,13 +634,6 @@ public:
 		Pathfinding::NearestNavcell(goal.x, goal.z, i1, j1, gridSize, gridSize);
 		stream << "<p class='pixel' style='z-index:500000; border-radius:100%;box-shadow: 0 0 0 10px red, 0 0 0 12px white; left:" << i1 * scale << "px; top:" << j1 * scale << "px;'></p>";
 
-		PathGoal goalCopy = goal;
-		hier.MakeGoalReachable(i0, j0, goalCopy, obstructionsMask);
-
-		Pathfinding::NearestNavcell(goalCopy.x, goalCopy.z, i1, j1, gridSize, gridSize);
-		stream << "<p class='pixel' style='border-radius:100%;box-shadow: 0 0 0 20px blue, 0 0 0 25px red; left:" << i1 * scale << "px; top:" << j1 * scale << "px;'></p>";
-
-
 		stream << "<canvas id='path' width='" << obstructions.m_W*scale << "' height='" << obstructions.m_H*scale << "'></canvas>";
 		stream << "<canvas id='path2' width='" << obstructions.m_W*scale << "' height='" << obstructions.m_H*scale << "'></canvas>";
 
@@ -658,8 +651,8 @@ public:
 		"var context2 = path2.getContext('2d');"
 		"context2.clearRect(0, 0, path2.width, path2.height);";
 
-		goalCopy = goal;
-		hier.MakeGoalReachable_Astar(i0, j0, goalCopy, obstructionsMask);//, stream);
+		PathGoal goalCopy = goal;
+		hier.MakeGoalReachable(i0, j0, goalCopy, obstructionsMask);//, stream);
 
 		stream << "};";
 		stream << "printPath(scale,10000);";
@@ -668,9 +661,10 @@ public:
 
 		Pathfinding::NearestNavcell(goalCopy.x, goalCopy.z, i1, j1, gridSize, gridSize);
 		stream << "<p class='pixel' style='border-radius:100%;box-shadow: 0 0 0 20px green, 0 0 0 25px red; left:" << i1 * scale << "px; top:" << j1 * scale << "px;'></p>";
+		stream << "</body>\n";
+		stream.close();
 
 		// Perf test. This is a little primitive, but should work well enough to give an idea of the algo.
-
 		double t = timer_Time();
 
 		srand(1234);
@@ -682,27 +676,11 @@ public:
 		}
 
 		t = timer_Time() - t;
-		printf("\nPoint Only  Goal old:  [%f]\n", t);
+		printf("\nPoint  Goal:  [%f]\n", t);
 
-		std::ofstream ostr(OsString("out.html").c_str(), std::ofstream::out | std::ofstream::trunc);
-
-		t = timer_Time();
-		for (size_t j = 0; j < 10000; ++j)
-		{
-			PathGoal oldGoal = goal;
-			hier.MakeGoalReachable_Astar(i0, j0, goal, obstructionsMask);//, ostr);
-			goal = oldGoal;
-		}
-
-		t = timer_Time() - t;
-		printf("\nPoint Only  Goal new:  [%f]\n", t);
-
-
-		// Replace the point with a small circle: this prevents the flood fill from early-exiting
-		// whereas A* can perform about the same.
 		goal.type = PathGoal::CIRCLE;
-		goal.hh = fixed::FromInt(1);
-		goal.hw = fixed::FromInt(1);
+		goal.hh = fixed::FromInt(40);
+		goal.hw = fixed::FromInt(40);
 
 		t = timer_Time();
 
@@ -715,20 +693,7 @@ public:
 		}
 
 		t = timer_Time() - t;
-		printf("\nSmall Circle Goal old:  [%f]\n", t);
-
-		t = timer_Time();
-		for (size_t j = 0; j < 10000; ++j)
-		{
-			PathGoal oldGoal = goal;
-			hier.MakeGoalReachable_Astar(i0, j0, goal, obstructionsMask);//, ostr);
-			goal = oldGoal;
-		}
-
-		t = timer_Time() - t;
-		printf("\nSmall Circle Goal new:  [%f]\n\n\n", t);
-
-		stream << "</body>\n";
+		printf("\nCircle Goal:  [%f]\n", t);
 	}
 
 	void test_MakeGoalReachable_performance_DISABLED()
@@ -742,6 +707,7 @@ public:
 			u16 gz;
 		};
 		/*
+		 * Initially this was done to compare A* to the earlier flood-fill method, which has since been removed.
 		 * Compare performance on a few cases:
 		 * - short path, good case for the flood fill (it finds immediately the point/circle and stops)
 		 * - short path, bad case for the flood fill (it will not find the correct region right away, so it's literally about 100x slower than the former)

@@ -30,7 +30,7 @@
 /**
  * Hierarchical pathfinder.
  *
- * It doesn't find shortest paths, but deals with connectivity.
+ * Deals with connectivity (can point A reach point B?)
  *
  * The navcell-grid representation of the map is split into fixed-size chunks.
  * Within a chunk, each maximal set of adjacently-connected passable navcells
@@ -38,11 +38,15 @@
  * Each region is a vertex in the hierarchical pathfinder's graph.
  * When two regions in adjacent chunks are connected by passable navcells,
  * the graph contains an edge between the corresponding two vertexes.
- * (There will never be an edge between two regions in the same chunk.)
+ * (by design, there can never be an edge between two regions in the same chunk.)
  *
- * Since regions are typically fairly large, it is possible to determine
- * connectivity between any two navcells by mapping them onto their appropriate
- * region and then doing a relatively small graph search.
+ * Those fixed-size chunks are used to efficiently compute "global regions" by effectively flood-filling.
+ * Those can then be used to immediately determine if two reachables points are connected
+ *
+ * The main use of this class is to convert an arbitrary PathGoal to a reachable navcell
+ * This happens in MakeGoalReachable, which implements A* over the chunks.
+ * Currently, the resulting path is unused.
+ *
  */
 
 #ifdef TEST
@@ -104,18 +108,20 @@ public:
 	GlobalRegionID GetGlobalRegion(u16 i, u16 j, pass_class_t passClass);
 
 	/**
-	 * Updates @p goal so that it's guaranteed to be reachable from the navcell
+	 * Updates @p goal to a point goal guaranteed to be reachable from the original navcell
 	 * @p i0, @p j0 (which is assumed to be on a passable navcell).
 	 *
-	 * If the goal is not reachable, it is replaced with a point goal nearest to
-	 * the goal center.
+	 * If the goal is not reachable, it is replaced with an acceptable point goal
+	 * This function does not necessarily return the closest navcell to the goal
+	 * but the one with the lowest f score of the A* algorithm.
+	 * This means it is usually a tradeoff between walking time and distance to the goal.
 	 *
 	 * In the case of a non-point reachable goal, it is replaced with a point goal
 	 * at the reachable navcell of the goal which is nearest to the starting navcell.
+	 * TODO: since A* is used, it could return the reachable navcell nearest to the penultimate region visited.
+	 * which is probably better (imagine a path that must bend around).
 	 */
 	void MakeGoalReachable(u16 i0, u16 j0, PathGoal& goal, pass_class_t passClass);
-	// TODO: remove this and rename it MakeGoalReachable
-	void MakeGoalReachable_Astar(u16 i0, u16 j0, PathGoal& goal, pass_class_t passClass);
 
 	/**
 	 * Updates @p i, @p j (which is assumed to be an impassable navcell)
@@ -140,7 +146,7 @@ public:
 
 private:
 	static const u8 CHUNK_SIZE = 96; // number of navcells per side
-									 // TODO PATHFINDER: figure out best number. Probably 64 < n < 128
+									 // TODO: figure out best number. Probably 64 < n < 128
 
 	struct Chunk
 	{
@@ -180,9 +186,8 @@ private:
 	void FindGoalRegions(u16 gi, u16 gj, const PathGoal& goal, std::set<RegionID>& regions, pass_class_t passClass);
 
 	/*
-	 * Implementations of A* to make a goal reachable. Called by MakeGoalReachable
-	 * There are two cases: if the goal is known to be reachable, and if the goal is known to be unreachable (but we can try to get close).
-	 * We reuse flat_XX containers so as to have good cache locality and avoid the cost of allocating memory. Flat_XX implementa  map/set as a sorted vector
+	 * Helpers for the A* implementation of MakeGoalReachable.
+	 * We reuse flat_XX containers to have good cache locality and avoid the cost of allocating memory. Flat_XX implementa  map/set as a sorted vector
 	 */
 	boost::container::flat_map<RegionID, HierarchicalPathfinder::RegionID> m_Astar_Predecessor;
 	boost::container::flat_map<RegionID, int> m_Astar_GScore;
@@ -216,7 +221,7 @@ private:
 	std::map<pass_class_t, EdgesMap> m_Edges;
 
 	std::map<pass_class_t, std::map<RegionID, GlobalRegionID>> m_GlobalRegions;
-	std::vector<GlobalRegionID> m_AvailableGlobalRegionIDs;
+	std::vector<GlobalRegionID> m_AvailableGlobalRegionIDs; // TODO: actually push back deleted global regions here.
 
 	// Passability classes for which grids will be updated when calling Update
 	std::map<std::string, pass_class_t> m_PassClassMasks;

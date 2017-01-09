@@ -813,7 +813,7 @@ void LongPathfinder::ComputeJPSPath(entity_pos_t x0, entity_pos_t z0, const Path
 
 	// Make the goal reachable. This includes shortening the path if the goal is in a non-passable
 	// region, transforming non-point goals to reachable point goals, etc.
-	m_PathfinderHier.MakeGoalReachable_Astar(i0, j0, state.goal, passClass);
+	m_PathfinderHier.MakeGoalReachable(i0, j0, state.goal, passClass);
 
 	// If we're already at the goal tile, then move directly to the exact goal coordinates
 	if (state.goal.NavcellContainsGoal(i0, j0))

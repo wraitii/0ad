@@ -760,97 +760,6 @@ HierarchicalPathfinder::GlobalRegionID HierarchicalPathfinder::GetGlobalRegion(u
 	return m_GlobalRegions[passClass][region];
 }
 
-void HierarchicalPathfinder::MakeGoalReachable(u16 i0, u16 j0, PathGoal& goal, pass_class_t passClass)
-{
-	PROFILE2("MakeGoalReachable");
-	RegionID source = Get(i0, j0, passClass);
-
-	// Find everywhere that's reachable
-	std::set<RegionID> reachableRegions;
-
-	// Flood-fill the region graph, starting at 'from',
-	// collecting all the regions that are reachable via edges
-	std::vector<RegionID> open;
-	open.reserve(64);
-	open.push_back(source);
-	reachableRegions.insert(source);
-
-
-	u16 bestI = 0;
-	u16 bestJ = 0;
-	u32 dist2Best = std::numeric_limits<u32>::max();
-
-	u16 iGoal, jGoal;
-	Pathfinding::NearestNavcell(goal.x, goal.z, iGoal, jGoal, m_W, m_H);
-
-	std::set<RegionID> possRegs;
-	FindGoalRegions(iGoal, jGoal, goal, possRegs, passClass);
-
-	EdgesMap& edgeMap = m_Edges[passClass];
-	while (!open.empty())
-	{
-		RegionID curr = open.back();
-		open.pop_back();
-
-		for (const RegionID& region : edgeMap[curr])
-			// Add to the reachable set; if this is the first time we added
-			// it then also add it to the open list
-			if (reachableRegions.insert(region).second)
-				open.push_back(region);
-
-		// Skip region if its chunk doesn't contain the goal area
-		entity_pos_t x0 = Pathfinding::NAVCELL_SIZE * (curr.ci * CHUNK_SIZE);
-		entity_pos_t z0 = Pathfinding::NAVCELL_SIZE * (curr.cj * CHUNK_SIZE);
-		entity_pos_t x1 = x0 + Pathfinding::NAVCELL_SIZE * CHUNK_SIZE;
-		entity_pos_t z1 = z0 + Pathfinding::NAVCELL_SIZE * CHUNK_SIZE;
-		if (!goal.RectContainsGoal(x0, z0, x1, z1))
-			continue;
-
-		u16 i,j;
-		u32 dist2;
-
-		// If the region contains the goal area, the goal is reachable
-		// Remember the best point for optimization.
-		if (GetChunk(curr.ci, curr.cj, passClass).RegionNearestNavcellInGoal(curr.r, i0, j0, goal, i, j, dist2))
-		{
-			// If it's a point, no need to move it, we're done
-			if (goal.type == PathGoal::POINT)
-				return;
-			if (dist2 < dist2Best)
-			{
-				bestI = i;
-				bestJ = j;
-				dist2Best = dist2;
-			}
-			possRegs.erase(curr);
-			// We ran out of potential regions so we're done
-			if (possRegs.empty())
-				return;
-		}
-
-	}
-
-	// If the goal area wasn't reachable,
-	// find the navcell that's nearest to the goal's center
-	if (dist2Best == std::numeric_limits<u32>::max())
-	{
-		FindNearestNavcellInRegions(reachableRegions, iGoal, jGoal, passClass);
-
-		// Construct a new point goal at the nearest reachable navcell
-		PathGoal newGoal;
-		newGoal.type = PathGoal::POINT;
-		Pathfinding::NavcellCenter(iGoal, jGoal, newGoal.x, newGoal.z);
-		goal = newGoal;
-		return;
-	}
-
-	ENSURE(dist2Best != std::numeric_limits<u32>::max());
-	PathGoal newGoal;
-	newGoal.type = PathGoal::POINT;
-	Pathfinding::NavcellCenter(bestI, bestJ, newGoal.x, newGoal.z);
-	goal = newGoal;
-}
-
 #define OUTPUT 0
 
 #if OUTPUT
@@ -859,9 +768,9 @@ void HierarchicalPathfinder::MakeGoalReachable(u16 i0, u16 j0, PathGoal& goal, p
 
 #if OUTPUT
 // also change the header
-void HierarchicalPathfinder::MakeGoalReachable_Astar(u16 i0, u16 j0, PathGoal& goal, pass_class_t passClass, std::ofstream& stream)
+void HierarchicalPathfinder::MakeGoalReachable(u16 i0, u16 j0, PathGoal& goal, pass_class_t passClass, std::ofstream& stream)
 #else
-void HierarchicalPathfinder::MakeGoalReachable_Astar(u16 i0, u16 j0, PathGoal& goal, pass_class_t passClass)
+void HierarchicalPathfinder::MakeGoalReachable(u16 i0, u16 j0, PathGoal& goal, pass_class_t passClass)
 #endif
 {
 	/*
