@@ -2351,7 +2351,6 @@ UnitAI.prototype.UnitFsmSpec = {
 					// (else it'll look like we're chopping empty air).
 					// (If it's not alive, the Timer handler will deal with sending us
 					// off to a different target.)
-					warn("here");
 					if (this.CheckTargetRange(this.gatheringTarget, IID_ResourceGatherer))
 					{
 						var typename = "gather_" + this.order.data.type.specific;
