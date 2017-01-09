@@ -94,14 +94,8 @@ public:
 
 		std::map<HierarchicalPathfinder::RegionID, HierarchicalPathfinder::GlobalRegionID> globalRegions = hier.m_GlobalRegions[obstructionsMask];
 
-#ifdef DEBUG
-		// speed things up a little for debug mode otherwise it'll take ages.
-		for (u8 cj = 4; cj < hier.m_ChunksH; cj += 16)
-			for (u8 ci = 4; ci < hier.m_ChunksW; ci += 16)
-#else
 		for (u8 cj = 0; cj < hier.m_ChunksH; cj += 2)
 			for (u8 ci = 0; ci < hier.m_ChunksW; ci += 2)
-#endif
 				for(u16 i : hier.GetChunk(ci, cj, obstructionsMask).m_RegionsID)
 				{
 					std::set<HierarchicalPathfinder::RegionID> reachables;
@@ -112,7 +106,12 @@ public:
 				}
 	}
 
+	// disable in debug mode, creating the simulation and running the initial turn is too slow and tends to OOM in debug mode.
+#ifdef DEBUG
+	void test_hierarchical_globalRegions_DISABLED()
+#else
 	void test_hierarchical_globalRegions()
+#endif
 	{
 		// This test validates that the hierarchical's pathfinder global regions are in accordance with its regions
 		// IE it asserts that, for any two regions A and B of the hierarchical pathfinder, if one can find a path from A to B
@@ -158,11 +157,7 @@ public:
 		Grid<u8> dirtyGrid(hier.m_ChunksW * HierarchicalPathfinder::CHUNK_SIZE,hier.m_ChunksH * HierarchicalPathfinder::CHUNK_SIZE);
 		srand(1234);
 
-#ifdef DEBUG
-		size_t tries = 2;
-#else
 		size_t tries = 20;
-#endif
 		for (size_t i = 0; i < tries; ++i)
 		{
 			// Dirty a random one
@@ -184,7 +179,12 @@ public:
 		}
 	}
 
+	// disable in debug mode, creating the simulation and running the initial turn is too slow and tends to OOM in debug mode.
+#ifdef DEBUG
+	void test_hierarchical_update_DISABLED()
+#else
 	void test_hierarchical_update()
+#endif
 	{
 		// This test validates that the "Update" function of the hierarchical pathfinder
 		// ends up in a correct state (by comparing it with the clean, "Recompute"-d state).

@@ -1183,10 +1183,17 @@ void HierarchicalPathfinder::FindGoalRegions(u16 gi, u16 gj, const PathGoal& goa
 		return;
 	}
 
-	// Find bounds
+	// For non-point cases, we'll test each region inside the bounds of the goal.
+	// we might occasionally test a few too many for circles but it's not too bad.
+	// Note that this also works in the Inverse-circle / Inverse-square case
+	// Since our ranges are inclusive, we will necessarily test at least the perimeter/outer bound of the goal.
+	// If we find a navcell, great, if not, well then we'll be surrounded by an impassable barrier.
+	// Since in the Inverse-XX case we're supposed to start inside, then we can't ever reach the goal so it's good enough.
+	// It's not worth it to skip the "inner" regions since we'd need ranges above CHUNK_SIZE for that to start mattering
+	// (and even then not always) and that just doesn't happen for Inverse-XX goals
 	int size = (std::max(goal.hh, goal.hw) * 3 / 2).ToInt_RoundToInfinity();
 
-	u16 a,b; u32 c; // unused params
+	u16 a,b; u32 c; // unused params for RegionNearestNavcellInGoal
 
 	for (u8 sz = (gj - size) / CHUNK_SIZE; sz <= (gj + size) / CHUNK_SIZE; ++sz)
 		for (u8 sx = (gi - size) / CHUNK_SIZE; sx <= (gi + size) / CHUNK_SIZE; ++sx)
