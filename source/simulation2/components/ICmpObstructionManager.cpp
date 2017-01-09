@@ -24,4 +24,6 @@
 BEGIN_INTERFACE_WRAPPER(ObstructionManager)
 DEFINE_INTERFACE_METHOD_1("SetPassabilityCircular", void, ICmpObstructionManager, SetPassabilityCircular, bool)
 DEFINE_INTERFACE_METHOD_1("SetDebugOverlay", void, ICmpObstructionManager, SetDebugOverlay, bool)
+DEFINE_INTERFACE_METHOD_5("IsInPointRange", bool, ICmpObstructionManager, IsInPointRange, entity_id_t, entity_pos_t, entity_pos_t, entity_pos_t, entity_pos_t)
+DEFINE_INTERFACE_METHOD_4("IsInTargetRange", bool, ICmpObstructionManager, IsInTargetRange, entity_id_t, entity_id_t, entity_pos_t, entity_pos_t)
 END_INTERFACE_WRAPPER(ObstructionManager)

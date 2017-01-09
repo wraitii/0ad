@@ -221,7 +221,7 @@ UnitAI.prototype.UnitFsmSpec = {
 		}
 		// Move a tile outside the building
 		let range = 4;
-		if (this.MoveToTargetRangeExplicit(msg.data.target, range, range))
+		if (this.MoveToTargetRangeExplicit(msg.data.target, range))
 		{
 			// We've started walking to the given point
 			this.SetNextState("INDIVIDUAL.WALKING");
@@ -278,7 +278,7 @@ UnitAI.prototype.UnitFsmSpec = {
 		if (!this.order.data.max)
 			this.MoveToPoint(this.order.data.x, this.order.data.z);
 		else
-			this.MoveToPointRange(this.order.data.x, this.order.data.z, this.order.data.min, this.order.data.max);
+			this.MoveToPointRange(this.order.data.x, this.order.data.z, (this.order.data.min + this.order.data.max) / 2.0);
 		if (this.IsAnimal())
 			this.SetNextState("ANIMAL.WALKING");
 		else
@@ -387,7 +387,7 @@ UnitAI.prototype.UnitFsmSpec = {
 			return;
 		}
 
-		if (this.MoveToTargetRangeExplicit(this.isGuardOf, 0, this.guardRange))
+		if (this.MoveToTargetRangeExplicit(this.isGuardOf, this.guardRange))
 			this.SetNextState("INDIVIDUAL.GUARD.ESCORTING");
 		else
 			this.SetNextState("INDIVIDUAL.GUARD.GUARDING");
@@ -397,7 +397,7 @@ UnitAI.prototype.UnitFsmSpec = {
 		// We use the distance between the entities to account for ranged attacks
 		var distance = DistanceBetweenEntities(this.entity, this.order.data.target) + (+this.template.FleeDistance);
 		var cmpUnitMotion = Engine.QueryInterface(this.entity, IID_UnitMotion);
-		if (cmpUnitMotion.MoveToTargetRange(this.order.data.target, distance, -1))
+		if (cmpUnitMotion.SetNewDestinationAsEntity(this.order.data.target, distance))
 		{
 			// We've started fleeing from the given target
 			if (this.IsAnimal())
@@ -829,7 +829,7 @@ UnitAI.prototype.UnitFsmSpec = {
 
 		// Only used by other orders to walk there in formation
 		"Order.WalkToTargetRange": function(msg) {
-			if (this.MoveToTargetRangeExplicit(this.order.data.target, this.order.data.min, this.order.data.max))
+			if (this.MoveToTargetRangeExplicit(this.order.data.target, (this.order.data.min+this.order.data.max)/2.0))
 				this.SetNextState("WALKING");
 			else
 				this.FinishOrder();
@@ -843,7 +843,7 @@ UnitAI.prototype.UnitFsmSpec = {
 		},
 
 		"Order.WalkToPointRange": function(msg) {
-			if (this.MoveToPointRange(this.order.data.x, this.order.data.z, this.order.data.min, this.order.data.max))
+			if (this.MoveToPointRange(this.order.data.x, this.order.data.z, (this.order.data.min + this.order.data.max)/2.0))
 				this.SetNextState("WALKING");
 			else
 				this.FinishOrder();
@@ -1366,7 +1366,7 @@ UnitAI.prototype.UnitFsmSpec = {
 			}
 			// Move a tile outside the building
 			let range = 4;
-			if (this.MoveToTargetRangeExplicit(msg.data.target, range, range))
+			if (this.MoveToTargetRangeExplicit(msg.data.target, range))
 			{
 				// We've started walking to the given point
 				this.SetNextState("WALKINGTOPOINT");
@@ -1695,7 +1695,8 @@ UnitAI.prototype.UnitFsmSpec = {
 
 					// Adapt the speed to the one of the target if needed
 					let cmpUnitMotion = Engine.QueryInterface(this.entity, IID_UnitMotion);
-					if (cmpUnitMotion.IsInTargetRange(this.isGuardOf, 0, 3*this.guardRange))
+					let cmpObstructionManager = Engine.QueryInterface(SYSTEM_ENTITY, IID_ObstructionManager);
+					if (cmpObstructionManager.IsInTargetRange(this.entity, this.isGuardOf, 0, 3*this.guardRange))
 					{
 						var cmpOtherMotion = Engine.QueryInterface(this.isGuardOf, IID_UnitMotion);
 						if (cmpOtherMotion)
@@ -1716,7 +1717,7 @@ UnitAI.prototype.UnitFsmSpec = {
 
 				"MoveCompleted": function() {
 					this.SetMoveSpeed(WALKING_SPEED);
-					if (!this.MoveToTargetRangeExplicit(this.isGuardOf, 0, this.guardRange))
+					if (!this.MoveToTargetRangeExplicit(this.isGuardOf, this.guardRange))
 						this.SetNextState("GUARDING");
 				},
 			},
@@ -1743,7 +1744,7 @@ UnitAI.prototype.UnitFsmSpec = {
 						return;
 					}
 					// then check is the target has moved
-					if (this.MoveToTargetRangeExplicit(this.isGuardOf, 0, this.guardRange))
+					if (this.MoveToTargetRangeExplicit(this.isGuardOf, this.guardRange))
 						this.SetNextState("ESCORTING");
 					else
 					{
@@ -2350,6 +2351,7 @@ UnitAI.prototype.UnitFsmSpec = {
 					// (else it'll look like we're chopping empty air).
 					// (If it's not alive, the Timer handler will deal with sending us
 					// off to a different target.)
+					warn("here");
 					if (this.CheckTargetRange(this.gatheringTarget, IID_ResourceGatherer))
 					{
 						var typename = "gather_" + this.order.data.type.specific;
@@ -2440,10 +2442,9 @@ UnitAI.prototype.UnitFsmSpec = {
 							// the old one. So try to get close to the old resource's
 							// last known position
 
-							var maxRange = 8; // get close but not too close
+							var range = 4; // get close but not too close
 							if (this.order.data.lastPos &&
-								this.MoveToPointRange(this.order.data.lastPos.x, this.order.data.lastPos.z,
-									0, maxRange))
+								this.MoveToPointRange(this.order.data.lastPos.x, this.order.data.lastPos.z, range))
 							{
 								this.SetNextState("APPROACHING");
 								return;
@@ -3183,7 +3184,7 @@ UnitAI.prototype.UnitFsmSpec = {
 		"Order.LeaveFoundation": function(msg) {
 			// Move a tile outside the building
 			var range = 4;
-			if (this.MoveToTargetRangeExplicit(msg.data.target, range, range))
+			if (this.MoveToTargetRangeExplicit(msg.data.target, range))
 			{
 				// We've started walking to the given point
 				this.SetNextState("WALKING");
@@ -4330,14 +4331,14 @@ UnitAI.prototype.MoveToPoint = function(x, z)
 {
 	var cmpUnitMotion = Engine.QueryInterface(this.entity, IID_UnitMotion);
 	cmpUnitMotion.SetAbortIfStuck(3);
-	return cmpUnitMotion.MoveToPointRange(x, z, 0, 0);
+	return cmpUnitMotion.SetNewDestinationAsPosition(x, z, 0);
 };
 
-UnitAI.prototype.MoveToPointRange = function(x, z, rangeMin, rangeMax)
+UnitAI.prototype.MoveToPointRange = function(x, z, range)
 {
 	var cmpUnitMotion = Engine.QueryInterface(this.entity, IID_UnitMotion);
 	cmpUnitMotion.SetAbortIfStuck(3);
-	return cmpUnitMotion.MoveToPointRange(x, z, rangeMin, rangeMax);
+	return cmpUnitMotion.SetNewDestinationAsPosition(x, z, range);
 };
 
 UnitAI.prototype.MoveToTarget = function(target)
@@ -4347,7 +4348,7 @@ UnitAI.prototype.MoveToTarget = function(target)
 
 	var cmpUnitMotion = Engine.QueryInterface(this.entity, IID_UnitMotion);
 	cmpUnitMotion.SetAbortIfStuck(5);
-	return cmpUnitMotion.MoveToTargetRange(target, 0, 0);
+	return cmpUnitMotion.SetNewDestinationAsEntity(target, 0);
 };
 
 UnitAI.prototype.MoveToTargetRange = function(target, iid, type)
@@ -4362,7 +4363,8 @@ UnitAI.prototype.MoveToTargetRange = function(target, iid, type)
 
 	var cmpUnitMotion = Engine.QueryInterface(this.entity, IID_UnitMotion);
 	cmpUnitMotion.SetAbortIfStuck(5);
-	return cmpUnitMotion.MoveToTargetRange(target, range.min, range.max);
+	// generally speaking, try to aim for the middle of a range.
+	return cmpUnitMotion.SetNewDestinationAsEntity(target, (range.min + range.max)/2.0);
 };
 
 /**
@@ -4417,23 +4419,25 @@ UnitAI.prototype.MoveToTargetAttackRange = function(target, type)
 	// the parabole changes while walking, take something in the middle
 	var guessedMaxRange = (range.max + parabolicMaxRange)/2;
 
+// TODO: here we should give the desired range based on unit speed, our own desire to walk, and so on.
 	var cmpUnitMotion = Engine.QueryInterface(this.entity, IID_UnitMotion);
 	cmpUnitMotion.SetAbortIfStuck(9);
-	if (cmpUnitMotion.MoveToTargetRange(target, range.min, guessedMaxRange))
+	if (cmpUnitMotion.SetNewDestinationAsEntity(target, (range.min + guessedMaxRange)/2.0))
 		return true;
 
 	// if that failed, try closer
-	return cmpUnitMotion.MoveToTargetRange(target, range.min, Math.min(range.max, parabolicMaxRange));
+	return cmpUnitMotion.SetNewDestinationAsEntity(target, (range.min + Math.min(range.max, parabolicMaxRange))/2.0);
 };
 
-UnitAI.prototype.MoveToTargetRangeExplicit = function(target, min, max)
+// TODO: call
+UnitAI.prototype.MoveToTargetRangeExplicit = function(target, range)
 {
 	if (!this.CheckTargetVisible(target))
 		return false;
 
 	var cmpUnitMotion = Engine.QueryInterface(this.entity, IID_UnitMotion);
 	cmpUnitMotion.SetAbortIfStuck(5);
-	return cmpUnitMotion.MoveToTargetRange(target, min, max);
+	return cmpUnitMotion.SetNewDestinationAsEntity(target, range);
 };
 
 UnitAI.prototype.MoveToGarrisonRange = function(target)
@@ -4448,13 +4452,13 @@ UnitAI.prototype.MoveToGarrisonRange = function(target)
 
 	var cmpUnitMotion = Engine.QueryInterface(this.entity, IID_UnitMotion);
 	cmpUnitMotion.SetAbortIfStuck(5);
-	return cmpUnitMotion.MoveToTargetRange(target, range.min, range.max);
+	return cmpUnitMotion.SetNewDestinationAsEntity(target, (range.min + range.max)/2.0);
 };
 
 UnitAI.prototype.CheckPointRangeExplicit = function(x, z, min, max)
 {
-	var cmpUnitMotion = Engine.QueryInterface(this.entity, IID_UnitMotion);
-	return cmpUnitMotion.IsInPointRange(x, z, min, max);
+	let cmpObstructionManager = Engine.QueryInterface(SYSTEM_ENTITY, IID_ObstructionManager);
+	return cmpObstructionManager.IsInPointRange(this.entity, x, z, min, max);
 };
 
 UnitAI.prototype.CheckTargetRange = function(target, iid, type)
@@ -4463,9 +4467,8 @@ UnitAI.prototype.CheckTargetRange = function(target, iid, type)
 	if (!cmpRanged)
 		return false;
 	var range = cmpRanged.GetRange(type);
-
-	var cmpUnitMotion = Engine.QueryInterface(this.entity, IID_UnitMotion);
-	return cmpUnitMotion.IsInTargetRange(target, range.min, range.max);
+	let cmpObstructionManager = Engine.QueryInterface(SYSTEM_ENTITY, IID_ObstructionManager);
+	return cmpObstructionManager.IsInTargetRange(this.entity, target, range.min, range.max);
 };
 
 /**
@@ -4513,14 +4516,14 @@ UnitAI.prototype.CheckTargetAttackRange = function(target, type)
 	if (maxRangeSq < 0)
 		return false;
 
-	var cmpUnitMotion = Engine.QueryInterface(this.entity, IID_UnitMotion);
-	return cmpUnitMotion.IsInTargetRange(target, range.min, Math.sqrt(maxRangeSq));
+	let cmpObstructionManager = Engine.QueryInterface(SYSTEM_ENTITY, IID_ObstructionManager);
+	return cmpObstructionManager.IsInTargetRange(this.entity, target, range.min, Math.sqrt(maxRangeSq));
 };
 
 UnitAI.prototype.CheckTargetRangeExplicit = function(target, min, max)
 {
-	var cmpUnitMotion = Engine.QueryInterface(this.entity, IID_UnitMotion);
-	return cmpUnitMotion.IsInTargetRange(target, min, max);
+	let cmpObstructionManager = Engine.QueryInterface(SYSTEM_ENTITY, IID_ObstructionManager);
+	return cmpObstructionManager.IsInTargetRange(this.entity, target, min, max);
 };
 
 UnitAI.prototype.CheckGarrisonRange = function(target)
@@ -4534,8 +4537,8 @@ UnitAI.prototype.CheckGarrisonRange = function(target)
 	if (cmpObstruction)
 		range.max += cmpObstruction.GetUnitRadius()*1.5; // multiply by something larger than sqrt(2)
 
-	var cmpUnitMotion = Engine.QueryInterface(this.entity, IID_UnitMotion);
-	return cmpUnitMotion.IsInTargetRange(target, range.min, range.max);
+	let cmpObstructionManager = Engine.QueryInterface(SYSTEM_ENTITY, IID_ObstructionManager);
+	return cmpObstructionManager.IsInTargetRange(this.entity, target, range.min, range.max);
 };
 
 /**
@@ -5970,7 +5973,7 @@ UnitAI.prototype.MoveRandomly = function(distance)
 	var tz = pos.z + (2*Math.random()-1)*jitter;
 
 	var cmpMotion = Engine.QueryInterface(this.entity, IID_UnitMotion);
-	cmpMotion.MoveToPointRange(tx, tz, distance, distance);
+	cmpMotion.SetNewDestinationAsPosition(tx, tz, distance);
 };
 
 UnitAI.prototype.SetFacePointAfterMove = function(val)

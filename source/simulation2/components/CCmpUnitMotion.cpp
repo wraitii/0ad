@@ -828,10 +828,10 @@ void CCmpUnitMotion::Move(fixed dt)
 		{
 			bool inRange = false;
 			if (m_CurrentGoal.IsEntity())
-				inRange = cmpObstructionManager->IsInTargetRange(m_Path.m_Waypoints.back().x, m_Path.m_Waypoints.back().z,
+				inRange = cmpObstructionManager->IsPointInTargetRange(m_Path.m_Waypoints.back().x, m_Path.m_Waypoints.back().z,
 																 m_CurrentGoal.GetEntity(), m_CurrentGoal.Range(), m_CurrentGoal.Range());
 			else
-				inRange = cmpObstructionManager->IsInPointRange(m_Path.m_Waypoints.back().x, m_Path.m_Waypoints.back().z,
+				inRange = cmpObstructionManager->IsPointInPointRange(m_Path.m_Waypoints.back().x, m_Path.m_Waypoints.back().z,
 																m_CurrentGoal.GetPosition().X, m_CurrentGoal.GetPosition().Y, m_CurrentGoal.Range(), m_CurrentGoal.Range());
 			if (inRange)
 			{
@@ -916,20 +916,14 @@ void CCmpUnitMotion::Move(fixed dt)
 // In particular maybe we should support some "margin" for error.
 bool CCmpUnitMotion::ShouldConsiderOurselvesAtDestination(SMotionGoal& goal)
 {
-	CmpPtr<ICmpPosition> cmpPosition(GetEntityHandle());
-	if (!cmpPosition)
-		return false;
-
 	CmpPtr<ICmpObstructionManager> cmpObstructionManager(GetSystemEntity());
 	if (!cmpObstructionManager)
 		return true; // what's a sane default here?
 
-	CFixedVector2D pos = cmpPosition->GetPosition2D();
-
 	if (goal.IsEntity())
-		return cmpObstructionManager->IsInTargetRange(pos.X, pos.Y, goal.GetEntity(), goal.Range(), goal.Range() + m_Clearance.Multiply(fixed::FromInt(3)/2));
+		return cmpObstructionManager->IsInTargetRange(GetEntityId(), goal.GetEntity(), goal.Range(), goal.Range());
 	else
-		return cmpObstructionManager->IsInPointRange(pos.X, pos.Y, goal.GetPosition().X, goal.GetPosition().X, goal.Range(), goal.Range() + m_Clearance.Multiply(fixed::FromInt(3)/2));
+		return cmpObstructionManager->IsInPointRange(GetEntityId(), goal.GetPosition().X, goal.GetPosition().X, goal.Range(), goal.Range());
 }
 
 bool CCmpUnitMotion::PathIsShort(const WaypointPath& path, const CFixedVector2D& from, entity_pos_t minDistance) const

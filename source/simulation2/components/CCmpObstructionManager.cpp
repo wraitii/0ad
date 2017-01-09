@@ -314,7 +314,7 @@ public:
 	{
 		CFixedVector2D u(entity_pos_t::FromInt(1), entity_pos_t::Zero());
 		CFixedVector2D v(entity_pos_t::Zero(), entity_pos_t::FromInt(1));
-		ObstructionSquare o = { x, z, u, v, clearance, clearance };
+		ObstructionSquare o = { x, z, u, v, clearance, fixed::Zero() };
 		return o;
 	}
 
@@ -466,8 +466,12 @@ public:
 		}
 	}
 
-	virtual bool IsInPointRange(entity_pos_t x, entity_pos_t z, entity_pos_t px, entity_pos_t pz, entity_pos_t minRange, entity_pos_t maxRange);
-	virtual bool IsInTargetRange(entity_pos_t x, entity_pos_t z, entity_id_t target, entity_pos_t minRange, entity_pos_t maxRange);
+	virtual bool IsInPointRange(entity_id_t ent, entity_pos_t px, entity_pos_t pz, entity_pos_t minRange, entity_pos_t maxRange);
+	virtual bool IsInTargetRange(entity_id_t ent, entity_id_t target, entity_pos_t minRange, entity_pos_t maxRange);
+	virtual bool IsPointInPointRange(entity_pos_t x, entity_pos_t z, entity_pos_t px, entity_pos_t pz, entity_pos_t minRange, entity_pos_t maxRange);
+	virtual bool IsPointInTargetRange(entity_pos_t x, entity_pos_t z, entity_id_t target, entity_pos_t minRange, entity_pos_t maxRange);
+
+	bool AreShapesInRange(const ObstructionSquare& source, const ObstructionSquare& target, entity_pos_t minRange, entity_pos_t maxRange);
 
 	virtual bool TestLine(const IObstructionTestFilter& filter, entity_pos_t x0, entity_pos_t z0, entity_pos_t x1, entity_pos_t z1, entity_pos_t r, bool relaxClearanceForUnits = false);
 	virtual bool TestStaticShape(const IObstructionTestFilter& filter, entity_pos_t x, entity_pos_t z, entity_pos_t a, entity_pos_t w, entity_pos_t h, std::vector<entity_id_t>* out);
@@ -662,7 +666,70 @@ private:
 
 REGISTER_COMPONENT_TYPE(ObstructionManager)
 
-bool CCmpObstructionManager::IsInPointRange(entity_pos_t x, entity_pos_t z, entity_pos_t px, entity_pos_t pz, entity_pos_t minRange, entity_pos_t maxRange)
+////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////
+// Is In Range family of functions. Those either end up in IsPointInPointRange or AreShapesInRange
+
+bool CCmpObstructionManager::IsInPointRange(entity_id_t ent, entity_pos_t px, entity_pos_t pz, entity_pos_t minRange, entity_pos_t maxRange)
+{
+	CmpPtr<ICmpPosition> cmpPosition(GetSimContext(), ent);
+	if (!cmpPosition)
+		return false;
+
+	ObstructionSquare obstruction;
+	CmpPtr<ICmpObstruction> cmpObstruction(GetSimContext(), ent);
+	if (!cmpObstruction || !cmpObstruction->GetObstructionSquare(obstruction))
+		return IsPointInPointRange(cmpPosition->GetPosition2D().X, cmpPosition->GetPosition2D().Y, px, pz, minRange, maxRange);
+
+	ObstructionSquare point;
+	point.x = px;
+	point.z = pz;
+	return AreShapesInRange(obstruction, point, minRange, maxRange);
+}
+
+bool CCmpObstructionManager::IsInTargetRange(entity_id_t ent, entity_id_t target, entity_pos_t minRange, entity_pos_t maxRange)
+{
+	CmpPtr<ICmpPosition> cmpPosition(GetSimContext(), ent);
+	if (!cmpPosition)
+		return false;
+
+	CmpPtr<ICmpPosition> cmpPositionTarget(GetSimContext(), target);
+	if (!cmpPositionTarget)
+		return false;
+
+	ObstructionSquare obstruction;
+	CmpPtr<ICmpObstruction> cmpObstruction(GetSimContext(), ent);
+	if (!cmpObstruction || !cmpObstruction->GetObstructionSquare(obstruction))
+		return IsPointInTargetRange(cmpPosition->GetPosition2D().X, cmpPosition->GetPosition2D().Y, target, minRange, maxRange);
+
+	ObstructionSquare target_obstruction;
+	CmpPtr<ICmpObstruction> cmpObstructionTarget(GetSimContext(), target);
+	if (!cmpObstructionTarget || !cmpObstructionTarget->GetObstructionSquare(target_obstruction))
+		return IsInPointRange(ent, cmpPositionTarget->GetPosition2D().X, cmpPositionTarget->GetPosition2D().Y, minRange, maxRange);
+
+	return AreShapesInRange(obstruction, target_obstruction, minRange, maxRange);
+}
+
+bool CCmpObstructionManager::IsPointInTargetRange(entity_pos_t x, entity_pos_t z, entity_id_t target, entity_pos_t minRange, entity_pos_t maxRange)
+{
+	ObstructionSquare point;
+	point.x = x;
+	point.z = z;
+
+	CmpPtr<ICmpPosition> cmpPositionTarget(GetSimContext(), target);
+	if (!cmpPositionTarget)
+		return false;
+
+	ObstructionSquare target_obstruction;
+	CmpPtr<ICmpObstruction> cmpObstructionTarget(GetSimContext(), target);
+	if (!cmpObstructionTarget || !cmpObstructionTarget->GetObstructionSquare(target_obstruction))
+		return IsPointInPointRange(x, z, cmpPositionTarget->GetPosition2D().X, cmpPositionTarget->GetPosition2D().Y, minRange, maxRange);
+
+	return AreShapesInRange(point, target_obstruction, minRange, maxRange);
+}
+
+// trivial case
+bool CCmpObstructionManager::IsPointInPointRange(entity_pos_t x, entity_pos_t z, entity_pos_t px, entity_pos_t pz, entity_pos_t minRange, entity_pos_t maxRange)
 {
 	CFixedVector2D pos(x, z);
 
@@ -676,65 +743,51 @@ bool CCmpObstructionManager::IsInPointRange(entity_pos_t x, entity_pos_t z, enti
 		return true;
 }
 
-bool CCmpObstructionManager::IsInTargetRange(entity_pos_t x, entity_pos_t z, entity_id_t target, entity_pos_t minRange, entity_pos_t maxRange)
+// hard case
+bool CCmpObstructionManager::AreShapesInRange(const ObstructionSquare& source, const ObstructionSquare& target, entity_pos_t minRange, entity_pos_t maxRange)
 {
-	CFixedVector2D pos(x, z);
+	// In this function, we will give about a navcell worth of leeway to avoid weirdness
+	fixed navcellFix = Pathfinding::NAVCELL_SIZE * 3 / 2; // a little above √2, it's not important.
 
-	CmpPtr<ICmpObstructionManager> cmpObstructionManager(GetSystemEntity());
-	if (!cmpObstructionManager)
-		return false;
-
-	bool hasObstruction = false;
-	ICmpObstructionManager::ObstructionSquare obstruction;
-	CmpPtr<ICmpObstruction> cmpObstruction(GetSimContext(), target);
-	if (cmpObstruction)
-		hasObstruction = cmpObstruction->GetObstructionSquare(obstruction);
-
-	if (hasObstruction)
+	if (source.hh == fixed::Zero() && target.hw == fixed::Zero())
 	{
-		CFixedVector2D halfSize(obstruction.hw, obstruction.hh);
-		entity_pos_t distance = Geometry::DistanceToSquare(pos - CFixedVector2D(obstruction.x, obstruction.z), obstruction.u, obstruction.v, halfSize, true);
-
-		// Compare with previous obstruction
-		ICmpObstructionManager::ObstructionSquare previousObstruction;
-		cmpObstruction->GetPreviousObstructionSquare(previousObstruction);
-		entity_pos_t previousDistance = Geometry::DistanceToSquare(pos - CFixedVector2D(previousObstruction.x, previousObstruction.z), obstruction.u, obstruction.v, halfSize, true);
-
-		// See if we're too close to the target square
-		bool inside = distance.IsZero() && !Geometry::DistanceToSquare(pos - CFixedVector2D(obstruction.x, obstruction.z), obstruction.u, obstruction.v, halfSize).IsZero();
-		if ((distance < minRange && previousDistance < minRange) || inside)
+		// sphere-sphere collision.
+		// Source is in range if the edge to edge distance is inferior to maxRange
+		// and the opposite edge to opposite edge distance is bigger than minRange
+		// TODO: figure out whether we actually want that
+		fixed distance = (CFixedVector2D(target.x, target.z) - CFixedVector2D(source.x, source.z)).Length();
+		if (distance - source.hw - target.hw - navcellFix > maxRange)
 			return false;
-
-		// See if we're close enough to the target square
-		if (maxRange < entity_pos_t::Zero() || distance <= maxRange || previousDistance <= maxRange)
-			return true;
-
-		entity_pos_t circleRadius = halfSize.Length();
-
-		if (Geometry::ShouldTreatTargetAsCircle(maxRange, circleRadius))
-		{
-			// The target is small relative to our range, so pretend it's a circle
-			// and see if we're close enough to that.
-			// Also check circle around previous position.
-			entity_pos_t circleDistance = (pos - CFixedVector2D(obstruction.x, obstruction.z)).Length() - circleRadius;
-			entity_pos_t previousCircleDistance = (pos - CFixedVector2D(previousObstruction.x, previousObstruction.z)).Length() - circleRadius;
-
-			return circleDistance <= maxRange || previousCircleDistance <= maxRange;
-		}
-
-		// take minimal clearance required in MoveToTargetRange into account, multiplying by 3/2 for diagonals
-		return distance <= maxRange || previousDistance <= maxRange;
+		if (distance + source.hw + target.hw + navcellFix < minRange)
+			return false;
+		return true;
+	}
+	else if (source.hh != fixed::Zero() && target.hh != fixed::Zero())
+	{
+		// square to square
+		// TODO: implement this.
+		LOGWARNING("square-square range tests not yet implemented");
+		return false;
 	}
 	else
 	{
-		CmpPtr<ICmpPosition> cmpTargetPosition(GetSimContext(), target);
-		if (!cmpTargetPosition || !cmpTargetPosition->IsInWorld())
+		// to cover both remaining cases, shape a is the square one, shape b is the circular one.
+		const ObstructionSquare& a = source.hh == fixed::Zero() ? target : source;
+		const ObstructionSquare& b = source.hh == fixed::Zero() ? source : target;
+
+		CFixedVector2D relativePosition = CFixedVector2D(b.x, b.z) - CFixedVector2D(a.x, a.z);
+		fixed distance = Geometry::DistanceToSquare(relativePosition, a.u, a.v, CFixedVector2D(a.hw, a.hh), true);
+
+		// in range if the edge to edge distance is inferior to maxRange
+		// and if the opposite edge to opposite edge distance is more than Minrange
+		// This means for example that a unit is in range of a building if it is farther than clearance-buildingsize,
+		// which is generally going to be negative (and thus this returns true).
+		// NB: since calculating the opposite-edge distance of a square is annoying, we'll add min(hw,hh) instead which is OK enough I guess
+		if (distance - b.hw - navcellFix > maxRange)
 			return false;
-
-		CFixedVector2D targetPos = cmpTargetPosition->GetPreviousPosition2D();
-		entity_pos_t distance = (pos - targetPos).Length();
-
-		return minRange <= distance && (maxRange < entity_pos_t::Zero() || distance <= maxRange);
+		if (distance + b.hw + std::min(a.hw, a.hh) < minRange)
+			return false;
+		return true;
 	}
 }
 
