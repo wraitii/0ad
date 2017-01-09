@@ -237,6 +237,8 @@ public:
 
 	virtual Grid<u16> ComputeShoreGrid(bool expandOnWater = false);
 
+	virtual bool MakeGoalReachable(entity_pos_t x0, entity_pos_t z0, PathGoal &goal, pass_class_t passClass);
+
 	virtual void ComputePath(entity_pos_t x0, entity_pos_t z0, const PathGoal& goal, pass_class_t passClass, WaypointPath& ret)
 	{
 		m_LongPathfinder.ComputePath(x0, z0, goal, passClass, ret);

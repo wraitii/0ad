@@ -28,6 +28,7 @@
  * part of the goal.
  * Also, it can be an 'inverted' circle/square, where any point outside
  * the shape is part of the goal.
+ * In both cases, points on the range (ie at the frontier) are considered inside.
  */
 class PathGoal
 {

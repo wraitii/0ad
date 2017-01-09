@@ -668,6 +668,13 @@ const GridUpdateInformation& CCmpPathfinder::GetDirtinessData() const
 	return m_ObstructionsDirty;
 }
 
+bool CCmpPathfinder::MakeGoalReachable(entity_pos_t x0, entity_pos_t z0, PathGoal &goal, pass_class_t passClass)
+{
+	u16 i0, j0;
+	Pathfinding::NearestNavcell(x0, z0, i0, j0, m_MapSize*Pathfinding::NAVCELLS_PER_TILE, m_MapSize*Pathfinding::NAVCELLS_PER_TILE);
+	return m_LongPathfinder.MakeGoalReachable(i0, j0, goal, passClass);
+}
+
 //////////////////////////////////////////////////////////
 
 // Async path requests:

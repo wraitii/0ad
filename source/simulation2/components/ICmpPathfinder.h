@@ -89,6 +89,12 @@ public:
 	virtual Grid<u16> ComputeShoreGrid(bool expandOnWater = false) = 0;
 
 	/**
+	 * Transform an arbitrary PathGoal into a reachable Point PathGoal, see Hierarchical Pathfinder for details
+	 * Return true if the goal was reachable originally, false otherwise.
+	 */
+	virtual bool MakeGoalReachable(entity_pos_t x0, entity_pos_t z0, PathGoal &goal, pass_class_t passClass) = 0;
+
+	/**
 	 * Compute a tile-based path from the given point to the goal, and return the set of waypoints.
 	 * The waypoints correspond to the centers of horizontally/vertically adjacent tiles
 	 * along the path.

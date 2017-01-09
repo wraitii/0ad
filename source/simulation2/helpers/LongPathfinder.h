@@ -243,6 +243,8 @@ public:
 	void ComputePath(entity_pos_t x0, entity_pos_t z0, const PathGoal& origGoal,
 		pass_class_t passClass, std::vector<CircularRegion> excludedRegions, WaypointPath& path);
 
+	bool MakeGoalReachable(u16 i0, u16 j0, PathGoal &goal, pass_class_t passClass) { return m_PathfinderHier.MakeGoalReachable(i0, j0, goal, passClass); };
+
 	Grid<u16> GetConnectivityGrid(pass_class_t passClass)
 	{
 		return m_PathfinderHier.GetConnectivityGrid(passClass);
