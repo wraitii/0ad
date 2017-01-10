@@ -809,7 +809,8 @@ void CCmpUnitMotion::Move(fixed dt)
 	StopMoving();
 
 	if (ShouldConsiderOurselvesAtDestination(m_CurrentGoal))
-		// if we are where we should be, even if our move is still valid, don't bother moving.
+		// If we're out of path (ie not moving) but have a valid destination (IsTryingToMove()), we'll end up here every turn.
+		// We should not repath if we actually are where we want to be (ie at destination).
 		return;
 
 	// Oops, we've had a problem. Either we were obstructed, or we ran out of path (but still have a goal).
