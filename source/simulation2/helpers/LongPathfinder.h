@@ -245,6 +245,8 @@ public:
 
 	bool MakeGoalReachable(u16 i0, u16 j0, PathGoal &goal, pass_class_t passClass) { return m_PathfinderHier.MakeGoalReachable(i0, j0, goal, passClass); };
 
+	void FindNearestPassableNavcell(u16& i, u16& j, pass_class_t passClass) { return m_PathfinderHier.FindNearestPassableNavcell(i, j, passClass); };
+
 	Grid<u16> GetConnectivityGrid(pass_class_t passClass)
 	{
 		return m_PathfinderHier.GetConnectivityGrid(passClass);
