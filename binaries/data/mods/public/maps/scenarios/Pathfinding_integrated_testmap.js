@@ -43,7 +43,9 @@ Trigger.prototype.setupTests = function()
 		"54" : {"target":365},	// labyrinth: with hole for small - this is the elephant
 		"85" : {"target":362},	// labyrinth: with hole for small - this is the ram
 		"390" : {"target":391, "type" : "build"},	// build a house
-		"393" : {"target":392, "type" : "hunt", "becomes":434},	// hunt a chicken, 434 is the created resource ID
+		"393" : {"target":392, "type" : "hunt", "becomes":440},
+		"428" : {"target":426, "expectfail":true},	// try to reach unreachable obelisk.
+		"422" : {"target":363},	// Get out of impassable house
 	};
 
 	// order units to move

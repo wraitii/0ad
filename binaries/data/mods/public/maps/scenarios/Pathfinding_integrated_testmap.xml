@@ -33,7 +33,7 @@
 		</Postproc>
 	</Environment>
 	<Camera>
-		<Position x="186.301" y="248.19" z="250.622"/>
+		<Position x="338.388" y="247.272" z="12.2199"/>
 		<Rotation angle="0"/>
 		<Declination angle="0.610865"/>
 	</Camera>
@@ -2918,7 +2918,7 @@
 		<Entity uid="422">
 			<Template>units/maur_infantry_archer_b</Template>
 			<Player>1</Player>
-			<Position x="278.09272" z="54.10203"/>
+			<Position x="345.84263" z="103.35616"/>
 			<Orientation y="2.35622"/>
 			<Actor seed="65509"/>
 		</Entity>
@@ -2928,6 +2928,34 @@
 			<Position x="170.37449" z="335.6861"/>
 			<Orientation y="2.35622"/>
 			<Actor seed="21638"/>
+		</Entity>
+		<Entity uid="426">
+			<Template>other/obelisk</Template>
+			<Player>1</Player>
+			<Position x="306.32566" z="27.91451"/>
+			<Orientation y="2.35622"/>
+			<Actor seed="61423"/>
+		</Entity>
+		<Entity uid="427">
+			<Template>structures/maur_house</Template>
+			<Player>1</Player>
+			<Position x="316.68445" z="38.4499"/>
+			<Orientation y="2.35622"/>
+			<Actor seed="56518"/>
+		</Entity>
+		<Entity uid="428">
+			<Template>units/maur_infantry_archer_b</Template>
+			<Player>1</Player>
+			<Position x="325.30619" z="31.26777"/>
+			<Orientation y="2.35622"/>
+			<Actor seed="65509"/>
+		</Entity>
+		<Entity uid="429">
+			<Template>structures/maur_house</Template>
+			<Player>1</Player>
+			<Position x="345.90961" z="103.1294"/>
+			<Orientation y="2.35622"/>
+			<Actor seed="56518"/>
 		</Entity>
 	</Entities>
 	<Paths/>
