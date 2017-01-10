@@ -106,20 +106,18 @@ public:
 				}
 	}
 
-	// disable in debug mode, creating the simulation and running the initial turn is too slow and tends to OOM in debug mode.
-#ifdef DEBUG
-	void test_hierarchical_globalRegions_DISABLED()
-#else
 	void test_hierarchical_globalRegions()
-#endif
 	{
 		// This test validates that the hierarchical's pathfinder global regions are in accordance with its regions
 		// IE it asserts that, for any two regions A and B of the hierarchical pathfinder, if one can find a path from A to B
 		// then A and B have the same global region.
 		std::vector<std::wstring> maps = { L"maps/scenarios/Peloponnese.pmp", L"maps/skirmishes/Corinthian Isthmus (2).pmp", L"maps/skirmishes/Greek Acropolis (2).pmp" };
 
+// disable in debug mode, creating the simulation and running the initial turn is too slow and tends to OOM in debug mode.
+#ifndef DEBUG
 		for (std::wstring t : maps)
 			hierarchical_globalRegions_testmap(t);
+#endif
 	}
 
 	void hierarchical_update_testmap(std::wstring map)
@@ -179,19 +177,17 @@ public:
 		}
 	}
 
-	// disable in debug mode, creating the simulation and running the initial turn is too slow and tends to OOM in debug mode.
-#ifdef DEBUG
-	void test_hierarchical_update_DISABLED()
-#else
 	void test_hierarchical_update()
-#endif
 	{
 		// This test validates that the "Update" function of the hierarchical pathfinder
 		// ends up in a correct state (by comparing it with the clean, "Recompute"-d state).
 		std::vector<std::wstring> maps = { L"maps/scenarios/Peloponnese.pmp", L"maps/skirmishes/Corinthian Isthmus (2).pmp", L"maps/skirmishes/Greek Acropolis (2).pmp" };
 
+// disable in debug mode, creating the simulation and running the initial turn is too slow and tends to OOM in debug mode.
+#ifndef DEBUG
 		for (std::wstring t : maps)
 			hierarchical_update_testmap(t);
+#endif
 	}
 
 	void test_performance_DISABLED()
