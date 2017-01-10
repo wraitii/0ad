@@ -691,9 +691,9 @@ void CCmpUnitMotion::Move(fixed dt)
 
 	CFixedVector2D initialPos = cmpPosition->GetPosition2D();
 
-	// Check wether we are at our destination.
-	// This must be done only at the beginning of a turn, if we do at the end of a turn (after a unit position has changed)
-	// the unit's position will interpolate but the unit will already be doing the next thing, so it looks like it's gliding.
+	// NB: unitMotion has been changed such that unitAI should NOT rely on "movecompleted" messages but do its own range checks on a timer basis.
+	// To streamline some common interactions, such as gathering from a static entity, we'll send a "hint" when we're done moving (and thus presumably arrived)
+	// but this should NOT be relied upon.
 	if (ShouldConsiderOurselvesAtDestination(m_CurrentGoal))
 	{
 		bool sendMessage = false;
@@ -701,12 +701,10 @@ void CCmpUnitMotion::Move(fixed dt)
 			// send a hint to unitAI to maintain compatibility.
 			sendMessage = true;
 
-		// TODO: change this
-		SetActualSpeed(fixed::Zero());
-		DiscardMove();
-
 		if (sendMessage)
 			MoveHasSucceeded();
+
+		// We must return here, otherwise it may result in "gliding" from units getting another order immediately and other weirdness.
 		return;
 	}
 
@@ -807,7 +805,7 @@ void CCmpUnitMotion::Move(fixed dt)
 		}
 	}
 	else
-		// TODO: this could probably be moved before the if entirely, check rounding.
+		// TODO: this and the same call in the if above could probably be moved before the if entirely, check rounding.
 		SetActualSpeed(fixed::Zero());
 
 	// we've had to stop at the end of the turn.
@@ -823,6 +821,7 @@ void CCmpUnitMotion::Move(fixed dt)
 
 	// if our next waypoint is considered at the goal
 	// then don't wait a turn but recompute immediately (otherwise we look idle and that's bad).
+	// NB: useless right now since we're not waiting and the usefullness of this bit of code can be debated anyways.
 	if (!m_Path.m_Waypoints.empty())
 	{
 		CmpPtr<ICmpObstructionManager> cmpObstructionManager(GetSystemEntity());
@@ -914,10 +913,12 @@ void CCmpUnitMotion::Move(fixed dt)
 	return;
 }
 
-// TODO: ought to be cleverer here.
-// In particular maybe we should support some "margin" for error.
+// Only used to send a "hint" to unitAI.
 bool CCmpUnitMotion::ShouldConsiderOurselvesAtDestination(SMotionGoal& goal)
 {
+	if (HasValidPath())
+		return false; // wait until we're done.
+
 	CmpPtr<ICmpObstructionManager> cmpObstructionManager(GetSystemEntity());
 	if (!cmpObstructionManager)
 		return true; // what's a sane default here?

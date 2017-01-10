@@ -749,7 +749,7 @@ bool CCmpObstructionManager::AreShapesInRange(const ObstructionSquare& source, c
 	// In this function, we will give about a navcell worth of leeway to avoid weirdness
 	fixed navcellFix = Pathfinding::NAVCELL_SIZE * 3 / 2; // a little above √2, it's not important.
 
-	if (source.hh == fixed::Zero() && target.hw == fixed::Zero())
+	if (source.hh == fixed::Zero() && target.hh == fixed::Zero())
 	{
 		// sphere-sphere collision.
 		// Source is in range if the edge to edge distance is inferior to maxRange
@@ -783,6 +783,11 @@ bool CCmpObstructionManager::AreShapesInRange(const ObstructionSquare& source, c
 		// This means for example that a unit is in range of a building if it is farther than clearance-buildingsize,
 		// which is generally going to be negative (and thus this returns true).
 		// NB: since calculating the opposite-edge distance of a square is annoying, we'll add min(hw,hh) instead which is OK enough I guess
+		// NB: from a game POV, this means units can easily fire on buildings, which is good, but it also means that buildings can easily fire on units
+		// Buildings are usually meant to fire from the edge, not the opposite edge, so this looks odd.
+		// I don't really see an easy way to fix this tbh. Depending on the case, the JS code should call
+		// IsPointInTargetRange with the center/correct position (so the real distance is counted)
+		// or just add the min(hw,hh) to the minRange of the building.
 		if (distance - b.hw - navcellFix > maxRange)
 			return false;
 		if (distance + b.hw + std::min(a.hw, a.hh) < minRange)
