@@ -2821,10 +2821,13 @@ UnitAI.prototype.UnitFsmSpec = {
 					// in that case, the repairTarget is deleted, and we can just return
 					if (!this.repairTarget)
 						return;
-					if (this.MoveToTargetRange(this.repairTarget, IID_Builder))
-						this.SetNextState("APPROACHING");
-					else if (!this.CheckTargetRange(this.repairTarget, IID_Builder))
-						this.FinishOrder(); //can't approach and isn't in reach
+					if (!this.CheckTargetRange(this.repairTarget, IID_Builder))
+					{
+						if (this.MoveToTargetRange(this.repairTarget, IID_Builder))
+							this.SetNextState("APPROACHING");
+						else
+							this.FinishOrder(); //can't approach and isn't in reach
+					}
 				},
 			},
 
