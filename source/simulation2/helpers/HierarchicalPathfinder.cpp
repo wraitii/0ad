@@ -814,11 +814,12 @@ bool HierarchicalPathfinder::MakeGoalReachable(u16 i0, u16 j0, PathGoal& goal, p
 #endif
 
 	// In general, our maps are relatively open, so it's usually a better bet to be biaised towards minimal distance over path length.
-	int (*DistEstimate)(const RegionID&, u16, u16) = [](const RegionID& source, u16 gi, u16 gj) -> int { return (source.ci * CHUNK_SIZE + CHUNK_SIZE/2 - gi)*(source.ci * CHUNK_SIZE + CHUNK_SIZE/2 - gi) + (source.cj * CHUNK_SIZE + CHUNK_SIZE/2 - gj)*(source.cj * CHUNK_SIZE + CHUNK_SIZE/2 - gj); };
+	int (*DistEstimate)(u16, u16, u16, u16) = [](u16 regI, u16 regJ, u16 gi, u16 gj) -> int { return (regI - gi)*(regI - gi) + (regJ - gj)*(regJ - gj); };
 	// However, run unbiaised euclidian if we know the goal is unreachable, since we want to get as close as possible efficiently.
+	// multiply by 20 because we want distance to goal to matter a lot
 	if (!reachable)
-		DistEstimate = [](const RegionID& source, u16 gi, u16 gj) -> int {
-			return isqrt64((source.ci * CHUNK_SIZE + CHUNK_SIZE/2 - gi)*(source.ci * CHUNK_SIZE + CHUNK_SIZE/2 - gi) + (source.cj * CHUNK_SIZE + CHUNK_SIZE/2 - gj)*(source.cj * CHUNK_SIZE + CHUNK_SIZE/2 - gj));
+		DistEstimate = [](u16 regI, u16 regJ, u16 gi, u16 gj) -> int {
+			return 20 * isqrt64((regI - gi)*(regI - gi) + (regJ - gj)*(regJ - gj));
 		};
 
 	m_Astar_ClosedNodes.clear();
@@ -831,7 +832,7 @@ bool HierarchicalPathfinder::MakeGoalReachable(u16 i0, u16 j0, PathGoal& goal, p
 	m_Astar_GScore[source] = 0;
 
 	m_Astar_FScore.clear();
-	m_Astar_FScore[source] = DistEstimate(source, gi, gj);
+	m_Astar_FScore[source] = DistEstimate(source.ci * CHUNK_SIZE + CHUNK_SIZE/2, source.cj * CHUNK_SIZE + CHUNK_SIZE/2, gi, gj);
 
 	RegionID current {0,0,0};
 
@@ -879,6 +880,12 @@ bool HierarchicalPathfinder::MakeGoalReachable(u16 i0, u16 j0, PathGoal& goal, p
 			}
 		}
 
+		m_Astar_OpenNodes.erase(current);
+		m_Astar_ClosedNodes.emplace(current);
+		if (reachable)
+			m_Astar_FScore.erase(current);
+		m_Astar_GScore.erase(current);
+
 		// Stop heuristic in case we know we cannot reach the goal.
 		// Indeed this would cause A* to become an inacceptably slow flood fill.
 		// We keep track of our best fScore, we'll early-exit if we're too far from it
@@ -892,7 +899,7 @@ bool HierarchicalPathfinder::MakeGoalReachable(u16 i0, u16 j0, PathGoal& goal, p
 				globalBestFScore = currentFScore;
 				timeSinceLastFScoreImprovement = 0;
 			}
-			else if (currentFScore > globalBestFScore * 2 || ++timeSinceLastFScoreImprovement > m_ChunksW)
+			else if ( (++timeSinceLastFScoreImprovement > 3 && currentFScore > globalBestFScore * 2) || timeSinceLastFScoreImprovement > m_ChunksW)
 				break;
 		}
 
@@ -912,12 +919,6 @@ bool HierarchicalPathfinder::MakeGoalReachable(u16 i0, u16 j0, PathGoal& goal, p
 		if (goal.RectContainsGoal(x0, z0, x1, z1))
 			if (GetChunk(current.ci, current.cj, passClass).RegionNearestNavcellInGoal(current.r, i0, j0, goal, bestI, bestJ, dist2))
 				break;
-
-		m_Astar_OpenNodes.erase(current);
-		m_Astar_ClosedNodes.emplace(current);
-		if (reachable)
-			m_Astar_FScore.erase(current);
-		m_Astar_GScore.erase(current);
 
 		int currScore = m_Astar_GScore[current];
 		for (const RegionID& neighbor : edgeMap[current])
@@ -939,7 +940,26 @@ bool HierarchicalPathfinder::MakeGoalReachable(u16 i0, u16 j0, PathGoal& goal, p
 			// no default constructor so we'll use this hack in the meantime
 			auto alreadyThere = m_Astar_Predecessor.emplace( boost::container::flat_map<RegionID, RegionID>::value_type{ neighbor, current });
 			alreadyThere.first->second = current;
-			int score = temp_m_Astar_GScore + DistEstimate(neighbor, gi, gj);
+			int score;
+			// if the goal is reachable, we don't care much about fscore precision so pick the center
+			if (reachable)
+				score = temp_m_Astar_GScore + DistEstimate(neighbor.ci * CHUNK_SIZE + CHUNK_SIZE/2, neighbor.cj * CHUNK_SIZE + CHUNK_SIZE/2, gi, gj);
+			else
+			{
+				// if it's unreachable, it's more important however. So when we're close, get the "region center".
+				entity_pos_t x0 = Pathfinding::NAVCELL_SIZE * (neighbor.ci * CHUNK_SIZE);
+				entity_pos_t z0 = Pathfinding::NAVCELL_SIZE * (neighbor.cj * CHUNK_SIZE);
+				entity_pos_t x1 = x0 + Pathfinding::NAVCELL_SIZE * CHUNK_SIZE;
+				entity_pos_t z1 = z0 + Pathfinding::NAVCELL_SIZE * CHUNK_SIZE;
+				if (goal.RectContainsGoal(x0, z0, x1, z1))
+				{
+					int ri, rj;
+					GetChunk(neighbor.ci, neighbor.cj, passClass).RegionCenter(neighbor.r, ri, rj);
+					score = temp_m_Astar_GScore + DistEstimate((u16)ri, (u16)rj, gi, gj);
+				}
+				else
+					score = temp_m_Astar_GScore + DistEstimate(neighbor.ci * CHUNK_SIZE + CHUNK_SIZE/2, neighbor.cj * CHUNK_SIZE + CHUNK_SIZE/2, gi, gj);
+			}
 			if (score < secondBestFScore)
 			{
 				secondBestFScore = score;
@@ -970,6 +990,9 @@ bool HierarchicalPathfinder::MakeGoalReachable(u16 i0, u16 j0, PathGoal& goal, p
 
 	if (!exactFound)
 	{
+		// I don't believe this is possible, nor should it.
+		ENSURE(!m_Astar_ClosedNodes.empty());
+
 		// Pick best and roll with that.
 		current = *std::min_element(m_Astar_ClosedNodes.begin(), m_Astar_ClosedNodes.end(),
 									[this](const RegionID& a, const RegionID& b) -> bool { return m_Astar_FScore[a] < m_Astar_FScore[b]; });
@@ -1090,7 +1113,9 @@ void HierarchicalPathfinder::FindGoalRegions(u16 gi, u16 gj, const PathGoal& goa
 {
 	if (goal.type == PathGoal::POINT)
 	{
-		regions.insert(Get(gi, gj, passClass));
+		RegionID region = Get(gi, gj, passClass);
+		if (region.r > 0)
+			regions.insert(region);
 		return;
 	}
 
