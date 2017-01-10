@@ -1262,8 +1262,24 @@ void CCmpUnitMotion::RenderPath(const WaypointPath& path, std::vector<SOverlayLi
 		lines.back().m_Color = color;
 		SimRender::ConstructSquareOnGround(GetSimContext(), x, z, 1.0f, 1.0f, 0.0f, lines.back(), floating);
 	}
-	float x = cmpPosition->GetPosition2D().X.ToFloat();
-	float z = cmpPosition->GetPosition2D().Y.ToFloat();
+
+	if (CurrentGoalHasValidPosition())
+	{
+		float x = GetCurrentGoalPosition().X.ToFloat();
+		float z = GetCurrentGoalPosition().Y.ToFloat();
+		lines.push_back(SOverlayLine());
+		lines.back().m_Color = CColor(0.0f, 1.0f, 0.0f, 1.0f);
+		SimRender::ConstructSquareOnGround(GetSimContext(), x, z, 1.0f, 1.0f, 0.4f, lines.back(), floating);
+	}
+
+	float x = m_Goal.x.ToFloat();
+	float z = m_Goal.z.ToFloat();
+	lines.push_back(SOverlayLine());
+	lines.back().m_Color = CColor(0.0f, 1.0f, 1.0f, 1.0f);
+	SimRender::ConstructSquareOnGround(GetSimContext(), x, z, 1.0f, 1.0f, 0.0f, lines.back(), floating);
+
+	x = cmpPosition->GetPosition2D().X.ToFloat();
+	z = cmpPosition->GetPosition2D().Y.ToFloat();
 	waypointCoords.push_back(x);
 	waypointCoords.push_back(z);
 	lines.push_back(SOverlayLine());
