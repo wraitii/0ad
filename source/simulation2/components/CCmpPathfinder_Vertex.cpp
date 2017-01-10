@@ -556,8 +556,13 @@ void CCmpPathfinder::ComputeShortPath(const IObstructionTestFilter& filter,
 	fixed rangeZMin = z0 - range;
 	fixed rangeZMax = z0 + range;
 
-	// we don't actually add the "search space" edges as edges, since we may want to cross them
-	// in some cases (such as if we need to go around an obstruction that's partly out of the search range)
+	// add domain edges
+	// (The edges are the opposite direction to usual, so it's an inside-out square)
+	edges.emplace_back(Edge{ CFixedVector2D(rangeXMin, rangeZMin), CFixedVector2D(rangeXMin, rangeZMax) });
+	edges.emplace_back(Edge{ CFixedVector2D(rangeXMin, rangeZMax), CFixedVector2D(rangeXMax, rangeZMax) });
+	edges.emplace_back(Edge{ CFixedVector2D(rangeXMax, rangeZMax), CFixedVector2D(rangeXMax, rangeZMin) });
+	edges.emplace_back(Edge{ CFixedVector2D(rangeXMax, rangeZMin), CFixedVector2D(rangeXMin, rangeZMin) });
+
 
 	// List of obstruction vertexes (plus start/end points); we'll try to find paths through
 	// the graph defined by these vertexes
@@ -614,26 +619,23 @@ void CCmpPathfinder::ComputeShortPath(const IObstructionTestFilter& filter,
 		vert.status = Vertex::UNEXPLORED;
 		vert.quadInward = QUADRANT_NONE;
 		vert.quadOutward = QUADRANT_ALL;
-		vert.p.X = center.X - hd0.Dot(u); vert.p.Y = center.Y + hd0.Dot(v); if (aa) vert.quadInward = QUADRANT_BR; vertexes.push_back(vert);
-		if (vert.p.X < rangeXMin) rangeXMin = vert.p.X;
-		if (vert.p.Y < rangeZMin) rangeZMin = vert.p.Y;
-		if (vert.p.X > rangeXMax) rangeXMax = vert.p.X;
-		if (vert.p.Y > rangeZMax) rangeZMax = vert.p.Y;
-		vert.p.X = center.X - hd1.Dot(u); vert.p.Y = center.Y + hd1.Dot(v); if (aa) vert.quadInward = QUADRANT_TR; vertexes.push_back(vert);
-		if (vert.p.X < rangeXMin) rangeXMin = vert.p.X;
-		if (vert.p.Y < rangeZMin) rangeZMin = vert.p.Y;
-		if (vert.p.X > rangeXMax) rangeXMax = vert.p.X;
-		if (vert.p.Y > rangeZMax) rangeZMax = vert.p.Y;
-		vert.p.X = center.X + hd0.Dot(u); vert.p.Y = center.Y - hd0.Dot(v); if (aa) vert.quadInward = QUADRANT_TL; vertexes.push_back(vert);
-		if (vert.p.X < rangeXMin) rangeXMin = vert.p.X;
-		if (vert.p.Y < rangeZMin) rangeZMin = vert.p.Y;
-		if (vert.p.X > rangeXMax) rangeXMax = vert.p.X;
-		if (vert.p.Y > rangeZMax) rangeZMax = vert.p.Y;
-		vert.p.X = center.X + hd1.Dot(u); vert.p.Y = center.Y - hd1.Dot(v); if (aa) vert.quadInward = QUADRANT_BL; vertexes.push_back(vert);
-		if (vert.p.X < rangeXMin) rangeXMin = vert.p.X;
-		if (vert.p.Y < rangeZMin) rangeZMin = vert.p.Y;
-		if (vert.p.X > rangeXMax) rangeXMax = vert.p.X;
-		if (vert.p.Y > rangeZMax) rangeZMax = vert.p.Y;
+
+		vert.p.X = center.X - hd0.Dot(u); vert.p.Y = center.Y + hd0.Dot(v);
+		if (aa) vert.quadInward = QUADRANT_BR;
+		if (vert.p.X >= rangeXMin && vert.p.Y >= rangeZMin && vert.p.X <= rangeXMax && vert.p.Y <= rangeZMax)
+			vertexes.push_back(vert);
+		vert.p.X = center.X - hd1.Dot(u); vert.p.Y = center.Y + hd1.Dot(v);
+		if (aa) vert.quadInward = QUADRANT_BR;
+		if (vert.p.X >= rangeXMin && vert.p.Y >= rangeZMin && vert.p.X <= rangeXMax && vert.p.Y <= rangeZMax)
+			vertexes.push_back(vert);
+		vert.p.X = center.X + hd0.Dot(u); vert.p.Y = center.Y - hd0.Dot(v);
+		if (aa) vert.quadInward = QUADRANT_TL;
+		if (vert.p.X >= rangeXMin && vert.p.Y >= rangeZMin && vert.p.X <= rangeXMax && vert.p.Y <= rangeZMax)
+			vertexes.push_back(vert);
+		vert.p.X = center.X + hd1.Dot(u); vert.p.Y = center.Y - hd1.Dot(v);
+		if (aa) vert.quadInward = QUADRANT_BL;
+		if (vert.p.X >= rangeXMin && vert.p.Y >= rangeZMin && vert.p.X <= rangeXMax && vert.p.Y <= rangeZMax)
+			vertexes.push_back(vert);
 
 		// Add the edges:
 
