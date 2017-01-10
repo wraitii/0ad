@@ -241,15 +241,15 @@ UnitMotionFlying.prototype.OnUpdate = function(msg)
 	cmpPosition.MoveTo(pos.x, pos.z);
 };
 
-UnitMotionFlying.prototype.MoveToPointRange = function(x, z, minRange, maxRange)
+UnitMotionFlying.prototype.SetNewDestinationAsPosition = function(x, z, range)
 {
 	this.hasTarget = true;
 	this.landing = false;
 	this.reachedTarget = false;
 	this.targetX = x;
 	this.targetZ = z;
-	this.targetMinRange = minRange;
-	this.targetMaxRange = maxRange;
+	this.targetMinRange = range;
+	this.targetMaxRange = range;
 
 	// we'll tell the visual actor to set our animation here.
 	let cmpVisual = Engine.QueryInterface(this.entity, IID_Visual);
@@ -259,7 +259,7 @@ UnitMotionFlying.prototype.MoveToPointRange = function(x, z, minRange, maxRange)
 	return true;
 };
 
-UnitMotionFlying.prototype.MoveToTargetRange = function(target, minRange, maxRange)
+UnitMotionFlying.prototype.SetNewDestinationAsEntity = function(target, range)
 {
 	var cmpTargetPosition = Engine.QueryInterface(target, IID_Position);
 	if (!cmpTargetPosition || !cmpTargetPosition.IsInWorld())
@@ -276,8 +276,8 @@ UnitMotionFlying.prototype.MoveToTargetRange = function(target, minRange, maxRan
 	this.reachedTarget = false;
 	this.targetX = targetPos.x;
 	this.targetZ = targetPos.y;
-	this.targetMinRange = minRange;
-	this.targetMaxRange = maxRange;
+	this.targetMinRange = range;
+	this.targetMaxRange = range;
 
 	return true;
 };

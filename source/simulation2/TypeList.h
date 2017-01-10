@@ -178,7 +178,7 @@ COMPONENT(TerritoryManager)
 
 INTERFACE(UnitMotion)
 COMPONENT(UnitMotion) // must be after Obstruction
-					  //COMPONENT(UnitMotionScripted)
+COMPONENT(UnitMotionScripted)
 
 INTERFACE(UnitRenderer)
 COMPONENT(UnitRenderer)

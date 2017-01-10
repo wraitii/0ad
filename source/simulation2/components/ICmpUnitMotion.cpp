@@ -42,30 +42,20 @@ DEFINE_INTERFACE_METHOD_1("SetFacePointAfterMove", void, ICmpUnitMotion, SetFace
 DEFINE_INTERFACE_METHOD_1("SetDebugOverlay", void, ICmpUnitMotion, SetDebugOverlay, bool)
 END_INTERFACE_WRAPPER(UnitMotion)
 
-/*
+
 class CCmpUnitMotionScripted : public ICmpUnitMotion
 {
 public:
 	DEFAULT_SCRIPT_WRAPPER(UnitMotionScripted)
 
-	virtual bool MoveToPointRange(entity_pos_t x, entity_pos_t z, entity_pos_t minRange, entity_pos_t maxRange)
+	virtual bool SetNewDestinationAsPosition(entity_pos_t x, entity_pos_t z, entity_pos_t range)
 	{
-		return m_Script.Call<bool>("MoveToPointRange", x, z, minRange, maxRange);
+		return m_Script.Call<bool>("SetNewDestinationAsPosition", x, z, range);
 	}
 
-	virtual bool IsInPointRange(entity_pos_t x, entity_pos_t z, entity_pos_t minRange, entity_pos_t maxRange)
+	virtual bool SetNewDestinationAsEntity(entity_id_t target, entity_pos_t range)
 	{
-		return m_Script.Call<bool>("IsInPointRange", x, z, minRange, maxRange);
-	}
-
-	virtual bool IsInTargetRange(entity_id_t target, entity_pos_t minRange, entity_pos_t maxRange)
-	{
-		return m_Script.Call<bool>("IsInTargetRange", target, minRange, maxRange);
-	}
-
-	virtual bool MoveToTargetRange(entity_id_t target, entity_pos_t minRange, entity_pos_t maxRange)
-	{
-		return m_Script.Call<bool>("MoveToTargetRange", target, minRange, maxRange);
+		return m_Script.Call<bool>("SetNewDestinationAsEntity", target, range);
 	}
 
 	virtual void FaceTowardsPoint(entity_pos_t x, entity_pos_t z)
@@ -78,7 +68,7 @@ public:
 		m_Script.CallVoid("DiscardMove");
 	}
 
-	virtual void CompleteMove()
+	virtual void StopMoving()
 	{
 		m_Script.CallVoid("CompleteMove");
 	}
@@ -101,6 +91,11 @@ public:
 	virtual fixed GetTopSpeedRatio()
 	{
 		return m_Script.Call<fixed>("GetTopSpeedRatio");
+	}
+
+	virtual bool HasValidPath()
+	{
+		return m_Script.Call<bool>("HasValidPath");
 	}
 
 	virtual bool IsActuallyMoving()
@@ -156,4 +151,3 @@ public:
 };
 
 REGISTER_COMPONENT_SCRIPT_WRAPPER(UnitMotionScripted)
-*/
