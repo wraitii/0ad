@@ -703,9 +703,6 @@ void CCmpUnitMotion::Move(fixed dt)
 
 		if (sendMessage)
 			MoveHasSucceeded();
-
-		// We must return here, otherwise it may result in "gliding" from units getting another order immediately and other weirdness.
-		return;
 	}
 
 	// TODO: here should go things such as:
@@ -810,6 +807,9 @@ void CCmpUnitMotion::Move(fixed dt)
 
 	// we've had to stop at the end of the turn.
 	StopMoving();
+
+	if (!wasObstructed)
+		return;
 
 	// Oops, we've had a problem. Either we were obstructed, or we ran out of path (but still have a goal).
 	// Handle it.
@@ -926,7 +926,7 @@ bool CCmpUnitMotion::ShouldConsiderOurselvesAtDestination(SMotionGoal& goal)
 	if (goal.IsEntity())
 		return cmpObstructionManager->IsInTargetRange(GetEntityId(), goal.GetEntity(), goal.Range(), goal.Range());
 	else
-		return cmpObstructionManager->IsInPointRange(GetEntityId(), goal.GetPosition().X, goal.GetPosition().X, goal.Range(), goal.Range());
+		return cmpObstructionManager->IsInPointRange(GetEntityId(), goal.GetPosition().X, goal.GetPosition().Y, goal.Range(), goal.Range());
 }
 
 bool CCmpUnitMotion::PathIsShort(const WaypointPath& path, const CFixedVector2D& from, entity_pos_t minDistance) const

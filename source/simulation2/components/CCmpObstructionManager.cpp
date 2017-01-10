@@ -733,7 +733,7 @@ bool CCmpObstructionManager::IsPointInPointRange(entity_pos_t x, entity_pos_t z,
 {
 	CFixedVector2D pos(x, z);
 
-	entity_pos_t distance = (pos - CFixedVector2D(px, pz)).Length();
+	entity_pos_t distance = (pos - CFixedVector2D(px, pz)).Length() - Pathfinding::NAVCELL_SIZE / 2; // be a little permissive
 
 	if (distance < minRange)
 		return false;
@@ -756,6 +756,7 @@ bool CCmpObstructionManager::AreShapesInRange(const ObstructionSquare& source, c
 		// and the opposite edge to opposite edge distance is bigger than minRange
 		// TODO: figure out whether we actually want that
 		fixed distance = (CFixedVector2D(target.x, target.z) - CFixedVector2D(source.x, source.z)).Length();
+
 		if (distance - source.hw - target.hw - navcellFix > maxRange)
 			return false;
 		if (distance + source.hw + target.hw + navcellFix < minRange)

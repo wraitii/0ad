@@ -1593,6 +1593,11 @@ UnitAI.prototype.UnitFsmSpec = {
 			},
 
 			"Timer": function(msg) {
+				// bit of a sanity check, but this happening would most likely mean a bug somewhere.
+				let cmpUnitMotion = Engine.QueryInterface(this.entity, IID_UnitMotion);
+				if (cmpUnitMotion && cmpUnitMotion.IsTryingToMove())
+					warn("Entity " + this.entity + " is in the idle state but trying to move");
+
 				if (!this.isIdle)
 				{
 					this.isIdle = true;
@@ -1606,6 +1611,7 @@ UnitAI.prototype.UnitFsmSpec = {
 			},
 
 			"MoveCompleted": function() {
+				this.StopMoving();
 				this.FinishOrder();
 			},
 		},
@@ -1627,6 +1633,7 @@ UnitAI.prototype.UnitFsmSpec = {
 			},
 
 			"MoveCompleted": function() {
+				this.StopMoving();
 				this.FinishOrder();
 			},
 		},
@@ -1663,6 +1670,7 @@ UnitAI.prototype.UnitFsmSpec = {
 					this.PushOrder("Patrol",this.patrolStartPosOrder);
 
 				this.PushOrder(this.order.type, this.order.data);
+				this.StopMoving();
 				this.FinishOrder();
 			},
 		},
@@ -1716,6 +1724,7 @@ UnitAI.prototype.UnitFsmSpec = {
 				},
 
 				"MoveCompleted": function() {
+					this.StopMoving();
 					this.SetMoveSpeed(WALKING_SPEED);
 					if (!this.MoveToTargetRangeExplicit(this.isGuardOf, this.guardRange))
 						this.SetNextState("GUARDING");
@@ -1781,6 +1790,7 @@ UnitAI.prototype.UnitFsmSpec = {
 
 			"MoveCompleted": function() {
 				// When we've run far enough, stop fleeing
+				this.StopMoving();
 				this.FinishOrder();
 			},
 
@@ -1826,7 +1836,7 @@ UnitAI.prototype.UnitFsmSpec = {
 				},
 
 				"MoveCompleted": function() {
-
+					this.StopMoving();
 					if (this.CheckTargetAttackRange(this.order.data.target, this.order.data.attackType))
 					{
 						// If the unit needs to unpack, do so
@@ -2126,6 +2136,7 @@ UnitAI.prototype.UnitFsmSpec = {
 				},
 
 				"MoveCompleted": function() {
+					this.StopMoving();
 					this.SetNextState("ATTACKING");
 				},
 			},
@@ -2197,6 +2208,7 @@ UnitAI.prototype.UnitFsmSpec = {
 				},
 
 				"MoveCompleted": function(msg) {
+					this.StopMoving();
 					if (msg.data.error)
 					{
 						// We failed to reach the target
@@ -2260,6 +2272,7 @@ UnitAI.prototype.UnitFsmSpec = {
 				},
 
 				"MoveCompleted": function(msg) {
+					this.StopMoving();
 					var resourceType = this.order.data.type;
 					var resourceTemplate = this.order.data.template;
 
@@ -2538,6 +2551,7 @@ UnitAI.prototype.UnitFsmSpec = {
 				},
 
 				"MoveCompleted": function() {
+					this.StopMoving();
 					this.SetNextState("HEALING");
 				},
 			},
@@ -2637,6 +2651,7 @@ UnitAI.prototype.UnitFsmSpec = {
 					}
 				},
 				"MoveCompleted": function () {
+					this.StopMoving();
 					this.SetNextState("HEALING");
 				},
 			},
@@ -2649,10 +2664,7 @@ UnitAI.prototype.UnitFsmSpec = {
 				},
 
 				"MoveCompleted": function() {
-					// Switch back to idle animation to guarantee we won't
-					// get stuck with the carry animation after stopping moving
-					this.SelectAnimation("idle");
-
+					this.StopMoving();
 					// Check the dropsite is in range and we can return our resource there
 					// (we didn't get stopped before reaching it)
 					if (this.CheckTargetRange(this.order.data.target, IID_ResourceGatherer) && this.CanReturnResource(this.order.data.target, true))
@@ -2706,6 +2718,7 @@ UnitAI.prototype.UnitFsmSpec = {
 				},
 
 				"MoveCompleted": function() {
+					this.StopMoving();
 					if (this.waypoints && this.waypoints.length)
 					{
 						if (!this.MoveToMarket(this.order.data.target))
@@ -2733,6 +2746,7 @@ UnitAI.prototype.UnitFsmSpec = {
 				},
 
 				"MoveCompleted": function() {
+					this.StopMoving();
 					this.SetNextState("REPAIRING");
 				},
 			},
@@ -2930,6 +2944,7 @@ UnitAI.prototype.UnitFsmSpec = {
 				},
 
 				"MoveCompleted": function() {
+					this.StopMoving();
 					if (this.IsUnderAlert() && this.alertGarrisoningTarget)
 					{
 						// check that we can garrison in the building we're supposed to garrison in
@@ -3133,6 +3148,7 @@ UnitAI.prototype.UnitFsmSpec = {
 				},
 
 				"MoveCompleted": function() {
+					this.StopMoving();
 					this.SetNextState("LOADING");
 				},
 
@@ -3246,6 +3262,7 @@ UnitAI.prototype.UnitFsmSpec = {
 			},
 
 			"MoveCompleted": function() {
+				this.StopMoving();
 				this.MoveRandomly(+this.template.RoamDistance);
 			},
 		},
@@ -3278,7 +3295,7 @@ UnitAI.prototype.UnitFsmSpec = {
 				}
 			},
 
-			"MoveCompleted": function() { },
+			"MoveCompleted": function() { this.StopMoving(); },
 
 			"Timer": function(msg) {
 				this.SetNextState("ROAMING");
