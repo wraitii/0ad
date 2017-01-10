@@ -1666,11 +1666,11 @@ UnitAI.prototype.UnitFsmSpec = {
 			},
 
 			"MoveCompleted": function() {
+				this.StopMoving();
 				if (this.orderQueue.length == 1)
 					this.PushOrder("Patrol",this.patrolStartPosOrder);
 
 				this.PushOrder(this.order.type, this.order.data);
-				this.StopMoving();
 				this.FinishOrder();
 			},
 		},

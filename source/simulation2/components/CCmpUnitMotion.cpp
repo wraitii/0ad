@@ -808,7 +808,8 @@ void CCmpUnitMotion::Move(fixed dt)
 	// we've had to stop at the end of the turn.
 	StopMoving();
 
-	if (!wasObstructed)
+	if (ShouldConsiderOurselvesAtDestination(m_CurrentGoal))
+		// if we are where we should be, even if our move is still valid, don't bother moving.
 		return;
 
 	// Oops, we've had a problem. Either we were obstructed, or we ran out of path (but still have a goal).
