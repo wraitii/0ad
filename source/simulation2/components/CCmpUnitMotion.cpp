@@ -41,13 +41,6 @@
 #include "renderer/Scene.h"
 
 /**
- * When advancing along the long path, and picking a new waypoint to move
- * towards, we'll pick one that's up to this far from the unit's current
- * position (to minimise the effects of grid-constrained movement)
- */
-static const entity_pos_t WAYPOINT_ADVANCE_MAX = entity_pos_t::FromInt(TERRAIN_TILE_SIZE*8);
-
-/**
  * Min/Max range to restrict short path queries to. (Larger ranges are slower,
  * smaller ranges might miss some legitimate routes around large obstacles.)
  */
@@ -60,56 +53,18 @@ static const entity_pos_t SHORT_PATH_MAX_SEARCH_RANGE = entity_pos_t::FromInt(TE
 static const entity_pos_t LONG_PATH_MIN_DIST = entity_pos_t::FromInt(TERRAIN_TILE_SIZE*4);
 
 /**
- * When short-pathing, and the short-range pathfinder failed to return a path,
- * Assume we are at destination if we are closer than this distance to the target
- * And we have no target entity.
- * This is somewhat arbitrary, but setting a too big distance means units might lose sight of their end goal too much;
- */
-static const entity_pos_t SHORT_PATH_GOAL_RADIUS = entity_pos_t::FromInt(TERRAIN_TILE_SIZE*2);
-
-/**
  * If we are this close to our target entity/point, then think about heading
  * for it in a straight line instead of pathfinding.
+ * TODO: this should probably be reintroduced
  */
 static const entity_pos_t DIRECT_PATH_RANGE = entity_pos_t::FromInt(TERRAIN_TILE_SIZE*4);
-
-/**
- * If we're following a target entity,
- * we will recompute our path if the target has moved
- * more than this distance from where we last pathed to.
- */
-static const entity_pos_t CHECK_TARGET_MOVEMENT_MIN_DELTA = entity_pos_t::FromInt(TERRAIN_TILE_SIZE*4);
-
-/**
- * If we're following as part of a formation,
- * but can't move to our assigned target point in a straight line,
- * we will recompute our path if the target has moved
- * more than this distance from where we last pathed to.
- */
-static const entity_pos_t CHECK_TARGET_MOVEMENT_MIN_DELTA_FORMATION = entity_pos_t::FromInt(TERRAIN_TILE_SIZE*1);
-
-/**
- * If we're following something but it's more than this distance away along
- * our path, then don't bother trying to repath regardless of how much it has
- * moved, until we get this close to the end of our old path.
- */
-static const entity_pos_t CHECK_TARGET_MOVEMENT_AT_MAX_DIST = entity_pos_t::FromInt(TERRAIN_TILE_SIZE*16);
-
-/**
- * If we're following something and the angle between the (straight-line) directions to its previous target
- * position and its present target position is greater than a given angle, recompute the path even far away
- * (i.e. even if CHECK_TARGET_MOVEMENT_AT_MAX_DIST condition is not fulfilled). The actual check is done
- * on the cosine of this angle, with a PI/6 angle.
- */
-static const fixed CHECK_TARGET_MOVEMENT_MIN_COS = fixed::FromInt(866)/1000;
 
 /**
  * See unitmotion logic for details. Higher means units will retry more often before potentially failing.
  */
 static const size_t MAX_PATH_REATTEMPS = 8;
 
-static const CColor OVERLAY_COLOR_LONG_PATH(1, 1, 1, 1);
-static const CColor OVERLAY_COLOR_SHORT_PATH(1, 0, 0, 1);
+static const CColor OVERLAY_COLOR_PATH(1, 0, 0, 1);
 
 class CCmpUnitMotion : public ICmpUnitMotion
 {
@@ -180,8 +135,7 @@ public:
 	DEFAULT_COMPONENT_ALLOCATOR(UnitMotion)
 
 	bool m_DebugOverlayEnabled;
-	std::vector<SOverlayLine> m_DebugOverlayLongPathLines;
-	std::vector<SOverlayLine> m_DebugOverlayShortPathLines;
+	std::vector<SOverlayLine> m_DebugOverlayPathLines;
 
 	// Template state, never changed after init.
 	fixed m_TemplateWalkSpeed, m_TemplateTopSpeedRatio;
@@ -218,6 +172,7 @@ public:
 
 	// asynchronous request ID we're waiting for, or 0 if none
 	u32 m_ExpectedPathTicket;
+	bool m_DumpPathOnResult;
 
 	// Currently active paths (storing waypoints in reverse order).
 	// The last item in each path is the point we're currently heading towards.
@@ -282,12 +237,14 @@ public:
 		}
 
 		m_ExpectedPathTicket = 0;
+		m_DumpPathOnResult = false;
 
 		m_Tries = 0;
 		m_WaitingTurns = 0;
 
 		m_DebugOverlayEnabled = false;
 		m_AbortIfStuck = 0;
+
 	}
 
 	virtual void Deinit()
@@ -303,6 +260,7 @@ public:
 		serialize.NumberFixed_Unbounded("speed ratio", m_SpeedRatio);
 
 		serialize.NumberU32_Unbounded("ticket", m_ExpectedPathTicket);
+		serialize.Bool("dump path on result", m_DumpPathOnResult);
 
 		SerializeVector<SerializeWaypoint>()(serialize, "path", m_Path.m_Waypoints);
 
@@ -593,6 +551,22 @@ private:
 	void Move(fixed dt);
 
 	/**
+	 * Check that our current waypoints are sensible or whether we should recompute
+	 *
+	 * Quick note on how clever UnitMotion should be: UnitMotion should try to reach the current target (m_CurrentGoal)
+	 * as well as it can. But it should not take any particular guess on wether something CAN or SHOULD be reached.
+	 * Examples: chasing a unit that's faster than us is probably stupid. This is not UnitMotion's to say, UnitMotion should try.
+	 * Likewise when requesting a new path, even if it's unreachable unitMotion must try its best (but can inform unitAI that it's being obtuse)
+	 * However, if a chased unit is moving, we should try to anticipate its moves by any means possible.
+	 */
+	void ValidateCurrentPath();
+
+	/**
+	 * take a 2D position and return an updated one based on estimated target velocity.
+	 */
+	inline void UpdatePositionForTargetVelocity(entity_id_t ent, entity_pos_t& x, entity_pos_t& z, fixed& certainty);
+
+	/**
 	 * Returns whether we are close enough to the target to assume it's a good enough
 	 * position to stop.
 	 */
@@ -615,9 +589,7 @@ private:
 	ControlGroupMovementObstructionFilter GetObstructionFilter() const;
 
 	/**
-	 * Dump current paths and request a new one.
-	 * Might go in a straight line immediately, or might start an asynchronous
-	 * path request.
+	 * Dumps current path and request a new one asynchronously.
 	 */
 	bool RequestNewPath();
 
@@ -649,6 +621,12 @@ void CCmpUnitMotion::PathResult(u32 ticket, const WaypointPath& path)
 
 	m_ExpectedPathTicket = 0; // we don't expect to get this result again
 
+	if (m_DumpPathOnResult)
+	{
+		m_Path.m_Waypoints.clear();
+		m_DumpPathOnResult = false;
+	}
+
 	if (!m_Destination.Valid())
 		return;
 
@@ -664,14 +642,95 @@ void CCmpUnitMotion::PathResult(u32 ticket, const WaypointPath& path)
 		return;
 	}
 
-	// add to the top of our current waypoints
+	// if we're currently moving, we have a path, so check if the first waypoint can be removed
+	// it's not impossible that we've actually reached it already.
+	if (IsActuallyMoving() && path.m_Waypoints.size() >= 2)
+	{
+		CmpPtr<ICmpPosition> cmpPosition(GetEntityHandle());
+		CFixedVector2D nextWp = CFixedVector2D(path.m_Waypoints.back().x,path.m_Waypoints.back().z) - cmpPosition->GetPosition2D();
+		if (nextWp.CompareLength(GetSpeed()/2) <= 0)
+		{
+			m_Path.m_Waypoints.insert(m_Path.m_Waypoints.end(), path.m_Waypoints.begin(), path.m_Waypoints.end()-1);
+			return;
+		}
+	}
 	m_Path.m_Waypoints.insert(m_Path.m_Waypoints.end(), path.m_Waypoints.begin(), path.m_Waypoints.end());
 }
 
+void CCmpUnitMotion::ValidateCurrentPath()
+{
+	// this should be kept in sync with RequestNewPath otherwise we'll spend our whole life repathing.
+
+	// don't check our path if we have no path (dumbo) or if it's a point because a point never changes.
+	if (!HasValidPath() || !m_CurrentGoal.IsEntity())
+		return;
+
+	// TODO: figure out what to do when the goal dies.
+	// for now we'll keep on keeping on, but reset as if our goal was a position
+	// and send a failure message to UnitAI in case it wants to do something
+	// use position as a proxy for existence
+	CmpPtr<ICmpPosition> cmpTargetPosition(GetSimContext(), m_CurrentGoal.GetEntity());
+	if (!cmpTargetPosition)
+	{
+		// TODO: this should call a custom function for this
+		SMotionGoal newGoal(CFixedVector2D(m_Goal.x, m_Goal.z), m_CurrentGoal.Range());
+		m_Destination = newGoal;
+		m_CurrentGoal = newGoal;
+		RequestNewPath();
+		MoveWillFail();
+		return;
+	}
+
+	// TODO: check LOS here (instead of in UnitAI like we do now).
+
+	// if our goal can move, then perhaps it has.
+	CmpPtr<ICmpUnitMotion> cmpTargetUnitMotion(GetSimContext(), m_CurrentGoal.GetEntity());
+	if (!cmpTargetUnitMotion)
+		return;
+
+	// Check if our current Goal's position (ie m_Goal, not m_CurrentGoal) is sensible.
+
+	// TODO: this will probably be called every turn if the entity tries to go to an unreachable unit
+	// In those cases, UnitAI should be warned that the unit is unreachable and tell us to do something else.
+
+	CFixedVector2D targetPos = cmpTargetPosition->GetPosition2D();
+	fixed certainty = m_Clearance*2;
+	UpdatePositionForTargetVelocity(m_CurrentGoal.GetEntity(), targetPos.X, targetPos.Y, certainty);
+
+	CmpPtr<ICmpObstructionManager> cmpObstructionManager(GetSystemEntity());
+	if (!cmpObstructionManager->IsPointInPointRange(m_Goal.x, m_Goal.z, targetPos.X, targetPos.Y, m_CurrentGoal.Range() - certainty, m_CurrentGoal.Range() + certainty))
+		RequestNewPath();
+}
+
+void CCmpUnitMotion::UpdatePositionForTargetVelocity(entity_id_t ent, entity_pos_t& x, entity_pos_t& z, fixed& certainty)
+{
+	CmpPtr<ICmpPosition> cmpTargetPosition(GetSimContext(), ent);
+	CmpPtr<ICmpUnitMotion> cmpTargetUnitMotion(GetSimContext(), ent);
+	if (!cmpTargetPosition || !cmpTargetUnitMotion || !cmpTargetUnitMotion->IsActuallyMoving())
+		return;
+
+	// So here we'll try to estimate where the unit will be by the time we reach it.
+	// This can be done perfectly but I cannot think of a non-iterative process and this seems complicated for our purposes here
+	// so just get our direct distance and do some clever things, we'll correct later on anyhow so it doesn't matter.
+	CmpPtr<ICmpPosition> cmpPosition(GetEntityHandle());
+
+	// try to estimate in how much time we'll reach it.
+	fixed distance = (cmpTargetPosition->GetPosition2D() - cmpPosition->GetPosition2D()).Length();
+	fixed time = std::min(distance / GetSpeed(), fixed::FromInt(5)); // don't try from too far away or this is just dumb.
+
+	CFixedVector2D travelVector = (cmpTargetPosition->GetPosition2D() - cmpTargetPosition->GetPreviousPosition2D()).Multiply(time) * 2;
+	x += travelVector.X;
+	z += travelVector.Y;
+
+	certainty += time * 2;
+}
+
+// TODO: this can probably be split in a few functions efficiently and it'd be cleaner.
 void CCmpUnitMotion::Move(fixed dt)
 {
 	PROFILE("Move");
 
+	// early out
 	if (!IsTryingToMove())
 	{
 		SetActualSpeed(fixed::Zero());
@@ -705,9 +764,21 @@ void CCmpUnitMotion::Move(fixed dt)
 			MoveHasSucceeded();
 	}
 
-	// TODO: here should go things such as:
-	// - has our target moved enough that we should re-path?
-	// end TODO
+	// All path updates/checks should go here, before the moving loop.
+	ValidateCurrentPath();
+
+	//////////////////////////////////////////////////////////////////////////////////////
+	//// AFTER THIS POINT, NO MESSAGES SHOULD BE SENT OR HORRIBLE THINGS WILL HAPPEN. ////
+	////                             YOU HAVE BEEN WARNED.                            ////
+	//////////////////////////////////////////////////////////////////////////////////////
+
+	if (!IsTryingToMove())
+	{
+		// One of the messages we sent UnitAI caused us to stop moving entirely.
+		// Tell the visual actor we're not moving this turn to avoid gliding.
+		SetActualSpeed(fixed::Zero());
+		return;
+	}
 
 	// Keep track of the current unit's position during the update
 	CFixedVector2D pos = initialPos;
@@ -807,6 +878,10 @@ void CCmpUnitMotion::Move(fixed dt)
 
 	// we've had to stop at the end of the turn.
 	StopMoving();
+
+	////////////////////////////////////////////////////////////////////
+	//// From this point onwards messages are "safe" to send again. ////
+	////////////////////////////////////////////////////////////////////
 
 	if (ShouldConsiderOurselvesAtDestination(m_CurrentGoal))
 		// If we're out of path (ie not moving) but have a valid destination (IsTryingToMove()), we'll end up here every turn.
@@ -986,6 +1061,7 @@ ControlGroupMovementObstructionFilter CCmpUnitMotion::GetObstructionFilter() con
 
 // TODO: this can be improved, it's a little limited
 // e.g. use of hierarchical pathfinder,…
+// Also adding back the "straight-line if close enough" test could be good.
 bool CCmpUnitMotion::RequestNewPath()
 {
 	ENSURE(m_ExpectedPathTicket == 0);
@@ -997,8 +1073,7 @@ bool CCmpUnitMotion::RequestNewPath()
 
 	CFixedVector2D position = cmpPosition->GetPosition2D();
 
-	// dump current path
-	m_Path.m_Waypoints.clear();
+	m_DumpPathOnResult = true;
 
 	bool reachable = RecomputeGoalPosition(m_Goal);
 
@@ -1045,7 +1120,6 @@ bool CCmpUnitMotion::RecomputeGoalPosition(PathGoal& goal)
 	goal.z = GetCurrentGoalPosition().Y;
 
 	// few cases to consider.
-
 	if (m_CurrentGoal.IsEntity())
 	{
 		CmpPtr<ICmpObstruction> cmpObstruction(GetSimContext(), m_CurrentGoal.GetEntity());
@@ -1055,6 +1129,9 @@ bool CCmpUnitMotion::RecomputeGoalPosition(PathGoal& goal)
 			bool hasObstruction = cmpObstruction->GetObstructionSquare(obstruction);
 			if (hasObstruction)
 			{
+				fixed certainty;
+				UpdatePositionForTargetVelocity(m_CurrentGoal.GetEntity(), obstruction.x, obstruction.z, certainty);
+
 				goal.type = PathGoal::CIRCLE;
 				goal.x = obstruction.x;
 				goal.z = obstruction.z;
@@ -1197,11 +1274,8 @@ void CCmpUnitMotion::RenderSubmit(SceneCollector& collector)
 	if (!m_DebugOverlayEnabled)
 		return;
 
-	RenderPath(m_Path, m_DebugOverlayLongPathLines, OVERLAY_COLOR_LONG_PATH);
+	RenderPath(m_Path, m_DebugOverlayPathLines, OVERLAY_COLOR_PATH);
 
-	for (size_t i = 0; i < m_DebugOverlayLongPathLines.size(); ++i)
-		collector.Submit(&m_DebugOverlayLongPathLines[i]);
-
-	for (size_t i = 0; i < m_DebugOverlayShortPathLines.size(); ++i)
-		collector.Submit(&m_DebugOverlayShortPathLines[i]);
+	for (size_t i = 0; i < m_DebugOverlayPathLines.size(); ++i)
+		collector.Submit(&m_DebugOverlayPathLines[i]);
 }
