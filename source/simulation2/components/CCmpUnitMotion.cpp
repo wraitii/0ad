@@ -755,6 +755,9 @@ void CCmpUnitMotion::Move(fixed dt)
 	// but this should NOT be relied upon.
 	if (ShouldConsiderOurselvesAtDestination(m_CurrentGoal))
 	{
+		if (m_FacePointAfterMove && CurrentGoalHasValidPosition())
+			FaceTowardsPoint(GetCurrentGoalPosition().X, GetCurrentGoalPosition().Y);
+
 		bool sendMessage = false;
 		if (ShouldConsiderOurselvesAtDestination(m_Destination))
 			// send a hint to unitAI to maintain compatibility.
