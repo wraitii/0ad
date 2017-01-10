@@ -661,8 +661,8 @@ void CCmpUnitMotion::ValidateCurrentPath()
 {
 	// this should be kept in sync with RequestNewPath otherwise we'll spend our whole life repathing.
 
-	// don't check our path if we have no path (dumbo) or if it's a point because a point never changes.
-	if (!HasValidPath() || !m_CurrentGoal.IsEntity())
+	// don't validate points, they never change
+	if (!m_CurrentGoal.IsEntity())
 		return;
 
 	// TODO: figure out what to do when the goal dies.
@@ -680,6 +680,10 @@ void CCmpUnitMotion::ValidateCurrentPath()
 		MoveWillFail();
 		return;
 	}
+
+	// don't validate if no path.
+	if (!HasValidPath())
+		return;
 
 	// TODO: check LOS here (instead of in UnitAI like we do now).
 
