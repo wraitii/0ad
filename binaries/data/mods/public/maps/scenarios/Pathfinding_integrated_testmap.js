@@ -5,20 +5,20 @@ var start = 0;
 
 var failedTests = 0;
 
+let cmpTechMgr = QueryPlayerIDInterface(1, IID_TechnologyManager);
+
+//XXXtreme hack: create a fake technology to drastically limit the range of everybody in place.
+cmpTechMgr.modifications = {};
+cmpTechMgr.modifications['Attack/Ranged/MaxRange'] = [ {"affects":[["Unit"]], "replace":1.5} ];
+
+cmpTechMgr = QueryPlayerIDInterface(2, IID_TechnologyManager);
+cmpTechMgr.modifications = {};
+cmpTechMgr.modifications['Attack/Ranged/MaxRange'] = [ {"affects":[["Unit"]], "replace":0} ];
+
 Trigger.prototype.setupTests = function()
 {
 	let cmpTimer = Engine.QueryInterface(SYSTEM_ENTITY, IID_Timer);
 	start = cmpTimer.GetTime();
-
-	let cmpTechMgr = QueryPlayerIDInterface(1, IID_TechnologyManager);
-
-	//XXXtreme hack: create a fake technology to drastically limit the range of everybody in place.
-	cmpTechMgr.modifications = {};
-	cmpTechMgr.modifications['Attack/Ranged/MaxRange'] = [ {"affects":["Unit"], "replace":2.5} ];
-
-	cmpTechMgr = QueryPlayerIDInterface(2, IID_TechnologyManager);
-	cmpTechMgr.modifications = {};
-	cmpTechMgr.modifications['Attack/Ranged/MaxRange'] = [ {"affects":["Unit"], "replace":0} ];
 
 	let cmpFoundation = Engine.QueryInterface(391, IID_Foundation);
 	cmpFoundation.InitialiseConstruction(1, "structures/maur_house");
@@ -43,7 +43,7 @@ Trigger.prototype.setupTests = function()
 		"54" : {"target":365},	// labyrinth: with hole for small - this is the elephant
 		"85" : {"target":362},	// labyrinth: with hole for small - this is the ram
 		"390" : {"target":391, "type" : "build"},	// build a house
-		"393" : {"target":392, "type" : "hunt"},	// hunt a chicken
+		"393" : {"target":392, "type" : "hunt", "becomes":434},	// hunt a chicken, 434 is the created resource ID
 	};
 
 	// order units to move
@@ -126,11 +126,9 @@ function testBuild(test)
 
 function testHunt(test)
 {
-	/*
-	let cmpFoundation = Engine.QueryInterface(tests[tester].target, IID_Foundation);
-	if (cmpFoundation.GetBuildProgress() > 0)
-		Success(tester);
-	*/
+	let cmpResourceSupply = Engine.QueryInterface(tests[test].becomes, IID_ResourceSupply);
+	if (cmpResourceSupply && cmpResourceSupply.GetCurrentAmount() < cmpResourceSupply.GetMaxAmount())
+		Success(test);
 }
 
 function testWalk(test)
@@ -150,7 +148,7 @@ function testWalk(test)
 	
 	cmpTesterAI.Stop();
 
-	if (MyPos.distanceTo(TgPos) > 8 || (tests[test].underTime && time > tests[test].underTime))
+	if (MyPos.distanceTo(TgPos) > 10 || (tests[test].underTime && time > tests[test].underTime))
 		if (!tests[test].expectfail)
 		{
 			Fail(test);

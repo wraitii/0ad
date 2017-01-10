@@ -33,7 +33,7 @@
 		</Postproc>
 	</Environment>
 	<Camera>
-		<Position x="318.107" y="322.521" z="82.4104"/>
+		<Position x="186.301" y="248.19" z="250.622"/>
 		<Rotation angle="0"/>
 		<Declination angle="0.610865"/>
 	</Camera>
@@ -2914,6 +2914,20 @@
 			<Position x="281.0394" z="395.01688"/>
 			<Orientation y="2.35621"/>
 			<Actor seed="23073"/>
+		</Entity>
+		<Entity uid="422">
+			<Template>units/maur_infantry_archer_b</Template>
+			<Player>1</Player>
+			<Position x="278.09272" z="54.10203"/>
+			<Orientation y="2.35622"/>
+			<Actor seed="65509"/>
+		</Entity>
+		<Entity uid="423">
+			<Template>units/maur_infantry_archer_b</Template>
+			<Player>1</Player>
+			<Position x="170.37449" z="335.6861"/>
+			<Orientation y="2.35622"/>
+			<Actor seed="21638"/>
 		</Entity>
 	</Entities>
 	<Paths/>
