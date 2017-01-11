@@ -4480,7 +4480,7 @@ UnitAI.prototype.MoveToTargetAttackRange = function(target, type, evenUnreachabl
 // TODO: here we should give the desired range based on unit speed, our own desire to walk, and so on.
 	var cmpUnitMotion = Engine.QueryInterface(this.entity, IID_UnitMotion);
 	cmpUnitMotion.SetAbortIfStuck(9);
-	if (cmpUnitMotion.SetNewDestinationAsEntity(target, (range.min + guessedMaxRange)/2.0), false)
+	if (cmpUnitMotion.SetNewDestinationAsEntity(target, (range.min + guessedMaxRange)/2.0, false))
 		return true;
 
 	// if that failed, try closer
