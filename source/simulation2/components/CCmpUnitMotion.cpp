@@ -436,8 +436,8 @@ public:
 		return m_Clearance;
 	}
 
-	virtual bool SetNewDestinationAsPosition(entity_pos_t x, entity_pos_t z, entity_pos_t range);
-	virtual bool SetNewDestinationAsEntity(entity_id_t target, entity_pos_t range);
+	virtual bool SetNewDestinationAsPosition(entity_pos_t x, entity_pos_t z, entity_pos_t range, bool evenUnreachable);
+	virtual bool SetNewDestinationAsEntity(entity_id_t target, entity_pos_t range, bool evenUnreachable);
 
 	virtual bool RecomputeGoalPosition(PathGoal& goal);
 
@@ -591,8 +591,9 @@ private:
 
 	/**
 	 * Dumps current path and request a new one asynchronously.
+	 * Inside of UnitMotion, do not set evenUnreachable to false unless you REALLY know what you're doing.
 	 */
-	bool RequestNewPath();
+	bool RequestNewPath(bool evenUnreachable = true);
 
 	/**
 	 * Start an asynchronous long path query.
@@ -1070,7 +1071,7 @@ ControlGroupMovementObstructionFilter CCmpUnitMotion::GetObstructionFilter() con
 // TODO: this can be improved, it's a little limited
 // e.g. use of hierarchical pathfinder,…
 // Also adding back the "straight-line if close enough" test could be good.
-bool CCmpUnitMotion::RequestNewPath()
+bool CCmpUnitMotion::RequestNewPath(bool evenUnreachable)
 {
 	ENSURE(m_ExpectedPathTicket == 0);
 
@@ -1084,6 +1085,13 @@ bool CCmpUnitMotion::RequestNewPath()
 	m_DumpPathOnResult = true;
 
 	bool reachable = RecomputeGoalPosition(m_Goal);
+
+	if (!reachable && !evenUnreachable)
+	{
+		// Do not submit a path request if we've been told it's not going to be used anyhow.
+		DiscardMove();
+		return false;
+	}
 
 	ENSURE(m_Goal.x >= fixed::Zero());
 
@@ -1173,13 +1181,13 @@ bool CCmpUnitMotion::RecomputeGoalPosition(PathGoal& goal)
 				goal.type = PathGoal::CIRCLE;
 				goal.x = obstruction.x;
 				goal.z = obstruction.z;
-				goal.hw = obstruction.hw + m_CurrentGoal.Range();
+				goal.hw = obstruction.hw + m_CurrentGoal.Range() + m_Clearance;
 
 				// if not a unit, treat as a square
 				if (cmpObstruction->GetUnitRadius() == fixed::Zero())
 				{
 					goal.type = PathGoal::SQUARE;
-					goal.hh = obstruction.hh + m_CurrentGoal.Range();
+					goal.hh = obstruction.hh + m_CurrentGoal.Range() + m_Clearance;
 					goal.u = obstruction.u;
 					goal.v = obstruction.v;
 
@@ -1250,7 +1258,7 @@ void CCmpUnitMotion::RequestShortPath(const CFixedVector2D &from, const PathGoal
 }
 
 
-bool CCmpUnitMotion::SetNewDestinationAsPosition(entity_pos_t x, entity_pos_t z, entity_pos_t range)
+bool CCmpUnitMotion::SetNewDestinationAsPosition(entity_pos_t x, entity_pos_t z, entity_pos_t range, bool evenUnreachable)
 {
 	// This sets up a new destination, scrap whatever came before.
 	DiscardMove();
@@ -1258,24 +1266,27 @@ bool CCmpUnitMotion::SetNewDestinationAsPosition(entity_pos_t x, entity_pos_t z,
 	m_Destination = SMotionGoal(CFixedVector2D(x, z), range);
 	m_CurrentGoal = m_Destination;
 
-	// TODO: do something with the result
-	RequestNewPath(); // calls RecomputeGoalPosition
+	bool reachable = RequestNewPath(evenUnreachable); // calls RecomputeGoalPosition
 
-	return true;
+	return reachable;
 }
 
-bool CCmpUnitMotion::SetNewDestinationAsEntity(entity_id_t ent, entity_pos_t range)
+bool CCmpUnitMotion::SetNewDestinationAsEntity(entity_id_t ent, entity_pos_t range, bool evenUnreachable)
 {
 	// This sets up a new destination, scrap whatever came before.
 	DiscardMove();
 
+	// validate entity's existence.
+	CmpPtr<ICmpPosition> cmpPosition(GetSimContext(), ent);
+	if (!cmpPosition || !cmpPosition->IsInWorld())
+		return false;
+
 	m_Destination = SMotionGoal(ent, range);
 	m_CurrentGoal = m_Destination;
 
-	// TODO: do something with the result
-	RequestNewPath(); // calls RecomputeGoalPosition
+	bool reachable = RequestNewPath(evenUnreachable); // calls RecomputeGoalPosition
 
-	return true;
+	return reachable;
 }
 
 void CCmpUnitMotion::RenderPath(const WaypointPath& path, std::vector<SOverlayLine>& lines, CColor color)

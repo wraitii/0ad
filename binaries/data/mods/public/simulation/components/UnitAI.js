@@ -228,7 +228,7 @@ UnitAI.prototype.UnitFsmSpec = {
 		}
 		else
 		{
-			// We are already at the target, or can't move at all
+			// We can't reach the target
 			this.FinishOrder();
 		}
 	},
@@ -341,7 +341,7 @@ UnitAI.prototype.UnitFsmSpec = {
 		}
 		else
 		{
-			// We are already at the target, or can't move at all
+			// We can't reach the target
 			this.StopMoving();
 			this.FinishOrder();
 		}
@@ -374,7 +374,7 @@ UnitAI.prototype.UnitFsmSpec = {
 		}
 		else
 		{
-			// We are already at the target, or can't move at all
+			// We can't reach the target
 			this.StopMoving();
 			this.SetNextState("INDIVIDUAL.PICKUP.LOADING");
 		}
@@ -387,7 +387,7 @@ UnitAI.prototype.UnitFsmSpec = {
 			return;
 		}
 
-		if (this.MoveToTargetRangeExplicit(this.isGuardOf, this.guardRange))
+		if (this.MoveToTargetRangeExplicit(this.isGuardOf, this.guardRange, true))
 			this.SetNextState("INDIVIDUAL.GUARD.ESCORTING");
 		else
 			this.SetNextState("INDIVIDUAL.GUARD.GUARDING");
@@ -397,7 +397,7 @@ UnitAI.prototype.UnitFsmSpec = {
 		// We use the distance between the entities to account for ranged attacks
 		var distance = DistanceBetweenEntities(this.entity, this.order.data.target) + (+this.template.FleeDistance);
 		var cmpUnitMotion = Engine.QueryInterface(this.entity, IID_UnitMotion);
-		if (cmpUnitMotion.SetNewDestinationAsEntity(this.order.data.target, distance))
+		if (cmpUnitMotion.SetNewDestinationAsEntity(this.order.data.target, distance, true))
 		{
 			// We've started fleeing from the given target
 			if (this.IsAnimal())
@@ -407,7 +407,7 @@ UnitAI.prototype.UnitFsmSpec = {
 		}
 		else
 		{
-			// We are already at the target, or can't move at all
+			// We can't reach the target
 			this.StopMoving();
 			this.FinishOrder();
 		}
@@ -619,7 +619,7 @@ UnitAI.prototype.UnitFsmSpec = {
 		}
 		else
 		{
-			// We are already at the target, or can't move at all,
+			// We can't reach the target.
 			// so try gathering it from here.
 			// TODO: need better handling of the can't-reach-target case
 			this.StopMoving();
@@ -696,7 +696,7 @@ UnitAI.prototype.UnitFsmSpec = {
 		}
 		else
 		{
-			// We are already at the target, or can't move at all,
+			// We can't reach the target.
 			// so try repairing it from here.
 			// TODO: need better handling of the can't-reach-target case
 			this.StopMoving();
@@ -1373,7 +1373,7 @@ UnitAI.prototype.UnitFsmSpec = {
 			}
 			else
 			{
-				// We are already at the target, or can't move at all
+				// We can't reach the target.
 				this.FinishOrder();
 			}
 		},
@@ -1753,6 +1753,7 @@ UnitAI.prototype.UnitFsmSpec = {
 						return;
 					}
 					// then check is the target has moved
+					// TODO: this should call isInRange, not this.
 					if (this.MoveToTargetRangeExplicit(this.isGuardOf, this.guardRange))
 						this.SetNextState("ESCORTING");
 					else
@@ -3209,7 +3210,7 @@ UnitAI.prototype.UnitFsmSpec = {
 			}
 			else
 			{
-				// We are already at the target, or can't move at all
+				// We cannot reach the target.
 				this.FinishOrder();
 			}
 		},
@@ -4350,27 +4351,27 @@ UnitAI.prototype.MoveToPoint = function(x, z)
 {
 	var cmpUnitMotion = Engine.QueryInterface(this.entity, IID_UnitMotion);
 	cmpUnitMotion.SetAbortIfStuck(3);
-	return cmpUnitMotion.SetNewDestinationAsPosition(x, z, 0);
+	return cmpUnitMotion.SetNewDestinationAsPosition(x, z, 0, true);
 };
 
 UnitAI.prototype.MoveToPointRange = function(x, z, range)
 {
 	var cmpUnitMotion = Engine.QueryInterface(this.entity, IID_UnitMotion);
 	cmpUnitMotion.SetAbortIfStuck(3);
-	return cmpUnitMotion.SetNewDestinationAsPosition(x, z, range);
+	return cmpUnitMotion.SetNewDestinationAsPosition(x, z, range, true);
 };
 
-UnitAI.prototype.MoveToTarget = function(target)
+UnitAI.prototype.MoveToTarget = function(target, evenUnreachable = false)
 {
 	if (!this.CheckTargetVisible(target))
 		return false;
 
 	var cmpUnitMotion = Engine.QueryInterface(this.entity, IID_UnitMotion);
 	cmpUnitMotion.SetAbortIfStuck(5);
-	return cmpUnitMotion.SetNewDestinationAsEntity(target, 0);
+	return cmpUnitMotion.SetNewDestinationAsEntity(target, 0, evenUnreachable);
 };
 
-UnitAI.prototype.MoveToTargetRange = function(target, iid, type)
+UnitAI.prototype.MoveToTargetRange = function(target, iid, type, evenUnreachable = false)
 {
 	if (!this.CheckTargetVisible(target) || this.IsTurret())
 		return false;
@@ -4383,7 +4384,7 @@ UnitAI.prototype.MoveToTargetRange = function(target, iid, type)
 	var cmpUnitMotion = Engine.QueryInterface(this.entity, IID_UnitMotion);
 	cmpUnitMotion.SetAbortIfStuck(5);
 	// generally speaking, try to aim for the middle of a range.
-	return cmpUnitMotion.SetNewDestinationAsEntity(target, (range.min + range.max)/2.0);
+	return cmpUnitMotion.SetNewDestinationAsEntity(target, (range.min + range.max)/2.0, evenUnreachable);
 };
 
 /**
@@ -4391,7 +4392,7 @@ UnitAI.prototype.MoveToTargetRange = function(target, iid, type)
  * for melee attacks, this goes straight to the default range checks
  * for ranged attacks, the parabolic range is used
  */
-UnitAI.prototype.MoveToTargetAttackRange = function(target, type)
+UnitAI.prototype.MoveToTargetAttackRange = function(target, type, evenUnreachable = false)
 {
 	// for formation members, the formation will take care of the range check
 	if (this.IsFormationMember())
@@ -4406,7 +4407,7 @@ UnitAI.prototype.MoveToTargetAttackRange = function(target, type)
 		target = cmpFormation.GetClosestMember(this.entity);
 
 	if (type != "Ranged")
-		return this.MoveToTargetRange(target, IID_Attack, type);
+		return this.MoveToTargetRange(target, IID_Attack, type, evenUnreachable);
 
 	if (!this.CheckTargetVisible(target))
 		return false;
@@ -4441,22 +4442,21 @@ UnitAI.prototype.MoveToTargetAttackRange = function(target, type)
 // TODO: here we should give the desired range based on unit speed, our own desire to walk, and so on.
 	var cmpUnitMotion = Engine.QueryInterface(this.entity, IID_UnitMotion);
 	cmpUnitMotion.SetAbortIfStuck(9);
-	if (cmpUnitMotion.SetNewDestinationAsEntity(target, (range.min + guessedMaxRange)/2.0))
+	if (cmpUnitMotion.SetNewDestinationAsEntity(target, (range.min + guessedMaxRange)/2.0), false)
 		return true;
 
 	// if that failed, try closer
-	return cmpUnitMotion.SetNewDestinationAsEntity(target, (range.min + Math.min(range.max, parabolicMaxRange))/2.0);
+	return cmpUnitMotion.SetNewDestinationAsEntity(target, (range.min + Math.min(range.max, parabolicMaxRange))/2.0, evenUnreachable);
 };
 
-// TODO: call
-UnitAI.prototype.MoveToTargetRangeExplicit = function(target, range)
+UnitAI.prototype.MoveToTargetRangeExplicit = function(target, range, evenUnreachable = false)
 {
 	if (!this.CheckTargetVisible(target))
 		return false;
 
 	var cmpUnitMotion = Engine.QueryInterface(this.entity, IID_UnitMotion);
 	cmpUnitMotion.SetAbortIfStuck(5);
-	return cmpUnitMotion.SetNewDestinationAsEntity(target, range);
+	return cmpUnitMotion.SetNewDestinationAsEntity(target, range, evenUnreachable);
 };
 
 UnitAI.prototype.MoveToGarrisonRange = function(target)
@@ -4471,7 +4471,7 @@ UnitAI.prototype.MoveToGarrisonRange = function(target)
 
 	var cmpUnitMotion = Engine.QueryInterface(this.entity, IID_UnitMotion);
 	cmpUnitMotion.SetAbortIfStuck(5);
-	return cmpUnitMotion.SetNewDestinationAsEntity(target, (range.min + range.max)/2.0);
+	return cmpUnitMotion.SetNewDestinationAsEntity(target, (range.min + range.max)/2.0, false); // presumably we always want to know if we can't garrison here
 };
 
 UnitAI.prototype.CheckPointRangeExplicit = function(x, z, min, max)
@@ -5115,7 +5115,7 @@ UnitAI.prototype.Attack = function(target, queued, allowCapture)
 		// We don't want to let healers walk to the target unit so they can be easily killed.
 		// Instead we just let them get into healing range.
 		if (this.IsHealer())
-			this.MoveToTargetRange(target, IID_Heal);
+			this.MoveToTargetRange(target, IID_Heal, true);
 		else
 			this.WalkToTarget(target, queued);
 		return;
@@ -5992,7 +5992,7 @@ UnitAI.prototype.MoveRandomly = function(distance)
 	var tz = pos.z + (2*Math.random()-1)*jitter;
 
 	var cmpMotion = Engine.QueryInterface(this.entity, IID_UnitMotion);
-	cmpMotion.SetNewDestinationAsPosition(tx, tz, distance);
+	cmpMotion.SetNewDestinationAsPosition(tx, tz, distance, true);
 };
 
 UnitAI.prototype.SetFacePointAfterMove = function(val)

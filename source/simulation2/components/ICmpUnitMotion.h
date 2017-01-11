@@ -36,26 +36,22 @@ class ICmpUnitMotion : public IComponent
 public:
 
 	/**
-	 * Sets our destination and current goal to be the given range from the given position.
-	 * As in IsInPointRange, the range is measured from the center of the unit.
-	 * If the unit is already in range, or cannot move anywhere at all, or if there is
-	 * some other error, then returns false.
+	 * Resets motion and assigns a new 2D position as destination.
+	 * Returns false if the position is unreachable (or if the move could not be completed for any other reason).
 	 * Otherwise, returns true.
-	 * Note that the caller may want to regularly check if it is in range, but UnitMotion will try to stay
-	 * at "Range" away from the point.
+	 * If evenUnreachable is false, and the point is unreachable, then the unit will not start moving.
+	 * Otherwise, the unit will try to go to another position as close as possible to the destination.
 	 */
-	virtual bool SetNewDestinationAsPosition(entity_pos_t x, entity_pos_t z, entity_pos_t range) = 0;
+	virtual bool SetNewDestinationAsPosition(entity_pos_t x, entity_pos_t z, entity_pos_t range, bool evenUnreachable) = 0;
 
 	/**
-	 * Sets our destination and current goal to be the given range from the given entity.
-	 * Distance is measured as in IsInTargetRange (edge to edge, as much as possible)
-	 * If the unit is already in range, or cannot move anywhere at all, or if there is
-	 * some other error, then returns false.
+	 * Resets motion and assigns a new entity as destination.
+	 * Returns false if the entity is unreachable (or if the move could not be completed for any other reason).
 	 * Otherwise, returns true.
-	 * Note that the caller may want to regularly check if it is in range, but UnitMotion will try to stay
-	 * at "Range" away from the entity. It may stop and start moving again on its own if the target moves
+	 * If evenUnreachable is false, and the point is unreachable, then the unit will not start moving.
+	 * Otherwise, the unit will try to go to another position as close as possible to the destination.
 	 */
-	virtual bool SetNewDestinationAsEntity(entity_id_t target, entity_pos_t range) = 0;
+	virtual bool SetNewDestinationAsEntity(entity_id_t target, entity_pos_t range, bool evenUnreachable) = 0;
 
 	/**
 	 * Turn to look towards the given point.
