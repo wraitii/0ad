@@ -33,8 +33,8 @@
 		</Postproc>
 	</Environment>
 	<Camera>
-		<Position x="107.181" y="203.277" z="101.038"/>
-		<Rotation angle="0"/>
+		<Position x="104.74" y="227.08" z="347.02"/>
+		<Rotation angle="1.82891"/>
 		<Declination angle="0.610865"/>
 	</Camera>
 	<ScriptSettings><![CDATA[
@@ -2956,6 +2956,104 @@
 			<Position x="345.90961" z="103.1294"/>
 			<Orientation y="2.35622"/>
 			<Actor seed="56518"/>
+		</Entity>
+		<Entity uid="430">
+			<Template>structures/maur_house</Template>
+			<Player>1</Player>
+			<Position x="377.74369" z="92.24572"/>
+			<Orientation y="2.35622"/>
+			<Actor seed="56518"/>
+		</Entity>
+		<Entity uid="431">
+			<Template>structures/maur_house</Template>
+			<Player>1</Player>
+			<Position x="383.42154" z="86.796"/>
+			<Orientation y="2.35622"/>
+			<Actor seed="56518"/>
+		</Entity>
+		<Entity uid="432">
+			<Template>structures/maur_house</Template>
+			<Player>1</Player>
+			<Position x="367.5583" z="84.06911"/>
+			<Orientation y="2.35622"/>
+			<Actor seed="56518"/>
+		</Entity>
+		<Entity uid="433">
+			<Template>structures/maur_house</Template>
+			<Player>1</Player>
+			<Position x="373.39695" z="77.88918"/>
+			<Orientation y="2.35622"/>
+			<Actor seed="56518"/>
+		</Entity>
+		<Entity uid="434">
+			<Template>gaia/flora_tree_cretan_date_palm_tall</Template>
+			<Player>1</Player>
+			<Position x="381.55201" z="78.87566"/>
+			<Orientation y="2.35622"/>
+			<Actor seed="2647"/>
+		</Entity>
+		<Entity uid="435">
+			<Template>structures/maur_house</Template>
+			<Player>1</Player>
+			<Position x="378.23035" z="70.90313"/>
+			<Orientation y="2.35622"/>
+			<Actor seed="56518"/>
+		</Entity>
+		<Entity uid="436">
+			<Template>structures/maur_house</Template>
+			<Player>1</Player>
+			<Position x="387.04218" z="71.55874"/>
+			<Orientation y="2.35622"/>
+			<Actor seed="56518"/>
+		</Entity>
+		<Entity uid="437">
+			<Template>structures/maur_house</Template>
+			<Player>1</Player>
+			<Position x="389.24646" z="81.32763"/>
+			<Orientation y="2.35622"/>
+			<Actor seed="56518"/>
+		</Entity>
+		<Entity uid="438">
+			<Template>units/maur_infantry_archer_b</Template>
+			<Player>1</Player>
+			<Position x="375.42475" z="85.0598"/>
+			<Orientation y="2.35622"/>
+			<Actor seed="65509"/>
+		</Entity>
+		<Entity uid="439">
+			<Template>units/maur_infantry_archer_b</Template>
+			<Player>1</Player>
+			<Position x="373.94166" z="86.57753"/>
+			<Orientation y="2.35622"/>
+			<Actor seed="65509"/>
+		</Entity>
+		<Entity uid="440">
+			<Template>units/maur_infantry_archer_b</Template>
+			<Player>1</Player>
+			<Position x="372.4004" z="88.15477"/>
+			<Orientation y="2.35622"/>
+			<Actor seed="65509"/>
+		</Entity>
+		<Entity uid="441">
+			<Template>units/maur_infantry_archer_b</Template>
+			<Player>1</Player>
+			<Position x="370.78223" z="89.81075"/>
+			<Orientation y="2.35622"/>
+			<Actor seed="65509"/>
+		</Entity>
+		<Entity uid="442">
+			<Template>units/maur_infantry_archer_b</Template>
+			<Player>1</Player>
+			<Position x="369.10245" z="91.46508"/>
+			<Orientation y="2.35622"/>
+			<Actor seed="65509"/>
+		</Entity>
+		<Entity uid="443">
+			<Template>units/maur_infantry_archer_b</Template>
+			<Player>1</Player>
+			<Position x="160.8505" z="324.71143"/>
+			<Orientation y="2.35622"/>
+			<Actor seed="21638"/>
 		</Entity>
 	</Entities>
 	<Paths/>

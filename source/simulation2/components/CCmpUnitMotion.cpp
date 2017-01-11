@@ -304,6 +304,7 @@ public:
 			m_PassClass = cmpPathfinder->GetPassabilityClass(m_PassClassName);
 	}
 
+	// TODO: would be nice to listen to entity renamed messages, but those have no C++ interface so far.
 	virtual void HandleMessage(const CMessage& msg, bool UNUSED(global))
 	{
 		switch (msg.GetType())

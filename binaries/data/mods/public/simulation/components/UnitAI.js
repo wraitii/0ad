@@ -1834,6 +1834,15 @@ UnitAI.prototype.UnitFsmSpec = {
 						if (this.GetStance().respondHoldGround)
 							this.WalkToHeldPosition();
 					}
+					else if (this.CheckTargetAttackRange(this.order.data.target, this.order.data.attackType))
+					{
+						this.StopMoving();
+						// If the unit needs to unpack, do so
+						if (this.CanUnpack())
+							this.SetNextState("UNPACKING");
+						else
+							this.SetNextState("ATTACKING");
+					}
 				},
 
 				"MoveCompleted": function() {
@@ -2133,6 +2142,15 @@ UnitAI.prototype.UnitFsmSpec = {
 						// Return to our original position
 						if (this.GetStance().respondHoldGround)
 							this.WalkToHeldPosition();
+					}
+					else if (this.CheckTargetAttackRange(this.order.data.target, this.order.data.attackType))
+					{
+						this.StopMoving();
+						// If the unit needs to unpack, do so
+						if (this.CanUnpack())
+							this.SetNextState("UNPACKING");
+						else
+							this.SetNextState("ATTACKING");
 					}
 				},
 
@@ -3721,6 +3739,9 @@ UnitAI.prototype.FinishOrder = function()
 		var template = cmpTemplateManager.GetCurrentTemplateName(this.entity);
 		error("FinishOrder called for entity " + this.entity + " (" + template + ") when order queue is empty\n" + stack);
 	}
+
+	// Safety net, in general it's better if unitAI states handle this properly.
+	this.StopMoving();
 
 	this.orderQueue.shift();
 	this.order = this.orderQueue[0];
