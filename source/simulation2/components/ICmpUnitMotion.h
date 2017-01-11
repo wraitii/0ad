@@ -59,6 +59,11 @@ public:
 	virtual void FaceTowardsPoint(entity_pos_t x, entity_pos_t z) = 0;
 
 	/**
+	 * Turn to look towards the given entity.
+	 */
+	virtual void FaceTowardsEntity(entity_id_t ent) = 0;
+
+	/**
 	 * Determine whether to abort or retry X times if pathing fails.
 	 * Generally safer to let it abort and inform us.
 	 */

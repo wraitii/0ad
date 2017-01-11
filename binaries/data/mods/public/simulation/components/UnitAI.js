@@ -2205,6 +2205,7 @@ UnitAI.prototype.UnitFsmSpec = {
 						}
 						return true;
 					}
+					this.StartTimer(0, 500);
 					return false;
 				},
 
@@ -2257,7 +2258,16 @@ UnitAI.prototype.UnitFsmSpec = {
 					this.SetNextState("GATHERING");
 				},
 
+				"Timer": function() {
+					if (this.CheckTargetRange(this.gatheringTarget, IID_ResourceGatherer))
+					{
+						this.StopMoving();
+						this.SetNextState("GATHERING");
+					}
+				},
+
 				"leave": function() {
+					this.StopTimer();
 					// don't use ownership because this is called after a conversion/resignation
 					// and the ownership would be invalid then.
 					var cmpSupply = Engine.QueryInterface(this.gatheringTarget, IID_ResourceSupply);
@@ -2367,6 +2377,7 @@ UnitAI.prototype.UnitFsmSpec = {
 					// off to a different target.)
 					if (this.CheckTargetRange(this.gatheringTarget, IID_ResourceGatherer))
 					{
+						this.FaceTowardsTarget(this.gatheringTarget);
 						var typename = "gather_" + this.order.data.type.specific;
 						this.SelectAnimation(typename, false, 1.0, typename);
 					}
@@ -2662,15 +2673,41 @@ UnitAI.prototype.UnitFsmSpec = {
 		"RETURNRESOURCE": {
 			"APPROACHING": {
 				"enter": function () {
+					this.StartTimer(0, 1000);
 				},
 
-				"MoveCompleted": function() {
-					this.StopMoving();
+				"leave": function() {
+					this.StopTimer();
+				},
+
+				"Timer": function() {
 					// Check the dropsite is in range and we can return our resource there
 					// (we didn't get stopped before reaching it)
-					if (this.CheckTargetRange(this.order.data.target, IID_ResourceGatherer) && this.CanReturnResource(this.order.data.target, true))
+					if (!this.CanReturnResource(this.order.data.target, true))
 					{
+						this.StopMoving();
+						// The dropsite was destroyed, or we couldn't reach it, or ownership changed
+						// Look for a new one.
+
+						var cmpResourceGatherer = Engine.QueryInterface(this.entity, IID_ResourceGatherer);
+						var genericType = cmpResourceGatherer.GetMainCarryingType();
+						var nearby = this.FindNearestDropsite(genericType);
+						if (nearby)
+						{
+							this.FinishOrder();
+							this.PushOrderFront("ReturnResource", { "target": nearby, "force": false });
+							return;
+						}
+
+						// Oh no, couldn't find any drop sites. Give up on returning.
+						this.FinishOrder();
+						return;
+					}
+					if (this.CheckTargetRange(this.order.data.target, IID_ResourceGatherer))
+					{
+						this.StopMoving();
 						var cmpResourceDropsite = Engine.QueryInterface(this.order.data.target, IID_ResourceDropsite);
+						// this ought to be redundant with the above check.
 						if (cmpResourceDropsite)
 						{
 							// Dump any resources we can
@@ -2688,23 +2725,9 @@ UnitAI.prototype.UnitFsmSpec = {
 							return;
 						}
 					}
-
-					// The dropsite was destroyed, or we couldn't reach it, or ownership changed
-					// Look for a new one.
-
-					var cmpResourceGatherer = Engine.QueryInterface(this.entity, IID_ResourceGatherer);
-					var genericType = cmpResourceGatherer.GetMainCarryingType();
-					var nearby = this.FindNearestDropsite(genericType);
-					if (nearby)
-					{
-						this.FinishOrder();
-						this.PushOrderFront("ReturnResource", { "target": nearby, "force": false });
-						return;
-					}
-
-					// Oh no, couldn't find any drop sites. Give up on returning.
-					this.FinishOrder();
 				},
+
+				"MoveCompleted": "Timer",
 			},
 		},
 
@@ -2744,9 +2767,22 @@ UnitAI.prototype.UnitFsmSpec = {
 		"REPAIR": {
 			"APPROACHING": {
 				"enter": function () {
+					this.StartTimer(0, 1000);
 				},
 
-				"MoveCompleted": function() {
+				"leave": function() {
+					this.StopTimer();
+				},
+				
+				"Timer": function() {
+					if (this.CheckTargetRange(this.order.data.target, IID_Builder))
+					{
+						this.StopMoving();
+						this.SetNextState("REPAIRING");
+					}
+				},
+				// TODO: clean this up when MoveCompleted becomes MoveSuccesHint and MoveFailure or something
+				"MoveCompleted": function(msg) {
 					this.StopMoving();
 					this.SetNextState("REPAIRING");
 				},
@@ -2791,6 +2827,8 @@ UnitAI.prototype.UnitFsmSpec = {
 					let cmpBuilderList = QueryBuilderListInterface(this.repairTarget);
 					if (cmpBuilderList)
 						cmpBuilderList.AddBuilder(this.entity);
+
+					this.FaceTowardsTarget(this.repairTarget);
 
 					this.SelectAnimation("build", false, 1.0, "build");
 					this.StartTimer(1000, 1000);

@@ -947,10 +947,31 @@ var unitActions =
 						return false;
 			}
 
+			// if the target has a static obstruction, move the rallypoint position closer to us
+			// keep this in sync with Rallypoint.js
+			let position = {};
+			let template = GetTemplateData(targetState.template);
+			if (template.obstruction && template.obstruction.shape && template.obstruction.shape.type == "static")
+			{
+				let size = Math.min(+template.obstruction.shape.width, +template.obstruction.shape.depth);
+				let vector = new Vector2D(targetState.position.x-entState.position.x,targetState.position.z-entState.position.z);
+				let pos = new Vector2D(targetState.position.x, targetState.position.z);
+				pos = pos.sub(vector.normalize().mult(size * 0.49));
+				position.x = pos.x;
+				position.z = pos.y;
+				position.y = targetState.position.y;
+			}
+			else
+			{
+				position.x = targetState.position.x;
+				position.z = targetState.position.z;
+				position.y = targetState.position.y;
+			}
+
 			return {
 				"possible": true,
 				"data": data,
-				"position": targetState.position,
+				"position": position,
 				"cursor": cursor,
 				"tooltip": tooltip
 			};

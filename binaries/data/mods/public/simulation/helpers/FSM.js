@@ -69,6 +69,10 @@ var FsmSpec = {
 			"leave": function() {
 				// Called when transitioning out of this state.
 			},
+
+			// Define a message handler that is an exact copy of another
+			// message handler defined in this Substate
+			"SomeMessageName": "AnotherMessageName",
 		},
 
 		// Define a new state which is an exact copy of another
@@ -194,16 +198,38 @@ function FSM(spec)
 			{
 				state[key] = node[key];
 			}
-			else if (key.match(/^[A-Z]+$/))
+			else if (typeof node[key] === "function")
 			{
+				// New message handler
+				newhandlers[key] = node[key];
+			}
+			else if (typeof node[key] === "object")
+			{
+				// new substate
 				state._refs[key] = (state._name ? state._name + "." : "") + key;
 
 				// (the rest of this will be handled later once we've grabbed
 				// all the event handlers)
 			}
-			else
+			else if (typeof node[key] === "string")
 			{
-				newhandlers[key] = node[key];
+				// this can be either a reference to a message handler, or to a state.
+				if (!node[node[key]] && !fsm.states[node[key]])
+				{
+					error("FSM node " + path.join(".") + " node " + key + " referring to unknown node/state " + node[key]);
+					return {};
+				}
+				else if (!!node[node[key]] && !!fsm.states[node[key]])
+				{
+					error("FSM node " + path.join(".") + " node " + key + " ambiguously referring to message handler or state " + node[key]);
+					return {};
+				}
+				if (!node[node[key]])
+					// new substate
+					state._refs[key] = (state._name ? state._name + "." : "") + key;
+				else
+					// New message handler
+					newhandlers[key] = node[node[key]];
 			}
 		}
 

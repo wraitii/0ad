@@ -442,6 +442,7 @@ public:
 	virtual bool RecomputeGoalPosition(PathGoal& goal);
 
 	virtual void FaceTowardsPoint(entity_pos_t x, entity_pos_t z);
+	virtual void FaceTowardsEntity(entity_id_t ent);
 
 	virtual void SetAbortIfStuck(u8 shouldAbort)
 	{
@@ -1060,6 +1061,28 @@ void CCmpUnitMotion::FaceTowardsPointFromPos(const CFixedVector2D& pos, entity_p
 			return;
 		cmpPosition->TurnTo(angle);
 	}
+}
+
+void CCmpUnitMotion::FaceTowardsEntity(entity_id_t ent)
+{
+	CmpPtr<ICmpPosition> cmpPosition(GetEntityHandle());
+	if (!cmpPosition || !cmpPosition->IsInWorld())
+		return;
+
+	CmpPtr<ICmpPosition> cmpTargetPosition(GetSimContext(), ent);
+	if (!cmpTargetPosition || !cmpTargetPosition->IsInWorld())
+		return;
+
+	CFixedVector2D pos = cmpPosition->GetPosition2D();
+	CFixedVector2D targetPos = cmpTargetPosition->GetPosition2D();
+
+	CFixedVector2D offset = targetPos - pos;
+	if (!offset.IsZero())
+	{
+		entity_angle_t angle = atan2_approx(offset.X, offset.Y);
+		cmpPosition->TurnTo(angle);
+	}
+
 }
 
 ControlGroupMovementObstructionFilter CCmpUnitMotion::GetObstructionFilter() const

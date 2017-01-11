@@ -26,6 +26,7 @@ BEGIN_INTERFACE_WRAPPER(UnitMotion)
 DEFINE_INTERFACE_METHOD_4("SetNewDestinationAsPosition", bool, ICmpUnitMotion, SetNewDestinationAsPosition, entity_pos_t, entity_pos_t, entity_pos_t, bool)
 DEFINE_INTERFACE_METHOD_3("SetNewDestinationAsEntity", bool, ICmpUnitMotion, SetNewDestinationAsEntity, entity_id_t, entity_pos_t, bool)
 DEFINE_INTERFACE_METHOD_2("FaceTowardsPoint", void, ICmpUnitMotion, FaceTowardsPoint, entity_pos_t, entity_pos_t)
+DEFINE_INTERFACE_METHOD_1("FaceTowardsEntity", void, ICmpUnitMotion, FaceTowardsEntity, entity_id_t)
 DEFINE_INTERFACE_METHOD_1("SetAbortIfStuck", void, ICmpUnitMotion, SetAbortIfStuck, u8)
 DEFINE_INTERFACE_METHOD_0("StopMoving", void, ICmpUnitMotion, StopMoving)
 DEFINE_INTERFACE_METHOD_0("DiscardMove", void, ICmpUnitMotion, DiscardMove)
@@ -48,12 +49,12 @@ class CCmpUnitMotionScripted : public ICmpUnitMotion
 public:
 	DEFAULT_SCRIPT_WRAPPER(UnitMotionScripted)
 
-	virtual bool SetNewDestinationAsPosition(entity_pos_t x, entity_pos_t z, entity_pos_t range, bool evenUnreachable)
+	virtual bool SetNewDestinationAsPosition(entity_pos_t x, entity_pos_t z, entity_pos_t range, bool UNUSED(evenUnreachable))
 	{
 		return m_Script.Call<bool>("SetNewDestinationAsPosition", x, z, range, true);
 	}
 
-	virtual bool SetNewDestinationAsEntity(entity_id_t target, entity_pos_t range, bool evenUnreachable)
+	virtual bool SetNewDestinationAsEntity(entity_id_t target, entity_pos_t range, bool UNUSED(evenUnreachable))
 	{
 		return m_Script.Call<bool>("SetNewDestinationAsEntity", target, range, true);
 	}
@@ -61,6 +62,11 @@ public:
 	virtual void FaceTowardsPoint(entity_pos_t x, entity_pos_t z)
 	{
 		m_Script.CallVoid("FaceTowardsPoint", x, z);
+	}
+
+	virtual void FaceTowardsEntity(entity_id_t ent)
+	{
+		m_Script.CallVoid("FaceTowardsEntity", ent);
 	}
 
 	virtual void DiscardMove()

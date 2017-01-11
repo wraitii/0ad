@@ -23,6 +23,8 @@ RallyPoint.prototype.GetPositions = function()
 
 	var cmpRangeManager = Engine.QueryInterface(SYSTEM_ENTITY, IID_RangeManager);
 	var cmpOwnership = Engine.QueryInterface(this.entity, IID_Ownership);
+	var cmpTemplateManager = Engine.QueryInterface(SYSTEM_ENTITY, IID_TemplateManager);
+	let cmpOurPosition = Engine.QueryInterface(this.entity, IID_Position);
 
 	// We must not affect the simulation state here (modifications of the
 	// RallyPointRenderer are allowed though), so copy the state
@@ -49,13 +51,31 @@ RallyPoint.prototype.GetPositions = function()
 		if (!targetPosition)
 			continue;
 
-		if (this.pos[i].x == targetPosition.x && this.pos[i].z == targetPosition.y)
+		// if the target has a static obstruction, move the rallypoint position closer to us
+		// keep this in sync with unit_actions.js
+		let position = {};
+		let entityTemplateName = cmpTemplateManager.GetCurrentTemplateName(this.data[i].target);
+		let targetTemplate = cmpTemplateManager.GetTemplate(entityTemplateName);
+		if (targetTemplate.Obstruction && targetTemplate.Obstruction.Static)
+		{
+			let ourPosition = cmpOurPosition.GetPosition2D();
+			let size = Math.min(+targetTemplate.Obstruction.Static["@width"], +targetTemplate.Obstruction.Static["@depth"]);
+			let vector = new Vector2D(targetPosition.x-ourPosition.x,targetPosition.y-ourPosition.y);
+			let pos = new Vector2D(targetPosition.x, targetPosition.y);
+			pos = pos.sub(vector.normalize().mult(size * 0.49));
+			position.x = pos.x;
+			position.y = pos.y;
+		}
+		else
+			position = targetPosition;
+
+		if (this.pos[i].x == position.x && this.pos[i].z == position.y)
 			continue;
 
-		ret[i] = { "x": targetPosition.x, "z": targetPosition.y };
+		ret[i] = { "x": position.x, "z": position.y };
 		var cmpRallyPointRenderer = Engine.QueryInterface(this.entity, IID_RallyPointRenderer);
 		if (cmpRallyPointRenderer)
-			cmpRallyPointRenderer.UpdatePosition(i, targetPosition);
+			cmpRallyPointRenderer.UpdatePosition(i, position);
 	}
 
 	return ret;
