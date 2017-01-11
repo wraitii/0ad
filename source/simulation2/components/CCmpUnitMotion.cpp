@@ -950,29 +950,6 @@ void CCmpUnitMotion::Move(fixed dt)
 		// wait until we get our path to see where that leads us.
 		return;
 
-	// if our next waypoint is considered at the goal
-	// then don't wait a turn but recompute immediately (otherwise we look idle and that's bad).
-	// NB: useless right now since we're not waiting and the usefullness of this bit of code can be debated anyways.
-	if (!m_Path.m_Waypoints.empty())
-	{
-		CmpPtr<ICmpObstructionManager> cmpObstructionManager(GetSystemEntity());
-		if (cmpObstructionManager)
-		{
-			bool inRange = false;
-			if (m_CurrentGoal.IsEntity())
-				inRange = cmpObstructionManager->IsPointInTargetRange(m_Path.m_Waypoints.back().x, m_Path.m_Waypoints.back().z,
-																 m_CurrentGoal.GetEntity(), m_CurrentGoal.Range(), m_CurrentGoal.Range());
-			else
-				inRange = cmpObstructionManager->IsPointInPointRange(m_Path.m_Waypoints.back().x, m_Path.m_Waypoints.back().z,
-																m_CurrentGoal.GetPosition().X, m_CurrentGoal.GetPosition().Y, m_CurrentGoal.Range(), m_CurrentGoal.Range());
-			if (inRange)
-			{
-				m_Path.m_Waypoints.clear();
-				m_WaitingTurns = MAX_PATH_REATTEMPS; // short path
-			}
-		}
-	}
-
 	// give us some turns to recover.
 	// TODO: only do this if we ran into a moving unit and not something else, because something else won't move
 	// specifically: if we ran into a moving unit, we should wait a turn and see what happens
