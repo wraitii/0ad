@@ -780,9 +780,12 @@ bool HierarchicalPathfinder::MakeGoalReachable(u16 i0, u16 j0, PathGoal& goal, p
 	 * The main optimisations are:
 	 *	- picking the best item directly from the open list when we can be sure we know which one it is (see fasttrack)
 	 *	- checking whether the goal is reachable or not, and if it isn't stopping early to avoid slowly flood-filling everything
-	 * The path isn't used for now but can reconstructed using predecessor.
-	 * NB: strictly speaking, from a reachability POV, we can skip A* entirely if the goal has the same global region ID (see below).
-	 * Haven't done so yet and having the path may be interesting but it this function ends up being too slow it would be an idea.
+	 *
+	 * Since we'd like to return the best possible navcell, if the goal is reachable, we'll stop A* once we've reached any goal region
+	 * since then presumably other reachable goal-regions would be reachable following roughtly the same path.
+	 * Then we'll loop over goal regions to get the best navcell and reconstruct the path from there.
+	 *
+	 * NB: since the path is currently unused, I skip the A* part for reachable goals.
 	 */
 	RegionID source = Get(i0, j0, passClass);
 
@@ -794,13 +797,15 @@ bool HierarchicalPathfinder::MakeGoalReachable(u16 i0, u16 j0, PathGoal& goal, p
 	std::set<RegionID> goalRegions;
 	FindGoalRegions(gi, gj, goal, goalRegions, passClass);
 
+	std::vector<RegionID> reachableGoalRegions;
+
 	GlobalRegionID startID = GetGlobalRegion(i0, j0, passClass);
 	bool reachable = false;
 	for (const RegionID& r : goalRegions)
 		if (m_GlobalRegions[passClass][r] == startID)
 		{
 			reachable = true;
-			break;
+			reachableGoalRegions.push_back(r);
 		}
 
 #if OUTPUT
@@ -850,7 +855,9 @@ bool HierarchicalPathfinder::MakeGoalReachable(u16 i0, u16 j0, PathGoal& goal, p
 	int globalBestFScore = currentFScore;
 
 	EdgesMap& edgeMap = m_Edges[passClass];
-	while (!m_Astar_OpenNodes.empty())
+
+	// NB: to re-enable A* for the reachable case (if you want to use the path), remove the "!reachable" part of this check
+	while (!reachable && !m_Astar_OpenNodes.empty())
 	{
 		// Since we are not using a fancy open list, we have to go through all nodes each time
 		// So when we are sure that we know the best node (because the last run gave us a node better than us, which was already the best
@@ -972,23 +979,14 @@ bool HierarchicalPathfinder::MakeGoalReachable(u16 i0, u16 j0, PathGoal& goal, p
 #endif
 	}
 
-	// TODO: arrive from predecessor, not origin.
-	bool exactFound = GetChunk(current.ci, current.cj, passClass).RegionNearestNavcellInGoal(current.r, i0, j0, goal, bestI, bestJ, dist2);
-
 #if OUTPUT
 	fixed x0 = Pathfinding::NAVCELL_SIZE * (current.ci * CHUNK_SIZE);
 	fixed z0 = Pathfinding::NAVCELL_SIZE * (current.cj * CHUNK_SIZE);
 	stream << "context.fillStyle = 'rgba(255,0,0,0.6)';\n";
 	stream << "if (step >= " << step << ") context.fillRect(" << x0.ToInt_RoundToZero() << " * scale," << z0.ToInt_RoundToZero() << " * scale," << (int)CHUNK_SIZE << " * scale," << (int)CHUNK_SIZE << " * scale);\n";
-
-	// sanity check
-	if (reachable)
-		ENSURE (exactFound);
-	else
-		ENSURE (!exactFound);
 #endif
 
-	if (!exactFound)
+	if (!reachable)
 	{
 		// I don't believe this is possible, nor should it.
 		ENSURE(!m_Astar_ClosedNodes.empty());
@@ -1001,6 +999,25 @@ bool HierarchicalPathfinder::MakeGoalReachable(u16 i0, u16 j0, PathGoal& goal, p
 		Pathfinding::NearestNavcell(goal.x, goal.z, bestI, bestJ, m_W, m_H);
 
 		FindNearestNavcellInRegions(set, bestI, bestJ, passClass);
+	}
+	else
+	{
+		u32 bestDist;
+		// loop through reachable goal regions and get the best navcell.
+		// TODO: we probably could skip some of those if our gScore/fScore were good enough.
+		for (const RegionID& region : reachableGoalRegions)
+		{
+			u16 ri, rj;
+			u32 dist;
+			// TODO: using the A* path, we should consider from predecessor and not from source
+			GetChunk(region.ci, region.cj, passClass).RegionNearestNavcellInGoal(region.r, i0, j0, goal, ri, rj, dist);
+			if (dist < bestDist)
+			{
+				bestI = ri;
+				bestJ = rj;
+				bestDist = dist;
+			}
+		}
 	}
 
 	PathGoal newGoal;

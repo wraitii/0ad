@@ -650,8 +650,6 @@ void CCmpUnitMotion::PathResult(u32 ticket, const WaypointPath& path)
 
 	if (path.m_Waypoints.empty())
 	{
-		MoveWillFail();
-
 		// no waypoints, path failed.
 		// if we have some room, pop waypoint
 		// TODO: this isn't particularly bright.
