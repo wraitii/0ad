@@ -49,8 +49,9 @@ static const entity_pos_t SHORT_PATH_MAX_SEARCH_RANGE = entity_pos_t::FromInt(TE
 
 /**
  * Minimum distance to goal for a long path request
+ * Disabled, see note in RequestNewPath.
  */
-static const entity_pos_t LONG_PATH_MIN_DIST = entity_pos_t::FromInt(TERRAIN_TILE_SIZE*4);
+static const entity_pos_t LONG_PATH_MIN_DIST = entity_pos_t::FromInt(TERRAIN_TILE_SIZE*0);
 
 /**
  * If we are this close to our target entity/point, then think about heading
@@ -1086,12 +1087,42 @@ bool CCmpUnitMotion::RequestNewPath()
 
 	ENSURE(m_Goal.x >= fixed::Zero());
 
-	// If it's close then just do a short path, not a long path
-	// TODO: If it's close on the opposite side of a river then we really
-	// need a long path, so we shouldn't simply check linear distance
-	// the check is arbitrary but should be a reasonably small distance.
-	// Maybe use PathIsShort?
-	// TODO: note by wraitii: figure out if the above comment is still true. It seems false.
+	/**
+	 * A (long) note on short vs long range pathfinder, their conflict, and stuck units.
+	 * A long-standing issue with 0 A.D.'s pathfinding has been that the short-range pathfinder is "better" than the long-range
+	 * Indeed it can find paths that the long-range one cannot, since the grid is coarser than the real vector representation.
+	 * This leads to units going where they shouldn't go, notably impassable and "unreachable" areas.
+	 * This has been a -real- plague. Made worse by the facts that groups of trees tended to trigger it, leading to stuck gatherers…
+	 * Thus, in general, we'd want the short-range and the long-range pathfinder to coincide. But making the short-range pathfinder
+	 * register all impassable navcells as edges would just be way too slow, so we can't do that, so we -cannot- fix the issue
+	 * by just changing the pathfinders' behavior.
+	 *
+	 * All hope is not lost, however.
+	 *
+	 * A big part of the problem is that before the unitMotion rewrite, UnitMotion requested a path to the goal, and then the pathfinder
+	 * made that goal "reachable" by calling MakeGoalReachable, which uses the same grid as the long-range pathfinder. Thus, over short ranges,
+	 * the pathfinder entirely short-circuited this. Since UnitMotion now calls MakeGoalReachable on its own, it only ever requests
+	 * paths to points that are indeed supposed to be reachable. This does fix a number of cases.
+	 *
+	 * But then, why set LONG_PATH_MIN_DIST to 0 and disable the use of short paths here? Well it turns out you still had a few edge cases.
+	 *
+	 * Imagine two houses next to each other, with a space between them just wide enough that there are no passable navcells,
+	 * but enough space for the short-range pathfinder to return a path through them (make them in a test map if you have to).
+	 * If you ask a unit to cross there, the goal won't change: it's reachable by the long-range pathfinder by going around the house.
+	 * However, the distance is < LONG_PATH_MIN_DIST, so the short-range pathfinder is called, so it goes through the house. Edge case.
+	 * There's a variety of similar cases that can be imagined around the idea that there exists a shorter path visible only by the short-range pathfinder.
+	 * If we never use the short-pathfinder in RequestNewPath, we can safely avoid those edge cases.
+	 *
+	 * However, we still call the short-pathfinder when running into an obstruction to avoid units. Can't that get us stuck too?
+	 * Well, it probably can. But there's a few things to consider:
+	 * -it's harder to trigger it if you actually have to run into a unit
+	 * -In those cases, UnitMotion requests a path to the next existing waypoint (if there are none, it calls requestnewPath to get those)
+	 * and the next existing waypoint has -necessarily- been given to us by the long-range pathfinder since we're using it here
+	 * Thus it's far less likely that the short-range pathfinder will return us an impassable path.
+	 * It -is- not entirely impossible. A freak construction with many units strategically positionned could probably reveal the bug.
+	 * But it's in my opinion rare enough that this discrepancy can be considered fixed.
+	 */
+
 	if (m_Goal.DistanceToPoint(position) < LONG_PATH_MIN_DIST)
 		RequestShortPath(position, m_Goal, true);
 	else

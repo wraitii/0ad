@@ -33,7 +33,7 @@
 		</Postproc>
 	</Environment>
 	<Camera>
-		<Position x="338.388" y="247.272" z="12.2199"/>
+		<Position x="107.181" y="203.277" z="101.038"/>
 		<Rotation angle="0"/>
 		<Declination angle="0.610865"/>
 	</Camera>
@@ -2526,7 +2526,7 @@
 		<Entity uid="366">
 			<Template>structures/maur_house</Template>
 			<Player>1</Player>
-			<Position x="102.62531" z="125.94703"/>
+			<Position x="105.13955" z="123.6118"/>
 			<Orientation y="2.35621"/>
 			<Actor seed="45585"/>
 		</Entity>
