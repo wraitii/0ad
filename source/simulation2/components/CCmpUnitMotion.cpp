@@ -48,6 +48,13 @@ static const entity_pos_t SHORT_PATH_MIN_SEARCH_RANGE = entity_pos_t::FromInt(TE
 static const entity_pos_t SHORT_PATH_MAX_SEARCH_RANGE = entity_pos_t::FromInt(TERRAIN_TILE_SIZE*9);
 
 /**
+ * Below this distance to the goal, if we're getting obstructed, we will recreate a brand new Goal for our short-pathfinder
+ * Instead of using the one given to us by RecomputeGoalPosition.
+ * This is unsafe from a shot/long pathfinder compatibility POV, so it should not be too big.
+ */
+static const entity_pos_t SHORT_PATH_GOAL_REDUX_DIST = entity_pos_t::FromInt(TERRAIN_TILE_SIZE*2);
+
+/**
  * Minimum distance to goal for a long path request
  * Disabled, see note in RequestNewPath.
  */
@@ -174,6 +181,7 @@ public:
 	// asynchronous request ID we're waiting for, or 0 if none
 	u32 m_ExpectedPathTicket;
 	bool m_DumpPathOnResult;
+	bool m_RunShortPathValidation;
 
 	// Currently active paths (storing waypoints in reverse order).
 	// The last item in each path is the point we're currently heading towards.
@@ -239,6 +247,7 @@ public:
 
 		m_ExpectedPathTicket = 0;
 		m_DumpPathOnResult = false;
+		m_RunShortPathValidation = false;
 
 		m_Tries = 0;
 		m_WaitingTurns = 0;
@@ -262,6 +271,7 @@ public:
 
 		serialize.NumberU32_Unbounded("ticket", m_ExpectedPathTicket);
 		serialize.Bool("dump path on result", m_DumpPathOnResult);
+		serialize.Bool("short path validation", m_RunShortPathValidation);
 
 		SerializeVector<SerializeWaypoint>()(serialize, "path", m_Path.m_Waypoints);
 
@@ -439,7 +449,12 @@ public:
 	virtual bool SetNewDestinationAsPosition(entity_pos_t x, entity_pos_t z, entity_pos_t range, bool evenUnreachable);
 	virtual bool SetNewDestinationAsEntity(entity_id_t target, entity_pos_t range, bool evenUnreachable);
 
-	virtual bool RecomputeGoalPosition(PathGoal& goal);
+	// transform a motion goal into a corresponding PathGoal
+	// called by RecomputeGoalPosition
+	PathGoal CreatePathGoalFromMotionGoal(const SMotionGoal& motionGoal);
+
+	// take an arbitrary path goal and convert it to a 2D point goal, assign it to m_Goal.
+	bool RecomputeGoalPosition(PathGoal& goal);
 
 	virtual void FaceTowardsPoint(entity_pos_t x, entity_pos_t z);
 	virtual void FaceTowardsEntity(entity_id_t ent);
@@ -499,19 +514,19 @@ public:
 	}
 
 private:
-	CFixedVector2D GetCurrentGoalPosition()
+	CFixedVector2D GetGoalPosition(const SMotionGoal& goal) const
 	{
-		ENSURE (m_CurrentGoal.Valid());
+		ENSURE (goal.Valid());
 
-		if (m_CurrentGoal.IsEntity())
+		if (goal.IsEntity())
 		{
-			CmpPtr<ICmpPosition> cmpPosition(GetSimContext(), m_CurrentGoal.GetEntity());
+			CmpPtr<ICmpPosition> cmpPosition(GetSimContext(), goal.GetEntity());
 			ENSURE(cmpPosition);
 			ENSURE(cmpPosition->IsInWorld()); // TODO: do something? Like return garrisoned building or such?
 			return cmpPosition->GetPosition2D();
 		}
 		else
-			return m_CurrentGoal.GetPosition();
+			return goal.GetPosition();
 	}
 
 	bool CurrentGoalHasValidPosition()
@@ -635,6 +650,8 @@ void CCmpUnitMotion::PathResult(u32 ticket, const WaypointPath& path)
 
 	if (path.m_Waypoints.empty())
 	{
+		MoveWillFail();
+
 		// no waypoints, path failed.
 		// if we have some room, pop waypoint
 		// TODO: this isn't particularly bright.
@@ -643,6 +660,35 @@ void CCmpUnitMotion::PathResult(u32 ticket, const WaypointPath& path)
 
 		// we will then deal with this on the next Move() call.
 		return;
+	}
+
+	// if this is a short path, verify some things
+	// Namely reject any path that takes us in another global region
+	// and any waypoint that's not passable/next to a passable cell.
+	// this will ensure minimal changes of long/short rance pathfinder discrepancies
+	if (m_RunShortPathValidation)
+	{
+		CmpPtr<ICmpPathfinder> cmpPathfinder(GetSystemEntity());
+		ENSURE (cmpPathfinder);
+
+		CmpPtr<ICmpPosition> cmpPosition(GetEntityHandle());
+		ENSURE(cmpPosition);
+
+		u16 i0, j0;
+		cmpPathfinder->FindNearestPassableNavcell(cmpPosition->GetPosition2D().X, cmpPosition->GetPosition2D().Y, i0, j0, m_PassClass);
+
+		m_RunShortPathValidation = false;
+		for (const Waypoint& wpt : path.m_Waypoints)
+		{
+			u16 i1, j1;
+			u32 dist = cmpPathfinder->FindNearestPassableNavcell(wpt.x, wpt.z, i1, j1, m_PassClass);
+			if (dist > 1 || !cmpPathfinder->NavcellIsReachable(i0, j0, i1, j1, m_PassClass))
+			{
+				MoveWillFail();
+				// we will then deal with this on the next Move() call.
+				return;
+			}
+		}
 	}
 
 	// if we're currently moving, we have a path, so check if the first waypoint can be removed
@@ -763,7 +809,7 @@ void CCmpUnitMotion::Move(fixed dt)
 	if (ShouldConsiderOurselvesAtDestination(m_CurrentGoal))
 	{
 		if (m_FacePointAfterMove && CurrentGoalHasValidPosition())
-			FaceTowardsPoint(GetCurrentGoalPosition().X, GetCurrentGoalPosition().Y);
+			FaceTowardsPoint(GetGoalPosition(m_CurrentGoal).X, GetGoalPosition(m_CurrentGoal).Y);
 
 		bool sendMessage = false;
 		if (ShouldConsiderOurselvesAtDestination(m_Destination))
@@ -957,9 +1003,29 @@ void CCmpUnitMotion::Move(fixed dt)
 			RequestNewPath();
 			return;
 		}
+		/**
+		 * Here there are two cases:
+		 * 1) We are somewhat far away from the goal, in which case proceed as usual
+		 * 2) We're really close to the goal.
+		 * If it's (2) it's likely that we are running into units that are currently doing the same thing we want to do (gathering from the same tree…)
+		 * Since the initial call to MakeGoalReachable gave us a specific 2D coordinate, and we can't reach it,
+		 * We have a relatively high chance of never being able to reach that particular point.
+		 * So we need to recreate the actual goal for this entity. This is a little dangerous in terms of short/long pathfinder compatibility
+		 * So we'll run sanity checks on the output to try and not get stuck/go where we shouldn't.
+		 */
 		PathGoal goal;
-		goal = { PathGoal::POINT, m_Path.m_Waypoints.back().x, m_Path.m_Waypoints.back().z };
-		m_Path.m_Waypoints.pop_back();
+
+		CFixedVector2D nextWptPos(m_Path.m_Waypoints.back().x, m_Path.m_Waypoints.back().z);
+		if ((nextWptPos - pos).CompareLength(SHORT_PATH_GOAL_REDUX_DIST) > 0)
+		{
+			goal = { PathGoal::POINT, m_Path.m_Waypoints.back().x, m_Path.m_Waypoints.back().z };
+			m_Path.m_Waypoints.pop_back();
+		}
+		else
+		{
+			goal = CreatePathGoalFromMotionGoal(m_CurrentGoal);
+			m_DumpPathOnResult = true;
+		}
 
 		RequestShortPath(pos, goal, true);
 		return;
@@ -1146,9 +1212,10 @@ bool CCmpUnitMotion::RequestNewPath(bool evenUnreachable)
 	 *
 	 * However, we still call the short-pathfinder when running into an obstruction to avoid units. Can't that get us stuck too?
 	 * Well, it probably can. But there's a few things to consider:
-	 * -it's harder to trigger it if you actually have to run into a unit
+	 * -It's harder to trigger it if you actually have to run into a unit
 	 * -In those cases, UnitMotion requests a path to the next existing waypoint (if there are none, it calls requestnewPath to get those)
 	 * and the next existing waypoint has -necessarily- been given to us by the long-range pathfinder since we're using it here
+	 * -We are running sanity checks on the output (see PathResult).
 	 * Thus it's far less likely that the short-range pathfinder will return us an impassable path.
 	 * It -is- not entirely impossible. A freak construction with many units strategically positionned could probably reveal the bug.
 	 * But it's in my opinion rare enough that this discrepancy can be considered fixed.
@@ -1162,17 +1229,13 @@ bool CCmpUnitMotion::RequestNewPath(bool evenUnreachable)
 	return reachable;
 }
 
-bool CCmpUnitMotion::RecomputeGoalPosition(PathGoal& goal)
+PathGoal CCmpUnitMotion::CreatePathGoalFromMotionGoal(const SMotionGoal& motionGoal)
 {
-	goal = PathGoal();
+	PathGoal goal = PathGoal();
 	goal.x = fixed::FromInt(-1); // to figure out whether it's false-unreachable or false-buggy
 
-	if (!CurrentGoalHasValidPosition())
-		return false; // we're not going anywhere
-
 	CmpPtr<ICmpPosition> cmpPosition(GetEntityHandle());
-	if (!cmpPosition || !cmpPosition->IsInWorld())
-		return false;
+	ENSURE(cmpPosition);
 
 	CFixedVector2D pos = cmpPosition->GetPosition2D();
 
@@ -1185,13 +1248,13 @@ bool CCmpUnitMotion::RecomputeGoalPosition(PathGoal& goal)
 
 	// defaut to point at position
 	goal.type = PathGoal::POINT;
-	goal.x = GetCurrentGoalPosition().X;
-	goal.z = GetCurrentGoalPosition().Y;
+	goal.x = GetGoalPosition(motionGoal).X;
+	goal.z = GetGoalPosition(motionGoal).Y;
 
 	// few cases to consider.
-	if (m_CurrentGoal.IsEntity())
+	if (motionGoal.IsEntity())
 	{
-		CmpPtr<ICmpObstruction> cmpObstruction(GetSimContext(), m_CurrentGoal.GetEntity());
+		CmpPtr<ICmpObstruction> cmpObstruction(GetSimContext(), motionGoal.GetEntity());
 		if (cmpObstruction)
 		{
 			ICmpObstructionManager::ObstructionSquare obstruction;
@@ -1199,18 +1262,18 @@ bool CCmpUnitMotion::RecomputeGoalPosition(PathGoal& goal)
 			if (hasObstruction)
 			{
 				fixed certainty;
-				UpdatePositionForTargetVelocity(m_CurrentGoal.GetEntity(), obstruction.x, obstruction.z, certainty);
+				UpdatePositionForTargetVelocity(motionGoal.GetEntity(), obstruction.x, obstruction.z, certainty);
 
 				goal.type = PathGoal::CIRCLE;
 				goal.x = obstruction.x;
 				goal.z = obstruction.z;
-				goal.hw = obstruction.hw + m_CurrentGoal.Range() + m_Clearance;
+				goal.hw = obstruction.hw + motionGoal.Range() + m_Clearance;
 
 				// if not a unit, treat as a square
 				if (cmpObstruction->GetUnitRadius() == fixed::Zero())
 				{
 					goal.type = PathGoal::SQUARE;
-					goal.hh = obstruction.hh + m_CurrentGoal.Range() + m_Clearance;
+					goal.hh = obstruction.hh + motionGoal.Range() + m_Clearance;
 					goal.u = obstruction.u;
 					goal.v = obstruction.v;
 
@@ -1224,20 +1287,34 @@ bool CCmpUnitMotion::RecomputeGoalPosition(PathGoal& goal)
 		}
 		// if no obstruction, keep treating as a point
 	}
-	if (goal.type == PathGoal::POINT && m_CurrentGoal.Range() > fixed::Zero())
+	if (goal.type == PathGoal::POINT && motionGoal.Range() > fixed::Zero())
 	{
 		goal.type = PathGoal::CIRCLE;
-		goal.hw = m_CurrentGoal.Range();
+		goal.hw = motionGoal.Range();
 		if ((pos - CFixedVector2D(goal.x,goal.z)).CompareLength(goal.hw) <= 0)
 			goal.type = PathGoal::INVERTED_CIRCLE;
 	}
+
+	return goal;
+}
+
+bool CCmpUnitMotion::RecomputeGoalPosition(PathGoal& goal)
+{
+	if (!CurrentGoalHasValidPosition())
+		return false; // we're not going anywhere
+
+	goal = CreatePathGoalFromMotionGoal(m_CurrentGoal);
 
 	// We now have a correct goal.
 	// Make it reachable
 
 	CmpPtr<ICmpPathfinder> cmpPathfinder(GetSystemEntity());
-	if (!cmpPathfinder)
-		return false;
+	ENSURE(cmpPathfinder);
+
+	CmpPtr<ICmpPosition> cmpPosition(GetEntityHandle());
+	ENSURE(cmpPosition);
+
+	CFixedVector2D pos = cmpPosition->GetPosition2D();
 
 	bool reachable = cmpPathfinder->MakeGoalReachable(pos.X, pos.Y, goal, m_PassClass);
 
@@ -1254,6 +1331,8 @@ void CCmpUnitMotion::RequestLongPath(const CFixedVector2D& from, const PathGoal&
 	if (!cmpPathfinder)
 		return;
 
+	m_RunShortPathValidation = false;
+
 	// this is by how much our waypoints will be apart at most.
 	// this value here seems sensible enough.
 	PathGoal improvedGoal = goal;
@@ -1269,6 +1348,8 @@ void CCmpUnitMotion::RequestShortPath(const CFixedVector2D &from, const PathGoal
 	CmpPtr<ICmpPathfinder> cmpPathfinder(GetSystemEntity());
 	if (!cmpPathfinder)
 		return;
+
+	m_RunShortPathValidation = true;
 
 	// wrapping around on m_Tries isn't really a problem so don't check for overflow.
 	fixed searchRange = std::max(SHORT_PATH_MIN_SEARCH_RANGE * (++m_Tries + 1), goal.DistanceToPoint(from));
@@ -1334,8 +1415,8 @@ void CCmpUnitMotion::RenderPath(const WaypointPath& path, std::vector<SOverlayLi
 
 	if (CurrentGoalHasValidPosition())
 	{
-		float x = GetCurrentGoalPosition().X.ToFloat();
-		float z = GetCurrentGoalPosition().Y.ToFloat();
+		float x = GetGoalPosition(m_CurrentGoal).X.ToFloat();
+		float z = GetGoalPosition(m_CurrentGoal).Y.ToFloat();
 		lines.push_back(SOverlayLine());
 		lines.back().m_Color = CColor(0.0f, 1.0f, 0.0f, 1.0f);
 		SimRender::ConstructSquareOnGround(GetSimContext(), x, z, 1.0f, 1.0f, 0.4f, lines.back(), floating);

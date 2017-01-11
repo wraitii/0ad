@@ -247,6 +247,12 @@ public:
 
 	void FindNearestPassableNavcell(u16& i, u16& j, pass_class_t passClass) { return m_PathfinderHier.FindNearestPassableNavcell(i, j, passClass); };
 
+	bool NavcellIsReachable(u16 i0, u16 j0, u16 i1, u16 j1, pass_class_t passClass)
+	{
+		return m_PathfinderHier.GetGlobalRegion(i0, j0, passClass) == m_PathfinderHier.GetGlobalRegion(i1, j1, passClass);
+	};
+
+
 	Grid<u16> GetConnectivityGrid(pass_class_t passClass)
 	{
 		return m_PathfinderHier.GetConnectivityGrid(passClass);

@@ -678,9 +678,23 @@ bool CCmpPathfinder::MakeGoalReachable(entity_pos_t x0, entity_pos_t z0, PathGoa
 	return m_LongPathfinder.MakeGoalReachable(i0, j0, goal, passClass);
 }
 
+u32 CCmpPathfinder::FindNearestPassableNavcell(entity_pos_t x, entity_pos_t z, u16& outI, u16& outJ, pass_class_t passClass)
+{
+	Pathfinding::NearestNavcell(x, z, outI, outJ, m_MapSize*Pathfinding::NAVCELLS_PER_TILE, m_MapSize*Pathfinding::NAVCELLS_PER_TILE);
+	u16 i0 = outI;
+	u16 j0 = outJ;
+	FindNearestPassableNavcell(outI, outJ, passClass);
+	return abs(i0 - outI) + abs(j0 - outJ);
+}
+
 void CCmpPathfinder::FindNearestPassableNavcell(u16& i, u16& j, pass_class_t passClass)
 {
 	m_LongPathfinder.FindNearestPassableNavcell(i, j, passClass);
+}
+
+bool CCmpPathfinder::NavcellIsReachable(u16 i0, u16 j0, u16 i1, u16 j1, pass_class_t passClass)
+{
+	return m_LongPathfinder.NavcellIsReachable(i0, j0, i1, j1, passClass);
 }
 
 //////////////////////////////////////////////////////////

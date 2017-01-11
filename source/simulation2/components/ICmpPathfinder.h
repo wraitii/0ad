@@ -95,6 +95,18 @@ public:
 	virtual bool MakeGoalReachable(entity_pos_t x0, entity_pos_t z0, PathGoal &goal, pass_class_t passClass) = 0;
 
 	/**
+	 * Gives the closest passable navcell from the given position.
+	 * Returns how many navcells away (manhattan) that navcell is.
+	 */
+	virtual u32 FindNearestPassableNavcell(entity_pos_t x, entity_pos_t z, u16& outI, u16& outJ, pass_class_t passClass) = 0;
+
+	/**
+	 * Returns true if navcell (i0, j0) has the same global region ID as navcell (i1, j1).
+	 * i.e. you can reach one from the other.
+	 */
+	virtual bool NavcellIsReachable(u16 i0, u16 j0, u16 i1, u16 j1, pass_class_t passClass) = 0;
+
+	/**
 	 * Compute a tile-based path from the given point to the goal, and return the set of waypoints.
 	 * The waypoints correspond to the centers of horizontally/vertically adjacent tiles
 	 * along the path.
