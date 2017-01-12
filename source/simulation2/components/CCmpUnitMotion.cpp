@@ -718,7 +718,7 @@ void CCmpUnitMotion::ValidateCurrentPath()
 	// and send a failure message to UnitAI in case it wants to do something
 	// use position as a proxy for existence
 	CmpPtr<ICmpPosition> cmpTargetPosition(GetSimContext(), m_CurrentGoal.GetEntity());
-	if (!cmpTargetPosition)
+	if (!cmpTargetPosition || !cmpTargetPosition->IsInWorld())
 	{
 		// TODO: this should call a custom function for this
 		SMotionGoal newGoal(CFixedVector2D(m_Goal.x, m_Goal.z), m_CurrentGoal.Range());
@@ -758,7 +758,7 @@ void CCmpUnitMotion::UpdatePositionForTargetVelocity(entity_id_t ent, entity_pos
 {
 	CmpPtr<ICmpPosition> cmpTargetPosition(GetSimContext(), ent);
 	CmpPtr<ICmpUnitMotion> cmpTargetUnitMotion(GetSimContext(), ent);
-	if (!cmpTargetPosition || !cmpTargetUnitMotion || !cmpTargetUnitMotion->IsActuallyMoving())
+	if (!cmpTargetPosition || !cmpTargetPosition->IsInWorld() || !cmpTargetUnitMotion || !cmpTargetUnitMotion->IsActuallyMoving())
 		return;
 
 	// So here we'll try to estimate where the unit will be by the time we reach it.

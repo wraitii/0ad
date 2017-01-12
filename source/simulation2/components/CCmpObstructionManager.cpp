@@ -673,7 +673,7 @@ REGISTER_COMPONENT_TYPE(ObstructionManager)
 bool CCmpObstructionManager::IsInPointRange(entity_id_t ent, entity_pos_t px, entity_pos_t pz, entity_pos_t minRange, entity_pos_t maxRange)
 {
 	CmpPtr<ICmpPosition> cmpPosition(GetSimContext(), ent);
-	if (!cmpPosition)
+	if (!cmpPosition || !cmpPosition->IsInWorld())
 		return false;
 
 	ObstructionSquare obstruction;
@@ -690,11 +690,11 @@ bool CCmpObstructionManager::IsInPointRange(entity_id_t ent, entity_pos_t px, en
 bool CCmpObstructionManager::IsInTargetRange(entity_id_t ent, entity_id_t target, entity_pos_t minRange, entity_pos_t maxRange)
 {
 	CmpPtr<ICmpPosition> cmpPosition(GetSimContext(), ent);
-	if (!cmpPosition)
+	if (!cmpPosition || !cmpPosition->IsInWorld())
 		return false;
 
 	CmpPtr<ICmpPosition> cmpPositionTarget(GetSimContext(), target);
-	if (!cmpPositionTarget)
+	if (!cmpPositionTarget || !cmpPositionTarget->IsInWorld())
 		return false;
 
 	ObstructionSquare obstruction;
@@ -717,7 +717,7 @@ bool CCmpObstructionManager::IsPointInTargetRange(entity_pos_t x, entity_pos_t z
 	point.z = z;
 
 	CmpPtr<ICmpPosition> cmpPositionTarget(GetSimContext(), target);
-	if (!cmpPositionTarget)
+	if (!cmpPositionTarget || !cmpPositionTarget->IsInWorld())
 		return false;
 
 	ObstructionSquare target_obstruction;
