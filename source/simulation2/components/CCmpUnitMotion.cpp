@@ -511,9 +511,9 @@ public:
 		GetSimContext().GetComponentManager().PostMessage(GetEntityId(), msg);
 	}
 
-	void MoveHasSucceeded()
+	void MoveHasPaused()
 	{
-		CMessageMoveSuccess msg;
+		CMessageMovePaused msg;
 		GetSimContext().GetComponentManager().PostMessage(GetEntityId(), msg);
 	}
 
@@ -810,23 +810,6 @@ void CCmpUnitMotion::Move(fixed dt)
 
 	CFixedVector2D initialPos = cmpPosition->GetPosition2D();
 
-	// NB: unitMotion has been changed such that unitAI should NOT rely on "movecompleted" messages but do its own range checks on a timer basis.
-	// To streamline some common interactions, such as gathering from a static entity, we'll send a "hint" when we're done moving (and thus presumably arrived)
-	// but this should NOT be relied upon.
-	if (ShouldConsiderOurselvesAtDestination(m_CurrentGoal))
-	{
-		if (m_FacePointAfterMove && CurrentGoalHasValidPosition())
-			FaceTowardsPoint(GetGoalPosition(m_CurrentGoal).X, GetGoalPosition(m_CurrentGoal).Y);
-
-		bool sendMessage = false;
-		if (ShouldConsiderOurselvesAtDestination(m_Destination))
-			// send a hint to unitAI to maintain compatibility.
-			sendMessage = true;
-
-		if (sendMessage)
-			MoveHasSucceeded();
-	}
-
 	// All path updates/checks should go here, before the moving loop.
 	ValidateCurrentPath();
 
@@ -835,7 +818,8 @@ void CCmpUnitMotion::Move(fixed dt)
 	////                             YOU HAVE BEEN WARNED.                            ////
 	//////////////////////////////////////////////////////////////////////////////////////
 
-	if (!IsTryingToMove())
+	// validate our state following the messages potentially sent above.
+	if (!IsTryingToMove() || !cmpPosition || !cmpPosition->IsInWorld() || !CurrentGoalHasValidPosition())
 	{
 		// One of the messages we sent UnitAI caused us to stop moving entirely.
 		// Tell the visual actor we're not moving this turn to avoid gliding.
@@ -939,12 +923,21 @@ void CCmpUnitMotion::Move(fixed dt)
 		// TODO: this and the same call in the if above could probably be moved before the if entirely, check rounding.
 		SetActualSpeed(fixed::Zero());
 
-	// we've had to stop at the end of the turn.
-	StopMoving();
+	//////////////////////////////////////////////////////////////////////////
+	////    From this point onwards messages are "safe" to send again.    ////
+	////  But after any messages are sent, you should validate our state. ////
+	//////////////////////////////////////////////////////////////////////////
 
-	////////////////////////////////////////////////////////////////////
-	//// From this point onwards messages are "safe" to send again. ////
-	////////////////////////////////////////////////////////////////////
+	// we've had to stop at the end of the turn.
+	if (m_StartedMoving)
+	{
+		StopMoving();
+
+		MoveHasPaused();
+		// Validate that the MoveHasPaused message hint has not caused us to be in an invalid state.
+		if (!IsTryingToMove() || !cmpPosition || !cmpPosition->IsInWorld() || !CurrentGoalHasValidPosition())
+			return;
+	}
 
 	if (ShouldConsiderOurselvesAtDestination(m_CurrentGoal))
 		// If we're out of path (ie not moving) but have a valid destination (IsTryingToMove()), we'll end up here every turn.

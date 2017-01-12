@@ -4070,8 +4070,9 @@ UnitAI.prototype.StopTimer = function()
 
 //// Message handlers /////
 
-UnitAI.prototype.OnMoveSuccess = function(msg)
+UnitAI.prototype.OnMovePaused = function(msg)
 {
+	// TODO: change this. Doesn't matter if UnitAI thinks it's completed for now since anyways the states do range checks.
 	this.UnitFsm.ProcessMessage(this, { "type": "MoveCompleted", "data": { "error" : false }});
 };
 

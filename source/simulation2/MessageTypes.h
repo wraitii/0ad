@@ -317,49 +317,15 @@ public:
 };
 
 /**
- * Sent by CCmpUnitMotion during Update,
- * whenever we have started actually moving and were not moving before.
- * We may or may not already have been trying to move
+ * Sent by CCmpUnitMotion as a hint whenever the unit stops moving
+ * Thus it will be sent if the unit's path is blocked, or if it's reached its destination.
  */
-class CMessageBeginMove : public CMessage
+class CMessageMovePaused : public CMessage
 {
 public:
-	DEFAULT_MESSAGE_IMPL(BeginMove)
+	DEFAULT_MESSAGE_IMPL(MovePaused)
 
-	CMessageBeginMove()
-	{
-	}
-};
-
-/**
- * Sent by CCmpUnitMotion during Update,
- * whenever we were actually moving before, and cannot continue
- * this can be because we've arrived (failed=false) or we failed moving (failed=true)
- * After this message is sent, the unit won't remove/repath without orders.
- * Will never be sent on the same turn as MT_BeginMove.
- */
-class CMessageFinishedMove : public CMessage
-{
-public:
-	DEFAULT_MESSAGE_IMPL(FinishedMove)
-
-	CMessageFinishedMove(bool fail) : failed(fail)
-	{
-	}
-
-	bool failed; // move failed
-};
-
-/**
- * Sent by CCmpUnitMotion as a hint when we have reached our destination
- * The unit may start moving again on its own despite this message being sent.
- */
-class CMessageMoveSuccess : public CMessage
-{
-public:
-	DEFAULT_MESSAGE_IMPL(MoveSuccess)
-
-	CMessageMoveSuccess()
+	CMessageMovePaused()
 	{
 	}
 };
@@ -374,24 +340,6 @@ public:
 	DEFAULT_MESSAGE_IMPL(MoveFailure)
 
 	CMessageMoveFailure()
-	{
-	}
-};
-
-/**
- * Sent by CCmpUnitMotion during Update,
- * whenever we were actually moving before, and now stopped
- * In this case, we will retry moving/pathing in the future on our own
- * Unless ordered otherwise.
- * We are just possibly stuck short-term, or must repath.
- * Will never be sent on the same turn as MT_BeginMove.
- */
-class CMessagePausedMove : public CMessage
-{
-public:
-	DEFAULT_MESSAGE_IMPL(PausedMove)
-
-	CMessagePausedMove()
 	{
 	}
 };
