@@ -148,9 +148,11 @@ var g_Commands = {
 
 	"walk": function(player, cmd, data)
 	{
-		CreateGroupWalkOrderIfNecessary(data.entities, player, cmd.x, cmd.z, 20, cmd.queued).forEach(cmpUnitAI => {
-			cmpUnitAI.Walk(cmd.x, cmd.z, true);
-		});
+		let unitAIs = CreateGroupWalkOrderIfNecessary(data.entities, player, cmd.x, cmd.z, 20, cmd.queued);
+		for (let i in unitAIs)
+			unitAIs[i].forEach(cmpUnitAI => {
+				cmpUnitAI.Walk(cmd.x, cmd.z, cmd.queued || +i);
+			});
 	},
 
 	"walk-to-range": function(player, cmd, data)
@@ -166,9 +168,11 @@ var g_Commands = {
 
 	"attack-walk": function(player, cmd, data)
 	{
-		GetFormationUnitAIs(data.entities, player).forEach(cmpUnitAI => {
-			cmpUnitAI.WalkAndFight(cmd.x, cmd.z, cmd.targetClasses, cmd.queued);
-		});
+		let unitAIs = CreateGroupWalkOrderIfNecessary(data.entities, player, cmd.x, cmd.z, 20, cmd.queued);
+		for (let i in unitAIs)
+			unitAIs[i].forEach(cmpUnitAI => {
+				cmpUnitAI.WalkAndFight(cmd.x, cmd.z, cmd.targetClasses, cmd.queued || +i);
+			});
 	},
 
 	"attack": function(player, cmd, data)
@@ -178,16 +182,23 @@ var g_Commands = {
 
 		let allowCapture = cmd.allowCapture || cmd.allowCapture == null;
 
-		GetFormationUnitAIs(data.entities, player).forEach(cmpUnitAI => {
-			cmpUnitAI.Attack(cmd.target, cmd.queued, allowCapture);
-		});
+		let pos = Engine.QueryInterface(cmd.target, IID_Position);
+		if (!pos)
+			return;
+		let unitAIs = CreateGroupWalkOrderIfNecessary(data.entities, player, pos.GetPosition2D().x, pos.GetPosition2D().y, 20, cmd.queued);
+		for (let i in unitAIs)
+			unitAIs[i].forEach(cmpUnitAI => {
+				cmpUnitAI.Attack(cmd.target, cmd.queued || +i, allowCapture);
+			});
 	},
 
 	"patrol": function(player, cmd, data)
 	{
-		GetFormationUnitAIs(data.entities, player).forEach(cmpUnitAI =>
-			cmpUnitAI.Patrol(cmd.x, cmd.z, cmd.targetClasses, cmd.queued)
-		);
+		let unitAIs = CreateGroupWalkOrderIfNecessary(data.entities, player, cmd.x, cmd.z, 20, cmd.queued);
+		for (let i in unitAIs)
+			unitAIs[i].forEach(cmpUnitAI => {
+				cmpUnitAI.Patrol(cmd.x, cmd.z, cmd.targetClasses, cmd.queued || +i)
+			});
 	},
 
 	"heal": function(player, cmd, data)
@@ -195,9 +206,14 @@ var g_Commands = {
 		if (g_DebugCommands && !(IsOwnedByPlayer(player, cmd.target) || IsOwnedByAllyOfPlayer(player, cmd.target)))
 			warn("Invalid command: heal target is not owned by player "+player+" or their ally: "+uneval(cmd));
 
-		GetFormationUnitAIs(data.entities, player).forEach(cmpUnitAI => {
-			cmpUnitAI.Heal(cmd.target, cmd.queued);
-		});
+		let pos = Engine.QueryInterface(cmd.target, IID_Position);
+		if (!pos)
+			return;
+		let unitAIs = CreateGroupWalkOrderIfNecessary(data.entities, player, pos.GetPosition2D().x, pos.GetPosition2D().y, 20, cmd.queued);
+		for (let i in unitAIs)
+			unitAIs[i].forEach(cmpUnitAI => {
+				cmpUnitAI.Heal(cmd.target, cmd.queued || +i);
+			});
 	},
 
 	"repair": function(player, cmd, data)
@@ -206,9 +222,14 @@ var g_Commands = {
 		if (g_DebugCommands && !IsOwnedByAllyOfPlayer(player, cmd.target))
 			warn("Invalid command: repair target is not owned by ally of player "+player+": "+uneval(cmd));
 
-		GetFormationUnitAIs(data.entities, player).forEach(cmpUnitAI => {
-			cmpUnitAI.Repair(cmd.target, cmd.autocontinue, cmd.queued);
-		});
+		let pos = Engine.QueryInterface(cmd.target, IID_Position);
+		if (!pos)
+			return;
+		let unitAIs = CreateGroupWalkOrderIfNecessary(data.entities, player, pos.GetPosition2D().x, pos.GetPosition2D().y, 20, cmd.queued);
+		for (let i in unitAIs)
+			unitAIs[i].forEach(cmpUnitAI => {
+				cmpUnitAI.Repair(cmd.target, cmd.autocontinue, cmd.queued || +i);
+			});
 	},
 
 	"gather": function(player, cmd, data)
@@ -219,22 +240,20 @@ var g_Commands = {
 		let pos = Engine.QueryInterface(cmd.target, IID_Position);
 		if (!pos)
 			return;
-
 		let unitAIs = CreateGroupWalkOrderIfNecessary(data.entities, player, pos.GetPosition2D().x, pos.GetPosition2D().y, 20, cmd.queued);
-
-		unitAIs[0].forEach(cmpUnitAI => {
-			cmpUnitAI.Gather(cmd.target, cmd.queued);
-		});
-		unitAIs[1].forEach(cmpUnitAI => {
-			cmpUnitAI.Gather(cmd.target, true);
-		});
+		for (let i in unitAIs)
+			unitAIs[i].forEach(cmpUnitAI => {
+				cmpUnitAI.Gather(cmd.target, cmd.queued || +i);
+			});
 	},
 
 	"gather-near-position": function(player, cmd, data)
 	{
-		GetFormationUnitAIs(data.entities, player).forEach(cmpUnitAI => {
-			cmpUnitAI.GatherNearPosition(cmd.x, cmd.z, cmd.resourceType, cmd.resourceTemplate, cmd.queued);
-		});
+		let unitAIs = CreateGroupWalkOrderIfNecessary(data.entities, player, cmd.x, cmd.z, 20, cmd.queued);
+		for (let i in unitAIs)
+			unitAIs[i].forEach(cmpUnitAI => {
+				cmpUnitAI.GatherNearPosition(cmd.x, cmd.z, cmd.resourceType, cmd.resourceTemplate, cmd.queued || +i);
+			});
 	},
 
 	"returnresource": function(player, cmd, data)
@@ -242,9 +261,14 @@ var g_Commands = {
 		if (g_DebugCommands && !IsOwnedByPlayer(player, cmd.target))
 			warn("Invalid command: dropsite is not owned by player "+player+": "+uneval(cmd));
 
-		GetFormationUnitAIs(data.entities, player).forEach(cmpUnitAI => {
-			cmpUnitAI.ReturnResource(cmd.target, cmd.queued);
-		});
+		let pos = Engine.QueryInterface(cmd.target, IID_Position);
+		if (!pos)
+			return;
+		let unitAIs = CreateGroupWalkOrderIfNecessary(data.entities, player, pos.GetPosition2D().x, pos.GetPosition2D().y, 20, cmd.queued);
+		for (let i in unitAIs)
+			unitAIs[i].forEach(cmpUnitAI => {
+				cmpUnitAI.ReturnResource(cmd.target, cmd.queued || +i);
+			});
 	},
 
 	"back-to-work": function(player, cmd, data)
@@ -457,9 +481,14 @@ var g_Commands = {
 			return;
 		}
 
-		GetFormationUnitAIs(data.entities, player).forEach(cmpUnitAI => {
-			cmpUnitAI.Garrison(cmd.target, cmd.queued);
-		});
+		let pos = Engine.QueryInterface(cmd.target, IID_Position);
+		if (!pos)
+			return;
+		let unitAIs = CreateGroupWalkOrderIfNecessary(data.entities, player, pos.GetPosition2D().x, pos.GetPosition2D().y, 20, cmd.queued);
+		for (let i in unitAIs)
+			unitAIs[i].forEach(cmpUnitAI => {
+				cmpUnitAI.Garrison(cmd.target, cmd.queued || +i);
+			});
 	},
 
 	"guard": function(player, cmd, data)
@@ -472,14 +501,19 @@ var g_Commands = {
 			return;
 		}
 
-		GetFormationUnitAIs(data.entities, player).forEach(cmpUnitAI => {
-			cmpUnitAI.Guard(cmd.target, cmd.queued);
-		});
+		let pos = Engine.QueryInterface(cmd.target, IID_Position);
+		if (!pos)
+			return;
+		let unitAIs = CreateGroupWalkOrderIfNecessary(data.entities, player, pos.GetPosition2D().x, pos.GetPosition2D().y, 20, cmd.queued);
+		for (let i in unitAIs)
+			unitAIs[i].forEach(cmpUnitAI => {
+				cmpUnitAI.Guard(cmd.target, cmd.queued || +i);
+			});
 	},
 
 	"stop": function(player, cmd, data)
 	{
-		GetFormationUnitAIs(data.entities, player).forEach(cmpUnitAI => {
+		data.entities.forEach(cmpUnitAI => {
 			cmpUnitAI.Stop(cmd.queued);
 		});
 	},
@@ -1398,7 +1432,7 @@ function CreateGroupWalkOrderIfNecessary(ents, player, x, z, range, queued)
 		let groupID = cmpGroupWalkManager.CreateGroup(formableEntsID, x, z, range, formationTemplate);
 		formableEntsAI.forEach(cmpUnitAI => { cmpUnitAI.WalkTogether(groupID); });
 	}
-	return nonFormableUnitAIs.concat(formableEntsAI);
+	return [nonFormableUnitAIs, formableEntsAI];
 }
 
 /**

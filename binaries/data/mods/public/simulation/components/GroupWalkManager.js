@@ -88,6 +88,7 @@ GroupWalkManager.prototype.SetReady = function(ID, ent)
 		let path = cmpPathfinder.ComputePath(group.rallyPoint.x,group.rallyPoint.z, group.x, group.z, "default");
 		group.waypoints = path;
 		group.step = group.waypoints.length;
+		warn(uneval(path));
 		if (group.waypoints.length > 2)
 		{
 			group.rallyPoint = { "x":group.waypoints[group.step-1].x, "z":group.waypoints[group.step-1].y };
