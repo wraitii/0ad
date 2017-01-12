@@ -1002,7 +1002,7 @@ bool HierarchicalPathfinder::MakeGoalReachable(u16 i0, u16 j0, PathGoal& goal, p
 	}
 	else
 	{
-		u32 bestDist;
+		u32 bestDist = std::numeric_limits<u32>::max();
 		// loop through reachable goal regions and get the best navcell.
 		// TODO: we probably could skip some of those if our gScore/fScore were good enough.
 		for (const RegionID& region : reachableGoalRegions)
