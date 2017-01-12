@@ -148,8 +148,12 @@ var g_Commands = {
 
 	"walk": function(player, cmd, data)
 	{
-		GetFormationUnitAIs(data.entities, player).forEach(cmpUnitAI => {
+		let unitAIs = CreateGroupWalkOrderIfNecessary(data.entities, player, cmd.x, cmd.z, 20, cmd.queued);
+		unitAIs[0].forEach(cmpUnitAI => {
 			cmpUnitAI.Walk(cmd.x, cmd.z, cmd.queued);
+		});
+		unitAIs[1].forEach(cmpUnitAI => {
+			cmpUnitAI.Walk(cmd.x, cmd.z, true);
 		});
 	},
 
@@ -216,8 +220,17 @@ var g_Commands = {
 		if (g_DebugCommands && !(IsOwnedByPlayer(player, cmd.target) || IsOwnedByGaia(cmd.target)))
 			warn("Invalid command: resource is not owned by gaia or player "+player+": "+uneval(cmd));
 
-		GetFormationUnitAIs(data.entities, player).forEach(cmpUnitAI => {
+		let pos = Engine.QueryInterface(cmd.target, IID_Position);
+		if (!pos)
+			return;
+
+		let unitAIs = CreateGroupWalkOrderIfNecessary(data.entities, player, pos.GetPosition2D().x, pos.GetPosition2D().y, 20, cmd.queued);
+
+		unitAIs[0].forEach(cmpUnitAI => {
 			cmpUnitAI.Gather(cmd.target, cmd.queued);
+		});
+		unitAIs[1].forEach(cmpUnitAI => {
+			cmpUnitAI.Gather(cmd.target, true);
 		});
 	},
 
@@ -1352,6 +1365,46 @@ function RemoveFromFormation(ents)
 		if (cmpFormation)
 			cmpFormation.RemoveMembers(formation.members[fid]);
 	}
+}
+
+function CreateGroupWalkOrderIfNecessary(ents, player, x, z, range, queued)
+{
+	// Sort units in "can use this formation" and "cannot".
+	let nonFormableUnitAIs = [];
+	let formableEntsID = [];
+	let formableEntsAI = [];
+
+	let formationTemplate = "formations/something";//QueryPlayerIDInterface(player).GetFormationTemplate();
+
+	// don't create a walk together order if this is a queued order because that's just going to be weird
+	let createGroupOrder = queued === false;
+
+	for (let ent of ents)
+	{
+		let cmpUnitAI = Engine.QueryInterface(ent, IID_UnitAI);
+		let cmpPosition = Engine.QueryInterface(ent, IID_Position);
+		if (!cmpUnitAI || !cmpPosition || !cmpPosition.IsInWorld())
+			continue;
+
+		let cmpIdentity = Engine.QueryInterface(ent, IID_Identity);
+		if (cmpIdentity)// && cmpIdentity.CanUseFormation(formationTemplate))
+		{
+			formableEntsID.push(ent);
+			formableEntsAI.push(cmpUnitAI);
+		}
+		else
+			nonFormableUnitAIs.push(cmpUnitAI);
+	}
+
+	// TODO: validate formation
+	if (createGroupOrder && formableEntsAI.length > 1)
+	{
+		// TODO: get position, get obstruction, that kind of stuff.
+		let cmpGroupWalkManager = Engine.QueryInterface(SYSTEM_ENTITY, IID_GroupWalkManager);
+		let groupID = cmpGroupWalkManager.CreateGroup(formableEntsID, x, z, range, formationTemplate);
+		formableEntsAI.forEach(cmpUnitAI => { cmpUnitAI.WalkTogether(groupID); });
+	}
+	return [nonFormableUnitAIs, formableEntsAI];
 }
 
 /**

@@ -256,6 +256,34 @@ UnitAI.prototype.UnitFsmSpec = {
 
 	},
 
+	"Order.WalkTogether": function(msg) {
+		if (this.IsAnimal() || this.IsTurret())
+		{
+			this.FinishOrder();
+			return;
+		}
+
+		// For packable units:
+		// 1. If packed, we can move.
+		// 2. If unpacked, we first need to pack, then follow case 1.
+		if (this.CanPack())
+		{
+			// Case 2: pack
+			this.PushOrderFront("Pack", { "force": true });
+			return;
+		}
+
+		let cmpGroupWalkManager = Engine.QueryInterface(SYSTEM_ENTITY, IID_GroupWalkManager);
+		let group = cmpGroupWalkManager.GetGroup(this.order.data.groupID);
+		if (!group || group.state != "waiting")
+		{
+			this.FinishOrder();
+			return;
+		}
+		
+		this.SetNextState("INDIVIDUAL.GROUPWALKING.WAITING");
+	},
+
 	"Order.Walk": function(msg) {
 		// Let players move captured domestic animals around
 		if (this.IsAnimal() && !this.IsDomestic() || this.IsTurret())
@@ -1604,6 +1632,96 @@ UnitAI.prototype.UnitFsmSpec = {
 					Engine.PostMessage(this.entity, MT_UnitIdleChanged, { "idle": this.isIdle });
 				}
 			},
+		},
+
+		"GROUPWALKING": {
+			"WAITING" : {
+				"enter": function() {
+					let cmpGroupWalkManager = Engine.QueryInterface(SYSTEM_ENTITY, IID_GroupWalkManager);
+					let group = cmpGroupWalkManager.GetGroup(this.order.data.groupID);
+					if (!group || group.state != "waiting")
+					{
+						this.FinishOrder();
+						return true;
+					}
+					cmpGroupWalkManager.SetReady(this.order.data.groupID, this.entity);
+					this.StartTimer(1000, 1000);
+				},
+
+				"leave": function() {
+					this.StopTimer();
+				},
+
+				"Timer": function() {
+					let cmpGroupWalkManager = Engine.QueryInterface(SYSTEM_ENTITY, IID_GroupWalkManager);
+					let group = cmpGroupWalkManager.GetGroup(this.order.data.groupID);
+					if (!group)
+					{
+						this.FinishOrder();
+						return true;
+					}
+					if (group.state == "walking")
+						this.SetNextState("WALKING");
+				},
+			},
+			"WALKING" : {
+				"enter": function() {
+					let cmpGroupWalkManager = Engine.QueryInterface(SYSTEM_ENTITY, IID_GroupWalkManager);
+					let group = cmpGroupWalkManager.GetGroup(this.order.data.groupID);
+					if (!group || group.state != "walking")
+					{
+						this.FinishOrder();
+						return true;
+					}
+					if (!this.MoveToPointRange(group.rallyPoint.x, group.rallyPoint.z, 0, false))
+					{
+						// couldn't move there for some reason
+						// TODO: check our destination
+						cmpGroupWalkManager.ResignFromGroup(this.order.data.groupID, this.entity);
+						this.FinishOrder();
+						return true;
+					}
+					this.StartTimer(1000, 1000);
+					this.step = group.step; // temporary, deleted in leave
+				},
+
+				"leave": function() {
+					this.StopTimer();
+					this.ready = undefined;
+					this.step = undefined;
+				},
+
+				"Timer": function() {
+					let cmpGroupWalkManager = Engine.QueryInterface(SYSTEM_ENTITY, IID_GroupWalkManager);
+					let group = cmpGroupWalkManager.GetGroup(this.order.data.groupID);
+					if (!group)
+					{
+						this.FinishOrder();
+						return true;
+					}
+					if (group.state == "arrived")
+					{
+						cmpGroupWalkManager.ResignFromGroup(this.order.data.groupID, this.entity);
+						this.FinishOrder();
+						return;
+					}
+					if (group.step < this.step)
+					{
+						// we need to walk to the next rallypoint.
+						this.SetNextStateAlwaysEntering("WALKING");
+						return;
+					}
+					if (this.ready)
+						return;
+					let cmpObstructionManager = Engine.QueryInterface(SYSTEM_ENTITY, IID_ObstructionManager);
+					let range = group.step !== 0 ? 6 : group.range;
+					if (cmpObstructionManager.IsInPointRange(this.entity, group.rallyPoint.x, group.rallyPoint.z, 0, range))
+					{
+						this.ready = true;
+						cmpGroupWalkManager.SetReady(this.order.data.groupID, this.entity);
+					}
+				},
+			}
 		},
 
 		"WALKING": {
@@ -4418,11 +4536,11 @@ UnitAI.prototype.MoveToPoint = function(x, z)
 	return cmpUnitMotion.SetNewDestinationAsPosition(x, z, 0, true);
 };
 
-UnitAI.prototype.MoveToPointRange = function(x, z, range)
+UnitAI.prototype.MoveToPointRange = function(x, z, range, evenUnreachable = false)
 {
 	var cmpUnitMotion = Engine.QueryInterface(this.entity, IID_UnitMotion);
 	cmpUnitMotion.SetAbortIfStuck(3);
-	return cmpUnitMotion.SetNewDestinationAsPosition(x, z, range, true);
+	return cmpUnitMotion.SetNewDestinationAsPosition(x, z, range, evenUnreachable);
 };
 
 UnitAI.prototype.MoveToTarget = function(target, evenUnreachable = false)
@@ -5101,6 +5219,14 @@ UnitAI.prototype.CanGuard = function()
 		return false;
 
 	return (this.template.CanGuard == "true");
+};
+
+/**
+ * Adds walk-together order to the queue, necessarily in front.
+ */
+UnitAI.prototype.WalkTogether = function(groupID)
+{
+	this.AddOrder("WalkTogether", { "groupID": groupID }, false);
 };
 
 /**
