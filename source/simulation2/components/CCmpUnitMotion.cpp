@@ -992,7 +992,7 @@ void CCmpUnitMotion::Move(fixed dt)
 		 */
 		PathGoal goal;
 
-		CFixedVector2D nextWptPos(m_Path.m_Waypoints.back().x, m_Path.m_Waypoints.back().z);
+		CFixedVector2D nextWptPos(m_Path.m_Waypoints.front().x, m_Path.m_Waypoints.front().z);
 		if ((nextWptPos - pos).CompareLength(SHORT_PATH_GOAL_REDUX_DIST) > 0)
 		{
 			goal = { PathGoal::POINT, m_Path.m_Waypoints.back().x, m_Path.m_Waypoints.back().z };
