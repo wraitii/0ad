@@ -450,6 +450,9 @@ public:
 	virtual bool SetNewDestinationAsPosition(entity_pos_t x, entity_pos_t z, entity_pos_t range, bool evenUnreachable);
 	virtual bool SetNewDestinationAsEntity(entity_id_t target, entity_pos_t range, bool evenUnreachable);
 
+	virtual bool TemporaryRerouteToPosition(entity_pos_t x, entity_pos_t z, entity_pos_t range);
+	virtual bool GoBackToOriginalDestination();
+
 	// transform a motion goal into a corresponding PathGoal
 	// called by RecomputeGoalPosition
 	PathGoal CreatePathGoalFromMotionGoal(const SMotionGoal& motionGoal);
@@ -483,15 +486,20 @@ public:
 			cmpObstruction->SetMovingFlag(false);
 	}
 
-	virtual void DiscardMove()
+	void ResetPathfinding()
 	{
-		StopMoving();
-
 		m_Tries = 0;
 		m_WaitingTurns = 0;
 
 		m_ExpectedPathTicket = 0;
 		m_Path.m_Waypoints.clear();
+	}
+
+	virtual void DiscardMove()
+	{
+		StopMoving();
+
+		ResetPathfinding();
 
 		m_CurrentGoal.Clear();
 		m_Destination.Clear();
@@ -1367,6 +1375,31 @@ bool CCmpUnitMotion::SetNewDestinationAsEntity(entity_id_t ent, entity_pos_t ran
 	bool reachable = RequestNewPath(evenUnreachable); // calls RecomputeGoalPosition
 
 	return reachable;
+}
+
+bool CCmpUnitMotion::TemporaryRerouteToPosition(entity_pos_t x, entity_pos_t z, entity_pos_t range)
+{
+	// Does not reset destination, this is a temporary rerouting.
+	StopMoving();
+	ResetPathfinding();
+	m_CurrentGoal = SMotionGoal(CFixedVector2D(x, z), range);
+
+	// we must set evenUnreachable to true otherwise if the path is unreachable we'll DiscardMove() and we don't want to do that.
+	bool reachable = RequestNewPath(true); // calls RecomputeGoalPosition
+
+	// if this is false, whoever called this function should probably un-reroute us and let us go on our way.
+	return reachable;
+}
+
+bool CCmpUnitMotion::GoBackToOriginalDestination()
+{
+	SMotionGoal original = m_Destination;
+
+	// assume evenUnreachable, since if it was false originally we'd have stopped by now.
+	if (original.IsEntity())
+		return SetNewDestinationAsEntity(original.GetEntity(), original.Range(), true);
+	else
+		return SetNewDestinationAsPosition(original.GetPosition().X,original.GetPosition().Y, original.Range(), true);
 }
 
 void CCmpUnitMotion::RenderPath(const WaypointPath& path, std::vector<SOverlayLine>& lines, CColor color)

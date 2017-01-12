@@ -27,9 +27,9 @@
  * Motion interface for entities with complex movement capabilities.
  * (Simpler motion is handled by ICmpMotion instead.)
  *
- * It should eventually support different movement speeds, moving to areas
- * instead of points, moving as part of a group, moving as part of a formation,
- * etc.
+ * This component is designed to handle clever individual movement,
+ * not movement as part of an integrated group (formation, bataillon…)
+ * and another component should probably be designed for that.
  */
 class ICmpUnitMotion : public IComponent
 {
@@ -52,6 +52,19 @@ public:
 	 * Otherwise, the unit will try to go to another position as close as possible to the destination.
 	 */
 	virtual bool SetNewDestinationAsEntity(entity_id_t target, entity_pos_t range, bool evenUnreachable) = 0;
+
+	/**
+	 * Set m_CurrentGoal to the given position. This does not affect m_Destination.
+	 * This does not reset the current move or send any specific message.
+	 */
+	virtual bool TemporaryRerouteToPosition(entity_pos_t x, entity_pos_t z, entity_pos_t range) = 0;
+
+	/**
+	 * Resets our pathfinding towards the original m_Destination.
+	 * If it wasn't modified by a TemporaryRerouteToPosition, this does nothing (except potentially stop the unit for one turn).
+	 * returns the same as the original SetNewDestinationAsXYZ call, with evenUnreachable set to true.
+	 */
+	virtual bool GoBackToOriginalDestination() = 0;
 
 	/**
 	 * Turn to look towards the given point.

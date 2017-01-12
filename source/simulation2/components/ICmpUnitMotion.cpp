@@ -59,6 +59,16 @@ public:
 		return m_Script.Call<bool>("SetNewDestinationAsEntity", target, range, true);
 	}
 
+	virtual bool TemporaryRerouteToPosition(entity_pos_t, entity_pos_t, entity_pos_t)
+	{
+		return false;
+	}
+	
+	virtual bool GoBackToOriginalDestination()
+	{
+		return true;
+	}
+
 	virtual void FaceTowardsPoint(entity_pos_t x, entity_pos_t z)
 	{
 		m_Script.CallVoid("FaceTowardsPoint", x, z);
