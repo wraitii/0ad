@@ -84,11 +84,9 @@ GroupWalkManager.prototype.SetReady = function(ID, ent)
 		group.rallyPoint.x = cmpPosition.GetPosition2D().x;
 		group.rallyPoint.z = cmpPosition.GetPosition2D().y;
 		let cmpPathfinder = Engine.QueryInterface(SYSTEM_ENTITY, IID_Pathfinder);
-		// this seems to return oddly few waypoints ?
 		let path = cmpPathfinder.ComputePath(group.rallyPoint.x,group.rallyPoint.z, group.x, group.z, "default");
 		group.waypoints = path;
 		group.step = group.waypoints.length;
-		warn(uneval(path));
 		if (group.waypoints.length > 2)
 		{
 			group.rallyPoint = { "x":group.waypoints[group.step-1].x, "z":group.waypoints[group.step-1].y };

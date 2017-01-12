@@ -256,6 +256,7 @@ public:
 		goal.type = PathGoal::POINT;
 		goal.x = x1;
 		goal.z = z1;
+		goal.maxdist = fixed::FromInt(50); // TODO: determine good value for this.
 		m_LongPathfinder.ComputePath(x0, z0, goal, GetPassabilityClass(passClass), ret);
 		std::vector<CFixedVector2D> output;
 		output.reserve(ret.m_Waypoints.size());
