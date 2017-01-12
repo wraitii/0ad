@@ -26,6 +26,7 @@ Player.prototype.Init = function()
 	this.diplomacy = [];	// array of diplomatic stances for this player with respect to other players (including gaia and self)
 	this.sharedDropsites = false;
 	this.formations = [];
+	this.chosenFormation = "formations/null"
 	this.startCam = undefined;
 	this.controlAllUnits = false;
 	this.isAI = false;
@@ -519,6 +520,16 @@ Player.prototype.GetFormations = function()
 Player.prototype.SetFormations = function(formations)
 {
 	this.formations = formations;
+};
+
+Player.prototype.SetChosenFormation = function(formation)
+{
+	this.chosenFormation = formation;
+};
+
+Player.prototype.GetChosenFormation = function(formation)
+{
+	return this.chosenFormation;
 };
 
 Player.prototype.GetStartingCameraPos = function()

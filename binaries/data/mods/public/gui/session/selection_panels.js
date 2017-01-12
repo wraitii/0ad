@@ -400,10 +400,7 @@ g_SelectionPanels.Formation = {
 
 		let formationInfo = g_FormationsInfo.get(data.item);
 		let formationOk = canMoveSelectionIntoFormation(data.item);
-		let formationSelected = Engine.GuiInterfaceCall("IsFormationSelected", {
-			"ents": data.unitEntStates.map(state => state.id),
-			"formationTemplate": data.item
-		});
+		let formationSelected = Engine.GuiInterfaceCall("IsFormationSelected", { "formationTemplate": data.item });
 
 		data.button.onPress = function() {
 			performFormation(data.unitEntStates.map(state => state.id), data.item);

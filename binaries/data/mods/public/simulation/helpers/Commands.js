@@ -148,11 +148,7 @@ var g_Commands = {
 
 	"walk": function(player, cmd, data)
 	{
-		let unitAIs = CreateGroupWalkOrderIfNecessary(data.entities, player, cmd.x, cmd.z, 20, cmd.queued);
-		unitAIs[0].forEach(cmpUnitAI => {
-			cmpUnitAI.Walk(cmd.x, cmd.z, cmd.queued);
-		});
-		unitAIs[1].forEach(cmpUnitAI => {
+		CreateGroupWalkOrderIfNecessary(data.entities, player, cmd.x, cmd.z, 20, cmd.queued).forEach(cmpUnitAI => {
 			cmpUnitAI.Walk(cmd.x, cmd.z, true);
 		});
 	},
@@ -580,9 +576,7 @@ var g_Commands = {
 
 	"formation": function(player, cmd, data)
 	{
-		GetFormationUnitAIs(data.entities, player, cmd.name).forEach(cmpUnitAI => {
-			cmpUnitAI.MoveIntoFormation(cmd);
-		});
+		QueryPlayerIDInterface(player).SetChosenFormation(cmd.name);
 	},
 
 	"promote": function(player, cmd, data)
@@ -1374,10 +1368,10 @@ function CreateGroupWalkOrderIfNecessary(ents, player, x, z, range, queued)
 	let formableEntsID = [];
 	let formableEntsAI = [];
 
-	let formationTemplate = "formations/something";//QueryPlayerIDInterface(player).GetFormationTemplate();
+	let formationTemplate = QueryPlayerIDInterface(player).GetChosenFormation();
 
 	// don't create a walk together order if this is a queued order because that's just going to be weird
-	let createGroupOrder = queued === false;
+	let createGroupOrder = queued === false && formationTemplate !== "formations/null";
 
 	for (let ent of ents)
 	{
@@ -1404,7 +1398,7 @@ function CreateGroupWalkOrderIfNecessary(ents, player, x, z, range, queued)
 		let groupID = cmpGroupWalkManager.CreateGroup(formableEntsID, x, z, range, formationTemplate);
 		formableEntsAI.forEach(cmpUnitAI => { cmpUnitAI.WalkTogether(groupID); });
 	}
-	return [nonFormableUnitAIs, formableEntsAI];
+	return nonFormableUnitAIs.concat(formableEntsAI);
 }
 
 /**

@@ -1645,7 +1645,7 @@ UnitAI.prototype.UnitFsmSpec = {
 						return true;
 					}
 					cmpGroupWalkManager.SetReady(this.order.data.groupID, this.entity);
-					this.StartTimer(1000, 1000);
+					this.StartTimer(200, 1000);
 				},
 
 				"leave": function() {
@@ -1686,7 +1686,7 @@ UnitAI.prototype.UnitFsmSpec = {
 					let cmpUnitMotion = Engine.QueryInterface(this.entity, IID_UnitMotion);
 					let ratio = maxSpeed / cmpUnitMotion.GetBaseSpeed();
 					cmpUnitMotion.SetSpeed(ratio);
-					this.StartTimer(1000, 1000);
+					this.StartTimer(200, 1000);
 					this.step = group.step; // temporary, deleted in leave
 				},
 

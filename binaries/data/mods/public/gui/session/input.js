@@ -1524,12 +1524,10 @@ function performAllyCommand(entity, commandName)
 
 function performFormation(entities, formationTemplate)
 {
-	if (entities)
-		Engine.PostNetworkCommand({
-			"type": "formation",
-			"entities": entities,
-			"name": formationTemplate
-		});
+	Engine.PostNetworkCommand({
+		"type": "formation",
+		"name": formationTemplate
+	});
 }
 
 function performGroup(action, groupId)

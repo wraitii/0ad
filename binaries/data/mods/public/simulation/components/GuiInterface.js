@@ -831,15 +831,7 @@ GuiInterface.prototype.GetFormationInfoFromTemplate = function(player, data)
 
 GuiInterface.prototype.IsFormationSelected = function(player, data)
 {
-	for each (let ent in data.ents)
-	{
-		let cmpUnitAI = Engine.QueryInterface(ent, IID_UnitAI);
-		// GetLastFormationName is named in a strange way as it (also) is
-		// the value of the current formation (see Formation.js LoadFormation)
-		if (cmpUnitAI && cmpUnitAI.GetLastFormationTemplate() == data.formationTemplate)
-			return true;
-	}
-	return false;
+	return QueryPlayerIDInterface(player).GetChosenFormation() === data.formationTemplate;
 };
 
 GuiInterface.prototype.IsStanceSelected = function(player, data)

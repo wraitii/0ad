@@ -94,7 +94,6 @@ GroupWalkManager.prototype.SetReady = function(ID, ent)
 			group.step--;
 		}
 		// TODO: compute proper offsets from Formation.JS
-		// TODO: compute path and generate waypoints
 		group.state = "walking";
 	}
 	else if (group.state == "walking")
