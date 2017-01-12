@@ -1681,6 +1681,11 @@ UnitAI.prototype.UnitFsmSpec = {
 						this.FinishOrder();
 						return true;
 					}
+					// TODO: for the first "grouping" order it'd be nice to skip this
+					let maxSpeed = cmpGroupWalkManager.GetMaxSpeed(this.order.data.groupID);
+					let cmpUnitMotion = Engine.QueryInterface(this.entity, IID_UnitMotion);
+					let ratio = maxSpeed / cmpUnitMotion.GetBaseSpeed();
+					cmpUnitMotion.SetSpeed(ratio);
 					this.StartTimer(1000, 1000);
 					this.step = group.step; // temporary, deleted in leave
 				},
@@ -1689,6 +1694,8 @@ UnitAI.prototype.UnitFsmSpec = {
 					this.StopTimer();
 					this.ready = undefined;
 					this.step = undefined;
+					let cmpUnitMotion = Engine.QueryInterface(this.entity, IID_UnitMotion);
+					cmpUnitMotion.SetSpeed(WALKING_SPEED);
 				},
 
 				"Timer": function() {
@@ -1714,7 +1721,7 @@ UnitAI.prototype.UnitFsmSpec = {
 					if (this.ready)
 						return;
 					let cmpObstructionManager = Engine.QueryInterface(SYSTEM_ENTITY, IID_ObstructionManager);
-					let range = group.step !== 0 ? 6 : group.range;
+					let range = group.step !== 0 ? 14 : group.range;
 					if (cmpObstructionManager.IsInPointRange(this.entity, group.rallyPoint.x, group.rallyPoint.z, 0, range))
 					{
 						this.ready = true;

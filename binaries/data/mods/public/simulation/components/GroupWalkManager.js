@@ -19,20 +19,36 @@ GroupWalkManager.prototype.Serialize = function()
 
 GroupWalkManager.prototype.CreateGroup = function(formableEntsID, x, z, range, formationTemplate)
 {
+	let speed = 50.0; // TODO: put formation max speed?
+	for (let ent of formableEntsID)
+	{
+		let cmpUnitMotion = Engine.QueryInterface(ent, IID_UnitMotion);
+		let sp = cmpUnitMotion.GetBaseSpeed();
+		if (sp < speed)
+			speed = sp;
+	}
 	let group = {
 		"entities" : formableEntsID,
 		"x" : x,
 		"z" : z,
 		"range": range,
 		"formationTemplate":formationTemplate,
+		"maxSpeed": speed,
 		"state": "waiting",
 		"readyForNextStep" : [],
 		"step":0,
+		"waypoints": [],
 	};
 	this.groups.set(this.nextGroupID++, group);
 
 	return this.nextGroupID - 1;
 };
+
+GroupWalkManager.prototype.GetMaxSpeed = function(ID)
+{
+	// undefined if undefined
+	return !!this.groups.get(ID) ? this.groups.get(ID).maxSpeed : 0;
+}
 
 GroupWalkManager.prototype.GetGroup = function(ID)
 {
@@ -63,13 +79,23 @@ GroupWalkManager.prototype.SetReady = function(ID, ent)
 	if (group.state == "waiting")
 	{
 		group.rallyPoint = { "x":0, "z": 0 };
+		// TODO: it might be better to get an averaged position, but we need to make sure to arrive somewhere units can reach.
 		let cmpPosition = Engine.QueryInterface(group.entities[0], IID_Position);
 		group.rallyPoint.x = cmpPosition.GetPosition2D().x;
 		group.rallyPoint.z = cmpPosition.GetPosition2D().y;
+		let cmpPathfinder = Engine.QueryInterface(SYSTEM_ENTITY, IID_Pathfinder);
+		// this seems to return oddly few waypoints ?
+		let path = cmpPathfinder.ComputePath(group.rallyPoint.x,group.rallyPoint.z, group.x, group.z, "default");
+		group.waypoints = path;
+		group.step = group.waypoints.length;
+		if (group.waypoints.length > 2)
+		{
+			group.rallyPoint = { "x":group.waypoints[group.step-1].x, "z":group.waypoints[group.step-1].y };
+			group.step--;
+		}
 		// TODO: compute proper offsets from Formation.JS
 		// TODO: compute path and generate waypoints
 		group.state = "walking";
-		group.step = 1;
 	}
 	else if (group.state == "walking")
 	{
@@ -78,8 +104,8 @@ GroupWalkManager.prototype.SetReady = function(ID, ent)
 			group.state = "arrived";
 			return;
 		}
+		group.rallyPoint = { "x":group.waypoints[group.step-1].x, "z":group.waypoints[group.step-1].y };
 		group.step--;
-		group.rallyPoint = { "x":group.x, "z":group.z };
 		// TODO: compute proper offsets from Formation.JS
 		group.state = "walking";
 	}

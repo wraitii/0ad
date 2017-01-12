@@ -249,6 +249,22 @@ public:
 		m_LongPathfinder.ComputePath(x0, z0, goal, passClass, ret);
 	}
 
+	virtual std::vector<CFixedVector2D> ComputePath_Script(entity_pos_t x0, entity_pos_t z0, entity_pos_t x1, entity_pos_t z1, const std::string& passClass)
+	{
+		WaypointPath ret;
+		PathGoal goal;
+		goal.type = PathGoal::POINT;
+		goal.x = x1;
+		goal.z = z1;
+		m_LongPathfinder.ComputePath(x0, z0, goal, GetPassabilityClass(passClass), ret);
+		std::vector<CFixedVector2D> output;
+		output.reserve(ret.m_Waypoints.size());
+		for (Waypoint& wpt : ret.m_Waypoints)
+			output.emplace_back(CFixedVector2D(wpt.x, wpt.z));
+		return output;
+	}
+
+
 	virtual u32 ComputePathAsync(entity_pos_t x0, entity_pos_t z0, const PathGoal& goal, pass_class_t passClass, entity_id_t notify);
 
 	virtual void ComputeShortPath(const IObstructionTestFilter& filter, entity_pos_t x0, entity_pos_t z0, entity_pos_t clearance, entity_pos_t range, const PathGoal& goal, pass_class_t passClass, WaypointPath& ret);

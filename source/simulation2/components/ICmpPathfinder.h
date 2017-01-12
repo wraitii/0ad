@@ -114,6 +114,11 @@ public:
 	virtual void ComputePath(entity_pos_t x0, entity_pos_t z0, const PathGoal& goal, pass_class_t passClass, WaypointPath& ret) = 0;
 
 	/**
+	 * Version for JS components
+	 */
+	virtual std::vector<CFixedVector2D> ComputePath_Script(entity_pos_t x0, entity_pos_t z0, entity_pos_t x1, entity_pos_t z1, const std::string& passClass) = 0;
+
+	/**
 	 * Asynchronous version of ComputePath.
 	 * The result will be sent as CMessagePathResult to 'notify'.
 	 * Returns a unique non-zero number, which will match the 'ticket' in the result,

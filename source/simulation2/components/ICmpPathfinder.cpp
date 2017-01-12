@@ -24,4 +24,5 @@
 BEGIN_INTERFACE_WRAPPER(Pathfinder)
 DEFINE_INTERFACE_METHOD_1("SetDebugOverlay", void, ICmpPathfinder, SetDebugOverlay, bool)
 DEFINE_INTERFACE_METHOD_1("SetHierDebugOverlay", void, ICmpPathfinder, SetHierDebugOverlay, bool)
+DEFINE_INTERFACE_METHOD_5("ComputePath", std::vector<CFixedVector2D>, ICmpPathfinder, ComputePath_Script, entity_pos_t, entity_pos_t, entity_pos_t, entity_pos_t, std::string)
 END_INTERFACE_WRAPPER(Pathfinder)
