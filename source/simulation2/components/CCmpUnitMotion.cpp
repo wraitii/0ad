@@ -893,6 +893,11 @@ void CCmpUnitMotion::Move(fixed dt)
 		// TODO: figure out if this is actually necessary with the other changes
 		pos = initialPos;
 
+	// Anticipate here future pathing needs;
+	bool willBeObstructed = false;
+	if (!wasObstructed && HasValidPath() && !cmpPathfinder->CheckMovement(GetObstructionFilter(), pos.X, pos.Y, m_Path.m_Waypoints.back().x, m_Path.m_Waypoints.back().z, m_Clearance, m_PassClass))
+		willBeObstructed = true;
+
 	// Update the Position component after our movement (if we actually moved anywhere)
 	if (pos != initialPos)
 	{
@@ -911,7 +916,7 @@ void CCmpUnitMotion::Move(fixed dt)
 		// so we end up changing the actual speed quite often, which is a little silly.
 		SetActualSpeed(cmpPosition->GetDistanceTravelled() / dt);
 
-		if (!wasObstructed)
+		if (!wasObstructed && !willBeObstructed)
 		{
 			// everything is going smoothly, return.
 			m_Tries = 0;
@@ -929,7 +934,7 @@ void CCmpUnitMotion::Move(fixed dt)
 	//////////////////////////////////////////////////////////////////////////
 
 	// we've had to stop at the end of the turn.
-	if (m_StartedMoving)
+	if (wasObstructed && m_StartedMoving)
 	{
 		StopMoving();
 
@@ -946,7 +951,7 @@ void CCmpUnitMotion::Move(fixed dt)
 		// otherwise we'll never reach our target.
 		return;
 
-	// Oops, we've had a problem. Either we were obstructed, or we ran out of path (but still have a goal).
+	// Oops, we have a problem. Either we were obstructed, we plan to be obstructed soon, or we ran out of path (but still have a goal).
 	// Handle it.
 	// Failure to handle it will result in stuckness and players complaining.
 
@@ -954,12 +959,9 @@ void CCmpUnitMotion::Move(fixed dt)
 		// wait until we get our path to see where that leads us.
 		return;
 
-	// give us some turns to recover.
-	// TODO: only do this if we ran into a moving unit and not something else, because something else won't move
-	// specifically: if we ran into a moving unit, we should wait a turn and see what happens
-	// if we ran into a static unit, recompute a short-path directly
-	// if we ran into a static obstruction, recompute long-path directly
-	// And then maybe we could add some finetuning based on target.
+	// TODO: it would be nice to react differently to different problems
+	// eg running into a static obstruction can be handled by the long-range pathfinder
+	// but running in a unit cannot.
 	if (m_WaitingTurns == 0)
 	{
 		if (HasValidPath())
@@ -970,11 +972,11 @@ void CCmpUnitMotion::Move(fixed dt)
 
 	--m_WaitingTurns;
 
-	// Try again next turn, no changes
+	// MAX_PATH_REATTEMPS and above: we wait.
 	if (m_WaitingTurns >= MAX_PATH_REATTEMPS)
 		return;
 
-	// already waited one turn, no changes, so try computing a short path.
+	// If we're here we want to compute a short path.
 	if (m_WaitingTurns >= 3)
 	{
 		if (m_Path.m_Waypoints.empty())
@@ -984,7 +986,7 @@ void CCmpUnitMotion::Move(fixed dt)
 		}
 		/**
 		 * Here there are two cases:
-		 * 1) We are somewhat far away from the goal, in which case proceed as usual
+		 * 1) We are somewhat far away from the goal
 		 * 2) We're really close to the goal.
 		 * If it's (2) it's likely that we are running into units that are currently doing the same thing we want to do (gathering from the same tree…)
 		 * Since the initial call to MakeGoalReachable gave us a specific 2D coordinate, and we can't reach it,
@@ -995,12 +997,21 @@ void CCmpUnitMotion::Move(fixed dt)
 		PathGoal goal;
 
 		CFixedVector2D nextWptPos(m_Path.m_Waypoints.front().x, m_Path.m_Waypoints.front().z);
+		bool redraw = true;
 		if ((nextWptPos - pos).CompareLength(SHORT_PATH_GOAL_REDUX_DIST) > 0)
 		{
-			goal = { PathGoal::POINT, m_Path.m_Waypoints.back().x, m_Path.m_Waypoints.back().z };
-			m_Path.m_Waypoints.pop_back();
+			// Check wether our next waypoint is obstructed in which case skip it.
+			// TODO: would be good to have a faster function here.
+			if (!cmpPathfinder->CheckMovement(GetObstructionFilter(), m_Path.m_Waypoints.back().x, m_Path.m_Waypoints.back().z, m_Path.m_Waypoints.back().x, m_Path.m_Waypoints.back().z, m_Clearance, m_PassClass))
+				m_Path.m_Waypoints.pop_back();
+			if (!m_Path.m_Waypoints.empty())
+			{
+				redraw = false;
+				goal = { PathGoal::POINT, m_Path.m_Waypoints.back().x, m_Path.m_Waypoints.back().z };
+				m_Path.m_Waypoints.pop_back();
+			}
 		}
-		else
+		if (redraw)
 		{
 			goal = CreatePathGoalFromMotionGoal(m_CurrentGoal);
 			m_DumpPathOnResult = true;
