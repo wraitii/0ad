@@ -1148,8 +1148,8 @@ void HierarchicalPathfinder::FindGoalRegions(u16 gi, u16 gj, const PathGoal& goa
 
 	u16 a,b; u32 c; // unused params for RegionNearestNavcellInGoal
 
-	for (u8 sz = (gj - size) / CHUNK_SIZE; sz <= (gj + size) / CHUNK_SIZE; ++sz)
-		for (u8 sx = (gi - size) / CHUNK_SIZE; sx <= (gi + size) / CHUNK_SIZE; ++sx)
+	for (u8 sz = std::max(0,(gj - size) / CHUNK_SIZE); sz <= std::min(m_ChunksH-1, (gj + size) / CHUNK_SIZE); ++sz)
+		for (u8 sx = std::max(0,(gi - size) / CHUNK_SIZE); sx <= std::min(m_ChunksW-1, (gi + size) / CHUNK_SIZE); ++sx)
 		{
 			Chunk& chunk = GetChunk(sx, sz, passClass);
 			for (u16 i : chunk.m_RegionsID)
