@@ -1737,7 +1737,8 @@ UnitAI.prototype.UnitFsmSpec = {
 
 			"MoveCompleted": function() {
 				let cmpObstructionManager = Engine.QueryInterface(SYSTEM_ENTITY, IID_ObstructionManager);
-				if (cmpObstructionManager.IsInPointRange(this.entity, this.order.data.x, this.order.data.z, 0, 1))
+				if (!this.order.data.target && cmpObstructionManager.IsInPointRange(this.entity, this.order.data.x, this.order.data.z, 0, 1)
+					|| this.order.data.target && cmpObstructionManager.IsInTargetRange(this.entity, this.order.data.target, 0, 1))
 				{
 					this.StopMoving();
 					this.FinishOrder();
@@ -2910,7 +2911,7 @@ UnitAI.prototype.UnitFsmSpec = {
 				let otherMarket = cmpTrader && cmpTrader.GetFirstMarket();
 				this.StopTrading();
 				if (otherMarket)
-					this.WalkToTarget(otherMarket);
+					this.g(otherMarket);
 			},
 		},
 
