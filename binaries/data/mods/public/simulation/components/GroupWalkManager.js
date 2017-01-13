@@ -84,7 +84,7 @@ GroupWalkManager.prototype.SetReady = function(ID, ent)
 		group.rallyPoint.x = cmpPosition.GetPosition2D().x;
 		group.rallyPoint.z = cmpPosition.GetPosition2D().y;
 		let cmpPathfinder = Engine.QueryInterface(SYSTEM_ENTITY, IID_Pathfinder);
-		let path = cmpPathfinder.ComputePath(group.rallyPoint.x,group.rallyPoint.z, group.x, group.z, "default");
+		let path = cmpPathfinder.ComputePath(group.rallyPoint.x,group.rallyPoint.z, group.x, group.z, "large");
 		group.waypoints = path;
 		group.step = group.waypoints.length;
 		if (group.waypoints.length > 2)

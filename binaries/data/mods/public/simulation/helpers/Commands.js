@@ -1405,7 +1405,7 @@ function CreateGroupWalkOrderIfNecessary(ents, player, x, z, range, queued)
 	let formationTemplate = QueryPlayerIDInterface(player).GetChosenFormation();
 
 	// don't create a walk together order if this is a queued order because that's just going to be weird
-	let createGroupOrder = queued === false && formationTemplate !== "formations/null";
+	let createGroupOrder = ents.length > 4 && queued === false && formationTemplate !== "formations/null";
 
 	for (let ent of ents)
 	{
@@ -1415,7 +1415,7 @@ function CreateGroupWalkOrderIfNecessary(ents, player, x, z, range, queued)
 			continue;
 
 		let cmpIdentity = Engine.QueryInterface(ent, IID_Identity);
-		if (cmpIdentity)// && cmpIdentity.CanUseFormation(formationTemplate))
+		if (createGroupOrder && cmpIdentity)// && cmpIdentity.CanUseFormation(formationTemplate))
 		{
 			formableEntsID.push(ent);
 			formableEntsAI.push(cmpUnitAI);
