@@ -3133,10 +3133,14 @@ UnitAI.prototype.UnitFsmSpec = {
 
 			"APPROACHING": {
 				"enter": function() {
+					this.StartTimer(1000,1000);
 				},
 
-				"MoveCompleted": function() {
-					this.StopMoving();
+				"leave": function() {
+					this.StopTimer();
+				},
+
+				"Timer": function() {
 					if (this.IsUnderAlert() && this.alertGarrisoningTarget)
 					{
 						// check that we can garrison in the building we're supposed to garrison in
@@ -3152,13 +3156,22 @@ UnitAI.prototype.UnitFsmSpec = {
 							}
 							else
 								this.FinishOrder();
+							return;
 						}
-						else
-							this.SetNextState("GARRISONED");
 					}
-					else
+					if (this.order.data.target && this.CheckGarrisonRange(this.order.data.target))
+					{
+						this.StopMoving();
 						this.SetNextState("GARRISONED");
+					}
+					else if (this.alertGarrisoningTarget && this.CheckGarrisonRange(this.alertGarrisoningTarget))
+					{
+						this.StopMoving();
+						this.SetNextState("GARRISONED");
+					}
 				},
+
+				"MoveCompleted": "Timer",
 			},
 
 			"GARRISONED": {
