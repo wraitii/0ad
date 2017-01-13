@@ -2511,23 +2511,22 @@ UnitAI.prototype.UnitFsmSpec = {
 						return true;
 					}
 
-					// Scale timing interval based on rate, and start timer
-					// The offset should be at least as long as the repeat time so we use the same value for both.
-					var offset = 1000/rate;
-					var repeat = offset;
-					this.StartTimer(offset, repeat);
-
-					// We want to start the gather animation as soon as possible,
-					// but only if we're actually at the target and it's still alive
-					// (else it'll look like we're chopping empty air).
-					// (If it's not alive, the Timer handler will deal with sending us
-					// off to a different target.)
+					// Range check: if we are in-range, start the gathering animation and set the timer
+					// If we are not in-range, we'll set a different timer to avoid waiting an inordinate amount of time.
 					if (this.CheckTargetRange(this.gatheringTarget, IID_ResourceGatherer))
 					{
 						this.FaceTowardsTarget(this.gatheringTarget);
 						var typename = "gather_" + this.order.data.type.specific;
 						this.SelectAnimation(typename, false, 1.0, typename);
+
+						// Scale timing interval based on rate, and start timer
+						// The offset should be at least as long as the repeat time so we use the same value for both.
+						var offset = 1000/rate;
+						var repeat = offset;
+						this.StartTimer(offset, repeat);
 					}
+					else
+						this.StartTimer(0, 1000);
 					return false;
 				},
 
