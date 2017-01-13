@@ -1762,8 +1762,12 @@ UnitAI.prototype.UnitFsmSpec = {
 			},
 
 			"MoveCompleted": function() {
-				this.StopMoving();
-				this.FinishOrder();
+				let cmpObstructionManager = Engine.QueryInterface(SYSTEM_ENTITY, IID_ObstructionManager);
+				if (cmpObstructionManager.IsInPointRange(this.entity, this.order.data.x, this.order.data.z, 0, 1))
+				{
+					this.StopMoving();
+					this.FinishOrder();
+				}
 			},
 		},
 

@@ -10,7 +10,6 @@ GroupWalkManager.prototype.Init = function()
 {
 	this.groups = new Map();
 	this.nextGroupID = 0;
-	warn("here");
 };
 
 GroupWalkManager.prototype.Serialize = function()

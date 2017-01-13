@@ -513,7 +513,8 @@ var g_Commands = {
 
 	"stop": function(player, cmd, data)
 	{
-		data.entities.forEach(cmpUnitAI => {
+		data.entities.forEach(ent => {
+			let cmpUnitAI = Engine.QueryInterface(ent, IID_UnitAI);
 			cmpUnitAI.Stop(cmd.queued);
 		});
 	},
