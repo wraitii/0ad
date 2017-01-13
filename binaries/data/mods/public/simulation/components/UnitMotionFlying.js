@@ -325,6 +325,11 @@ UnitMotionFlying.prototype.GetCurrentSpeed = function()
 	return this.speed;
 };
 
+UnitMotionFlying.prototype.IsTryingToMove = function()
+{
+	return false;
+}
+
 UnitMotionFlying.prototype.FaceTowardsPoint = function(x, z)
 {
 	// Ignore this - angle is controlled by the target-seeking code instead
