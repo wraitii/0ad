@@ -627,7 +627,9 @@ UnitAI.prototype.UnitFsmSpec = {
 				return;
 			}
 
-			this.PushOrderFront("Attack", { "target": this.order.data.target, "force": false, "hunting": true, "allowCapture": false });
+			if (!this.PushOrderFront("Attack", { "target": this.order.data.target, "force": false, "hunting": true, "allowCapture": false }))
+				this.FinishOrder();
+			
 			return;
 		}
 
@@ -3985,6 +3987,8 @@ UnitAI.prototype.PushOrderFront = function(type, data)
 	}
 	else
 	{
+		let orderQueue = this.orderQueue;
+		this.orderQueue = [];
 		this.orderQueue.unshift(order);
 		this.order = order;
 		let ret = this.UnitFsm.ProcessMessage(this,
@@ -3996,14 +4000,19 @@ UnitAI.prototype.PushOrderFront = function(type, data)
 		// new order hasn't changed state or anything) so we can carry on
 		// as if nothing had happened
 		if (ret && ret.discardOrder)
-		{
 			this.orderQueue.shift();
-			this.order = this.orderQueue[0];
-		}
+
+		let succeeded = this.orderQueue.length !== 0;
+
+		this.orderQueue = this.orderQueue.concat(orderQueue);
+		this.order = this.orderQueue[0];
+
+		if (!succeeded)
+			return false;
 	}
 
 	Engine.PostMessage(this.entity, MT_UnitAIOrderDataChanged, { "to": this.GetOrderData() });
-
+	return true;
 };
 
 /**
