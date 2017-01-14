@@ -756,7 +756,7 @@ void CCmpUnitMotion::ValidateCurrentPath()
 	// In those cases, UnitAI should be warned that the unit is unreachable and tell us to do something else.
 
 	CFixedVector2D targetPos = cmpTargetPosition->GetPosition2D();
-	fixed certainty = m_Clearance*2;
+	fixed certainty = (m_Clearance + cmpTargetUnitMotion->GetUnitClearance()) * 3 / 2;
 	UpdatePositionForTargetVelocity(m_CurrentGoal.GetEntity(), targetPos.X, targetPos.Y, certainty);
 
 	CmpPtr<ICmpObstructionManager> cmpObstructionManager(GetSystemEntity());
@@ -778,7 +778,11 @@ void CCmpUnitMotion::UpdatePositionForTargetVelocity(entity_id_t ent, entity_pos
 
 	// try to estimate in how much time we'll reach it.
 	fixed distance = (cmpTargetPosition->GetPosition2D() - cmpPosition->GetPosition2D()).Length();
-	fixed time = std::min(distance / GetSpeed(), fixed::FromInt(5)); // don't try from too far away or this is just dumb.
+
+	if (GetBaseSpeed() < fixed::Epsilon())
+		return;
+
+	fixed time = std::min(distance / GetBaseSpeed(), fixed::FromInt(5)); // don't try from too far away or this is just dumb.
 
 	CFixedVector2D travelVector = (cmpTargetPosition->GetPosition2D() - cmpTargetPosition->GetPreviousPosition2D()).Multiply(time) * 2;
 	x += travelVector.X;
