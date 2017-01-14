@@ -936,7 +936,7 @@ void CCmpUnitMotion::Move(fixed dt)
 	//////////////////////////////////////////////////////////////////////////
 
 	// we've had to stop at the end of the turn.
-	if (m_StartedMoving)
+	if (m_StartedMoving && (!willBeObstructed || wasObstructed))
 	{
 		StopMoving();
 
