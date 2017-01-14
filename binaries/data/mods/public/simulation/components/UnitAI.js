@@ -1658,15 +1658,8 @@ UnitAI.prototype.UnitFsmSpec = {
 						return true;
 					}
 					let offset = group.offsets[this.entity];
-					warn(uneval(offset) + " oofset");
-					if (!offset || !this.MoveToPointRange(group.rallyPoint.x + offset.x, group.rallyPoint.z + offset.y, 0, false))
-					{
-						// couldn't move there for some reason
-						// TODO: check our destination
-						cmpGroupWalkManager.ResignFromGroup(this.order.data.groupID, this.entity);
-						this.FinishOrder();
-						return true;
-					}
+					this.MoveToPointRange(group.rallyPoint.x + offset.x, group.rallyPoint.z + offset.y, 0, true);
+
 					// TODO: for the first "grouping" order it'd be nice to skip this
 					let maxSpeed = cmpGroupWalkManager.GetMaxSpeed(this.order.data.groupID);
 					let cmpUnitMotion = Engine.QueryInterface(this.entity, IID_UnitMotion);
@@ -1694,8 +1687,7 @@ UnitAI.prototype.UnitFsmSpec = {
 					}
 					if (group.state == "arrived")
 					{
-						//cmpGroupWalkManager.ResignFromGroup(this.order.data.groupID, this.entity);
-						//this.FinishOrder();
+						this.SetNextState("IDLE");
 						return;
 					}
 					if (group.step < this.step)
@@ -1707,7 +1699,7 @@ UnitAI.prototype.UnitFsmSpec = {
 					if (this.ready)
 						return;
 					let cmpObstructionManager = Engine.QueryInterface(SYSTEM_ENTITY, IID_ObstructionManager);
-					let range = group.step !== 0 ? 14 : group.range;
+					let range = group.step !== 0 ? 10 : group.range;
 					let offset = group.offsets[this.entity];
 					if (cmpObstructionManager.IsInPointRange(this.entity, group.rallyPoint.x + offset.x, group.rallyPoint.z + offset.y, 0, range))
 					{
@@ -1715,6 +1707,18 @@ UnitAI.prototype.UnitFsmSpec = {
 						cmpGroupWalkManager.SetReady(this.order.data.groupID, this.entity);
 					}
 				},
+			},
+			"IDLE" : {
+				"enter": function() {
+					this.group = this.order.data.groupID;
+				},
+				"leave": function() {
+					let cmpGroupWalkManager = Engine.QueryInterface(SYSTEM_ENTITY, IID_GroupWalkManager);
+					let group = cmpGroupWalkManager.GetGroup(this.group);
+					if (group)
+						cmpGroupWalkManager.ResignFromGroup(this.group, this.entity);
+					this.group = undefined;
+				}
 			}
 		},
 

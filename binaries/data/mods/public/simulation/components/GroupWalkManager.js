@@ -97,7 +97,8 @@ GroupWalkManager.prototype.SetReady = function(ID, ent)
 		let p1 = new Vector2D(cmpPosition.GetPosition2D().x, cmpPosition.GetPosition2D().y);
 		let p2 = new Vector2D(group.rallyPoint.x, group.rallyPoint.z);
 		p1.sub(p2).mult(-1);
-		group.offsets = this.ComputeOffsetsForWaypoint(0.0, p1, group.entities);
+
+		group.offsets = this.ComputeOffsetsForWaypoint(cmpPosition.GetRotation().y, p1, group.entities);
 
 		group.state = "walking";
 	}
@@ -116,7 +117,9 @@ GroupWalkManager.prototype.SetReady = function(ID, ent)
 		// compute offsets.
 		let p2 = new Vector2D(group.rallyPoint.x, group.rallyPoint.z);
 		p1.sub(p2).mult(-1);
-		group.offsets = this.ComputeOffsetsForWaypoint(0.0, p1, group.entities);
+
+		let angle = Math.atan2(p1.x, p1.y);
+		group.offsets = this.ComputeOffsetsForWaypoint(angle, p1, group.entities);
 
 		group.state = "walking";
 	}
@@ -128,16 +131,37 @@ GroupWalkManager.prototype.ComputeOffsetsForWaypoint = function(angle, center, e
 	// TODO: support more stuff.
 	let ret = {};
 
-	let xW = Math.max(6, Math.min(2, entities.length/4));
+	let xW = Math.min(6, Math.max(2, entities.length/4));
 	let y = -1;
+	let largeEntities = [];
 	for (let i = 0; i < entities.length; i++)
 	{
 		let ent = entities[i];
+		let cmpUnitMotion = Engine.QueryInterface(ent, IID_UnitMotion);
+		if (cmpUnitMotion.GetUnitClearance() > 1)
+		{
+			largeEntities.push(ent);
+			continue;
+		}
 		let x = i % xW;
 		if (x == 0)
 			y++;
 		let offsetX = 3 * (x-(xW+1)/2.0);
-		let offsetY = 4 * y;
+		let offsetY = -4 * y;
+		let vector = new Vector2D(offsetX, offsetY);
+		ret[ent] = vector.rotate(angle);
+	}
+	let baseY = y * -4;
+	y = 0;
+	xW = Math.min(3, Math.max(1, largeEntities.length/2));
+	for (let i = 0; i < largeEntities.length; i++)
+	{
+		let ent = largeEntities[i];
+		let x = i % xW;
+		if (x == 0)
+			y++;
+		let offsetX = 9 * (x-xW/2.0);
+		let offsetY = baseY -10 * y;
 		let vector = new Vector2D(offsetX, offsetY);
 		ret[ent] = vector.rotate(angle);
 	}

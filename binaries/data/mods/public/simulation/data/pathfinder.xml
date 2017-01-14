@@ -17,7 +17,7 @@
       <Obstructions>pathfinding</Obstructions>
       <MaxWaterDepth>2</MaxWaterDepth>
       <MaxTerrainSlope>1.0</MaxTerrainSlope>
-      <Clearance>4.0</Clearance>
+      <Clearance>3.0</Clearance>
     </large>
     <ship>
       <Obstructions>pathfinding</Obstructions>
