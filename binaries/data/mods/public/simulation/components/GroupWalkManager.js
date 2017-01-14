@@ -37,6 +37,7 @@ GroupWalkManager.prototype.CreateGroup = function(formableEntsID, x, z, range, f
 		"readyForNextStep" : [],
 		"step":0,
 		"waypoints": [],
+		"offsets": {}
 	};
 	this.groups.set(this.nextGroupID++, group);
 
@@ -91,7 +92,13 @@ GroupWalkManager.prototype.SetReady = function(ID, ent)
 			group.rallyPoint = { "x":group.waypoints[group.step-1].x, "z":group.waypoints[group.step-1].y };
 			group.step--;
 		}
-		// TODO: compute proper offsets from Formation.JS
+		
+		// compute offsets.
+		let p1 = new Vector2D(cmpPosition.GetPosition2D().x, cmpPosition.GetPosition2D().y);
+		let p2 = new Vector2D(group.rallyPoint.x, group.rallyPoint.z);
+		p1.sub(p2).mult(-1);
+		group.offsets = this.ComputeOffsetsForWaypoint(0.0, p1, group.entities);
+
 		group.state = "walking";
 	}
 	else if (group.state == "walking")
@@ -101,12 +108,42 @@ GroupWalkManager.prototype.SetReady = function(ID, ent)
 			group.state = "arrived";
 			return;
 		}
+		let p1 = new Vector2D(group.rallyPoint.x, group.rallyPoint.z);
+
 		group.rallyPoint = { "x":group.waypoints[group.step-1].x, "z":group.waypoints[group.step-1].y };
 		group.step--;
-		// TODO: compute proper offsets from Formation.JS
+
+		// compute offsets.
+		let p2 = new Vector2D(group.rallyPoint.x, group.rallyPoint.z);
+		p1.sub(p2).mult(-1);
+		group.offsets = this.ComputeOffsetsForWaypoint(0.0, p1, group.entities);
+
 		group.state = "walking";
 	}
 }
+
+GroupWalkManager.prototype.ComputeOffsetsForWaypoint = function(angle, center, entities)
+{
+	// for now we'll do a simple rectangular formations
+	// TODO: support more stuff.
+	let ret = {};
+
+	let xW = Math.max(6, Math.min(2, entities.length/4));
+	let y = -1;
+	for (let i = 0; i < entities.length; i++)
+	{
+		let ent = entities[i];
+		let x = i % xW;
+		if (x == 0)
+			y++;
+		let offsetX = 3 * (x-(xW+1)/2.0);
+		let offsetY = 4 * y;
+		let vector = new Vector2D(offsetX, offsetY);
+		ret[ent] = vector.rotate(angle);
+	}
+	return ret;
+}
+
 GroupWalkManager.prototype.ResignFromGroup = function(ID, ent)
 {
 	let group = this.groups.get(ID);

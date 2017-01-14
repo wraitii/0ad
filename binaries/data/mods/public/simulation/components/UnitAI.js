@@ -1657,7 +1657,9 @@ UnitAI.prototype.UnitFsmSpec = {
 						this.FinishOrder();
 						return true;
 					}
-					if (!this.MoveToPointRange(group.rallyPoint.x, group.rallyPoint.z, 0, false))
+					let offset = group.offsets[this.entity];
+					warn(uneval(offset) + " oofset");
+					if (!offset || !this.MoveToPointRange(group.rallyPoint.x + offset.x, group.rallyPoint.z + offset.y, 0, false))
 					{
 						// couldn't move there for some reason
 						// TODO: check our destination
@@ -1692,8 +1694,8 @@ UnitAI.prototype.UnitFsmSpec = {
 					}
 					if (group.state == "arrived")
 					{
-						cmpGroupWalkManager.ResignFromGroup(this.order.data.groupID, this.entity);
-						this.FinishOrder();
+						//cmpGroupWalkManager.ResignFromGroup(this.order.data.groupID, this.entity);
+						//this.FinishOrder();
 						return;
 					}
 					if (group.step < this.step)
@@ -1706,7 +1708,8 @@ UnitAI.prototype.UnitFsmSpec = {
 						return;
 					let cmpObstructionManager = Engine.QueryInterface(SYSTEM_ENTITY, IID_ObstructionManager);
 					let range = group.step !== 0 ? 14 : group.range;
-					if (cmpObstructionManager.IsInPointRange(this.entity, group.rallyPoint.x, group.rallyPoint.z, 0, range))
+					let offset = group.offsets[this.entity];
+					if (cmpObstructionManager.IsInPointRange(this.entity, group.rallyPoint.x + offset.x, group.rallyPoint.z + offset.y, 0, range))
 					{
 						this.ready = true;
 						cmpGroupWalkManager.SetReady(this.order.data.groupID, this.entity);
