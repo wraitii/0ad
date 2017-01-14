@@ -2912,7 +2912,7 @@ UnitAI.prototype.UnitFsmSpec = {
 				},
 
 				"leave": function() {
-					this.stopTimer();
+					this.StopTimer();
 				},
 
 				"Timer": function() {
