@@ -281,7 +281,7 @@ UnitAI.prototype.UnitFsmSpec = {
 			return;
 		}
 		
-		this.SetNextState("INDIVIDUAL.GROUPWALKING.WAITING");
+		this.SetNextStateAlwaysEntering("INDIVIDUAL.GROUPWALKING");
 	},
 
 	"Order.Walk": function(msg) {
@@ -1619,6 +1619,19 @@ UnitAI.prototype.UnitFsmSpec = {
 		},
 
 		"GROUPWALKING": {
+			"enter": function() {
+				this.group = this.order.data.groupID;
+				this.SetNextState("WAITING");
+			},
+
+			"leave": function() {
+				let cmpGroupWalkManager = Engine.QueryInterface(SYSTEM_ENTITY, IID_GroupWalkManager);
+				let group = cmpGroupWalkManager.GetGroup(this.group);
+				if (group)
+					cmpGroupWalkManager.ResignFromGroup(this.group, this.entity);
+				this.group = undefined;
+			},
+
 			"WAITING" : {
 				"enter": function() {
 					let cmpGroupWalkManager = Engine.QueryInterface(SYSTEM_ENTITY, IID_GroupWalkManager);
@@ -1707,19 +1720,34 @@ UnitAI.prototype.UnitFsmSpec = {
 						cmpGroupWalkManager.SetReady(this.order.data.groupID, this.entity);
 					}
 				},
-			},
-			"IDLE" : {
-				"enter": function() {
-					this.group = this.order.data.groupID;
-				},
-				"leave": function() {
+
+				"MoveCompleted": function(msg) {
 					let cmpGroupWalkManager = Engine.QueryInterface(SYSTEM_ENTITY, IID_GroupWalkManager);
-					let group = cmpGroupWalkManager.GetGroup(this.group);
-					if (group)
-						cmpGroupWalkManager.ResignFromGroup(this.group, this.entity);
-					this.group = undefined;
+					let group = cmpGroupWalkManager.GetGroup(this.order.data.groupID);
+					if (!group)
+					{
+						this.FinishOrder();
+						return;
+					}
+
+					if (!msg.error)
+						return;
+
+					// UnitMotion has told us we were unlikely to reach our destination.
+					// if we're way out of position we should exit the group
+					let cmpObstructionManager = Engine.QueryInterface(SYSTEM_ENTITY, IID_ObstructionManager);
+					let offset = group.offsets[this.entity];
+					if (!cmpObstructionManager.IsInPointRange(this.entity, group.rallyPoint.x + offset.x, group.rallyPoint.z + offset.y, 0, 60))
+					{
+						this.FinishOrder();
+						return;
+					}
+					// tell our group we're ready, it's probably just that our waypoint is impassable right now
+					this.ready = true;
+					cmpGroupWalkManager.SetReady(this.order.data.groupID, this.entity);
 				}
-			}
+			},
+			"IDLE" : { }
 		},
 
 		"WALKING": {

@@ -79,12 +79,22 @@ GroupWalkManager.prototype.SetReady = function(ID, ent)
 	if (group.state == "waiting")
 	{
 		group.rallyPoint = { "x":0, "z": 0 };
-		// TODO: it might be better to get an averaged position, but we need to make sure to arrive somewhere units can reach.
-		let cmpPosition = Engine.QueryInterface(group.entities[0], IID_Position);
-		group.rallyPoint.x = cmpPosition.GetPosition2D().x;
-		group.rallyPoint.z = cmpPosition.GetPosition2D().y;
+		// TODO: find the best position.
+		let x = 0;
+		let z = 0;
+		for (let ent of group.entities)
+		{
+			let cmpPosition = Engine.QueryInterface(ent, IID_Position);
+			x += cmpPosition.GetPosition2D().x;
+			z += cmpPosition.GetPosition2D().y;
+		}
+		group.rallyPoint.x = x / group.entities.length;
+		group.rallyPoint.z = z / group.entities.length;
+
+		let p1 = new Vector2D(group.rallyPoint.x, group.rallyPoint.z);
+
 		let cmpPathfinder = Engine.QueryInterface(SYSTEM_ENTITY, IID_Pathfinder);
-		let path = cmpPathfinder.ComputePath(group.rallyPoint.x,group.rallyPoint.z, group.x, group.z, "large");
+		let path = cmpPathfinder.ComputePath(group.rallyPoint.x, group.rallyPoint.z, group.x, group.z, "large");
 		group.waypoints = path;
 		group.step = group.waypoints.length;
 		if (group.waypoints.length > 2)
@@ -94,11 +104,11 @@ GroupWalkManager.prototype.SetReady = function(ID, ent)
 		}
 		
 		// compute offsets.
-		let p1 = new Vector2D(cmpPosition.GetPosition2D().x, cmpPosition.GetPosition2D().y);
 		let p2 = new Vector2D(group.rallyPoint.x, group.rallyPoint.z);
 		p1.sub(p2).mult(-1);
 
-		group.offsets = this.ComputeOffsetsForWaypoint(cmpPosition.GetRotation().y, p1, group.entities);
+		let angle = Math.atan2(p1.x, p1.y);
+		group.offsets = this.ComputeOffsetsForWaypoint(angle, p1, group.entities);
 
 		group.state = "walking";
 	}
@@ -133,6 +143,7 @@ GroupWalkManager.prototype.ComputeOffsetsForWaypoint = function(angle, center, e
 
 	let xW = Math.min(6, Math.max(2, entities.length/4));
 	let y = -1;
+	let maxYOffset = 0;
 	let largeEntities = [];
 	for (let i = 0; i < entities.length; i++)
 	{
@@ -146,8 +157,9 @@ GroupWalkManager.prototype.ComputeOffsetsForWaypoint = function(angle, center, e
 		let x = i % xW;
 		if (x == 0)
 			y++;
-		let offsetX = 3 * (x-(xW+1)/2.0);
+		let offsetX = 3 * (x-xW/2.0);
 		let offsetY = -4 * y;
+		maxYOffset = -offsetY;
 		let vector = new Vector2D(offsetX, offsetY);
 		ret[ent] = vector.rotate(angle);
 	}
@@ -162,9 +174,14 @@ GroupWalkManager.prototype.ComputeOffsetsForWaypoint = function(angle, center, e
 			y++;
 		let offsetX = 9 * (x-xW/2.0);
 		let offsetY = baseY -10 * y;
+		maxYOffset = -offsetY;
 		let vector = new Vector2D(offsetX, offsetY);
 		ret[ent] = vector.rotate(angle);
 	}
+	
+	for (let ent in ret)
+		ret[ent].y += maxYOffset / 2.0;
+
 	return ret;
 }
 

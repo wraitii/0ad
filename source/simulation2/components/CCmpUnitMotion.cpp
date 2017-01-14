@@ -614,7 +614,7 @@ private:
 	/**
 	 * Returns an appropriate obstruction filter for use with path requests.
 	 */
-	ControlGroupMovementObstructionFilter GetObstructionFilter() const;
+	ControlGroupMovementObstructionFilter GetObstructionFilter(bool evenMovingUnits = true) const;
 
 	/**
 	 * Dumps current path and request a new one asynchronously.
@@ -897,7 +897,7 @@ void CCmpUnitMotion::Move(fixed dt)
 
 	// Anticipate here future pathing needs;
 	bool willBeObstructed = false;
-	if (!wasObstructed && HasValidPath() && !cmpPathfinder->CheckMovement(GetObstructionFilter(), pos.X, pos.Y, m_Path.m_Waypoints.back().x, m_Path.m_Waypoints.back().z, m_Clearance, m_PassClass))
+	if (!wasObstructed && HasValidPath() && !cmpPathfinder->CheckMovement(GetObstructionFilter(false), pos.X, pos.Y, m_Path.m_Waypoints.back().x, m_Path.m_Waypoints.back().z, m_Clearance, m_PassClass))
 		willBeObstructed = true;
 
 	// Update the Position component after our movement (if we actually moved anywhere)
@@ -1004,7 +1004,7 @@ void CCmpUnitMotion::Move(fixed dt)
 		{
 			// Check wether our next waypoint is obstructed in which case skip it.
 			// TODO: would be good to have a faster function here.
-			if (!cmpPathfinder->CheckMovement(GetObstructionFilter(), m_Path.m_Waypoints.back().x, m_Path.m_Waypoints.back().z, m_Path.m_Waypoints.back().x, m_Path.m_Waypoints.back().z, m_Clearance, m_PassClass))
+			if (!cmpPathfinder->CheckMovement(GetObstructionFilter(false), m_Path.m_Waypoints.back().x, m_Path.m_Waypoints.back().z, m_Path.m_Waypoints.back().x, m_Path.m_Waypoints.back().z, m_Clearance, m_PassClass))
 				m_Path.m_Waypoints.pop_back();
 			if (!m_Path.m_Waypoints.empty())
 			{
@@ -1019,7 +1019,7 @@ void CCmpUnitMotion::Move(fixed dt)
 			m_DumpPathOnResult = true;
 		}
 
-		RequestShortPath(pos, goal, true);
+		RequestShortPath(pos, goal, false);
 		return;
 	}
 
@@ -1143,10 +1143,9 @@ void CCmpUnitMotion::FaceTowardsEntity(entity_id_t ent)
 
 }
 
-ControlGroupMovementObstructionFilter CCmpUnitMotion::GetObstructionFilter() const
+ControlGroupMovementObstructionFilter CCmpUnitMotion::GetObstructionFilter(bool evenMovingUnits) const
 {
-	// TODO: if we sometimes want to consider moving units, change here.
-	return ControlGroupMovementObstructionFilter(true, GetGroup());
+	return ControlGroupMovementObstructionFilter(evenMovingUnits, GetGroup());
 }
 
 // TODO: this can be improved, it's a little limited
