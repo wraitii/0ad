@@ -481,6 +481,8 @@ public:
 	{
 		m_StartedMoving = false;
 
+		SetActualSpeed(fixed::Zero());
+
 		CmpPtr<ICmpObstruction> cmpObstruction(GetEntityHandle());
 		if (cmpObstruction)
 			cmpObstruction->SetMovingFlag(false);
