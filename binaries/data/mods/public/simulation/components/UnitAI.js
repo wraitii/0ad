@@ -1700,8 +1700,7 @@ UnitAI.prototype.UnitFsmSpec = {
 					}
 					if (group.state == "arrived")
 					{
-						if (!this.FinishOrder())
-							this.SetNextState("IDLE");
+						this.FinishOrder()
 						return;
 					}
 					if (group.step < this.step)
@@ -1731,7 +1730,7 @@ UnitAI.prototype.UnitFsmSpec = {
 						return;
 					}
 
-					if (!msg.error)
+					if (!msg.data.error)
 						return;
 
 					// UnitMotion has told us we were unlikely to reach our destination.
@@ -1747,8 +1746,7 @@ UnitAI.prototype.UnitFsmSpec = {
 					this.ready = true;
 					cmpGroupWalkManager.SetReady(this.order.data.groupID, this.entity);
 				}
-			},
-			"IDLE" : { }
+			}
 		},
 
 		"WALKING": {
