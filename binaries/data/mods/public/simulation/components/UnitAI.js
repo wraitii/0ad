@@ -396,16 +396,8 @@ UnitAI.prototype.UnitFsmSpec = {
 
 		// TODO: what if the units are on a cliff ? the ship will go below the cliff
 		// and the units won't be able to garrison. Should go to the nearest (accessible) shore
-		if (needToMove && this.MoveToTarget(this.order.data.target))
-		{
-			this.SetNextState("INDIVIDUAL.PICKUP.APPROACHING");
-		}
-		else
-		{
-			// We can't reach the target
-			this.StopMoving();
-			this.SetNextState("INDIVIDUAL.PICKUP.LOADING");
-		}
+		this.MoveToTarget(this.order.data.target, true);
+		this.SetNextState("INDIVIDUAL.PICKUP");
 	},
 
 	"Order.Guard": function(msg) {
@@ -754,16 +746,8 @@ UnitAI.prototype.UnitFsmSpec = {
 			return;
 		}
 
-		if (this.MoveToGarrisonRange(this.order.data.target))
-		{
-			this.SetNextState("INDIVIDUAL.GARRISON.APPROACHING");
-		}
-		else
-		{
-			// We do a range check before actually garrisoning
-			this.StopMoving();
-			this.SetNextState("INDIVIDUAL.GARRISON.GARRISONED");
-		}
+		this.MoveToGarrisonRange(this.order.data.target, true)
+		this.SetNextState("INDIVIDUAL.GARRISON.APPROACHING");
 	},
 
 	"Order.Autogarrison": function(msg) {
@@ -3171,15 +3155,9 @@ UnitAI.prototype.UnitFsmSpec = {
 						}
 					}
 					if (this.order.data.target && this.CheckGarrisonRange(this.order.data.target))
-					{
-						this.StopMoving();
 						this.SetNextState("GARRISONED");
-					}
 					else if (this.alertGarrisoningTarget && this.CheckGarrisonRange(this.alertGarrisoningTarget))
-					{
-						this.StopMoving();
 						this.SetNextState("GARRISONED");
-					}
 				},
 
 				"MoveCompleted": "Timer",
@@ -3273,7 +3251,7 @@ UnitAI.prototype.UnitFsmSpec = {
 								}
 
 							}
-							if (this.MoveToTarget(target))
+							if (this.MoveToTarget(target, true))
 							{
 								this.SetNextState("APPROACHING");
 								return false;
@@ -3359,46 +3337,19 @@ UnitAI.prototype.UnitFsmSpec = {
 		},
 
 		"PICKUP": {
-			"APPROACHING": {
-				"enter": function() {
-					this.StartTimer(1000, 1000);
-				},
-
-				"leave": function() {
-					this.StopTimer();
-				},
-
-				"Timer": function() {
-					if (this.CheckTargetRange(this.order.data.target, IID_GarrisonHolder))
-					{
-						this.StopMoving();
-						this.SetNextState("LOADING");
-					}
-				},
-
-				"MoveCompleted": "Timer",
-
-				"PickupCanceled": function() {
-					this.StopMoving();
+			"enter": function() {
+				var cmpGarrisonHolder = Engine.QueryInterface(this.entity, IID_GarrisonHolder);
+				if (!cmpGarrisonHolder || cmpGarrisonHolder.IsFull())
+				{
 					this.FinishOrder();
-				},
+					return true;
+				}
+				return false;
 			},
 
-			"LOADING": {
-				"enter": function() {
-					this.SelectAnimation("idle");
-					var cmpGarrisonHolder = Engine.QueryInterface(this.entity, IID_GarrisonHolder);
-					if (!cmpGarrisonHolder || cmpGarrisonHolder.IsFull())
-					{
-						this.FinishOrder();
-						return true;
-					}
-					return false;
-				},
-
-				"PickupCanceled": function() {
-					this.FinishOrder();
-				},
+			"PickupCanceled": function() {
+				this.StopMoving();
+				this.FinishOrder();
 			},
 		},
 	},
@@ -4594,6 +4545,7 @@ UnitAI.prototype.MoveToTarget = function(target, evenUnreachable = false)
 
 	var cmpUnitMotion = Engine.QueryInterface(this.entity, IID_UnitMotion);
 	cmpUnitMotion.SetAbortIfStuck(5);
+	warn("here " + evenUnreachable);
 	return cmpUnitMotion.SetNewDestinationAsEntity(target, 0, evenUnreachable);
 };
 
@@ -4685,7 +4637,7 @@ UnitAI.prototype.MoveToTargetRangeExplicit = function(target, range, evenUnreach
 	return cmpUnitMotion.SetNewDestinationAsEntity(target, range, evenUnreachable);
 };
 
-UnitAI.prototype.MoveToGarrisonRange = function(target)
+UnitAI.prototype.MoveToGarrisonRange = function(target, evenUnreachable = false)
 {
 	if (!this.CheckTargetVisible(target))
 		return false;
@@ -4697,7 +4649,7 @@ UnitAI.prototype.MoveToGarrisonRange = function(target)
 
 	var cmpUnitMotion = Engine.QueryInterface(this.entity, IID_UnitMotion);
 	cmpUnitMotion.SetAbortIfStuck(5);
-	return cmpUnitMotion.SetNewDestinationAsEntity(target, (range.min + range.max)/2.0, false); // presumably we always want to know if we can't garrison here
+	return cmpUnitMotion.SetNewDestinationAsEntity(target, (range.min + range.max)/2.0, evenUnreachable);
 };
 
 UnitAI.prototype.CheckPointRangeExplicit = function(x, z, min, max)
