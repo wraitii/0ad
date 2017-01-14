@@ -2889,19 +2889,29 @@ UnitAI.prototype.UnitFsmSpec = {
 			},
 
 			"APPROACHINGMARKET": {
-				"enter": function () {
+				"enter": function() {
+					this.StartTimer(1000, 1000);
 				},
 
-				"MoveCompleted": function() {
-					this.StopMoving();
-					if (this.waypoints && this.waypoints.length)
-					{
-						if (!this.MoveToMarket(this.order.data.target))
-							this.StopTrading();
-					}
-					else
-						this.PerformTradeAndMoveToNextMarket(this.order.data.target);
+				"leave": function() {
+					this.stopTimer();
 				},
+
+				"Timer": function() {
+					if (this.CheckTargetRange(this.order.data.target, IID_Trader))
+					{
+						this.StopMoving();
+						if (this.waypoints && this.waypoints.length)
+						{
+							if (!this.MoveToMarket(this.order.data.target))
+								this.StopTrading();
+						}
+						else
+							this.PerformTradeAndMoveToNextMarket(this.order.data.target);
+					}
+				},
+
+				"MoveCompleted": "Timer",
 			},
 
 			"TradingCanceled": function(msg) {
@@ -3351,12 +3361,22 @@ UnitAI.prototype.UnitFsmSpec = {
 		"PICKUP": {
 			"APPROACHING": {
 				"enter": function() {
+					this.StartTimer(1000, 1000);
 				},
 
-				"MoveCompleted": function() {
-					this.StopMoving();
-					this.SetNextState("LOADING");
+				"leave": function() {
+					this.StopTimer();
 				},
+
+				"Timer": function() {
+					if (this.CheckTargetRange(this.order.data.target, IID_GarrisonHolder))
+					{
+						this.StopMoving();
+						this.SetNextState("LOADING");
+					}
+				},
+
+				"MoveCompleted": "Timer",
 
 				"PickupCanceled": function() {
 					this.StopMoving();
