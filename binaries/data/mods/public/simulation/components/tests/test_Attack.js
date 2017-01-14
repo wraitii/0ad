@@ -4,7 +4,6 @@ Engine.LoadComponentScript("interfaces/Auras.js");
 Engine.LoadComponentScript("interfaces/AuraManager.js");
 Engine.LoadComponentScript("interfaces/Capturable.js");
 Engine.LoadComponentScript("interfaces/TechnologyManager.js");
-Engine.LoadComponentScript("interfaces/Formation.js");
 Engine.LoadComponentScript("interfaces/Attack.js");
 Engine.LoadComponentScript("Attack.js");
 

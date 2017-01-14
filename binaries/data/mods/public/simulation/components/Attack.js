@@ -210,10 +210,6 @@ Attack.prototype.GetRestrictedClasses = function(type)
 
 Attack.prototype.CanAttack = function(target)
 {
-	let cmpFormation = Engine.QueryInterface(target, IID_Formation);
-	if (cmpFormation)
-		return true;
-
 	let cmpThisPosition = Engine.QueryInterface(this.entity, IID_Position);
 	let cmpTargetPosition = Engine.QueryInterface(target, IID_Position);
 	if (!cmpThisPosition || !cmpTargetPosition || !cmpThisPosition.IsInWorld() || !cmpTargetPosition.IsInWorld())
@@ -293,14 +289,6 @@ Attack.prototype.GetFullAttackRange = function()
 
 Attack.prototype.GetBestAttackAgainst = function(target, allowCapture)
 {
-	let cmpFormation = Engine.QueryInterface(target, IID_Formation);
-	if (cmpFormation)
-	{
-		// TODO: Formation against formation needs review
-		let types = this.GetAttackTypes();
-		return ["Ranged", "Melee", "Capture"].find(attack => types.indexOf(attack) != -1);
-	}
-
 	let cmpIdentity = Engine.QueryInterface(target, IID_Identity);
 	if (!cmpIdentity)
 		return undefined;

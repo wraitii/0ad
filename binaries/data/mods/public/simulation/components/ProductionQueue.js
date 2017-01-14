@@ -640,7 +640,7 @@ ProductionQueue.prototype.SpawnUnits = function(templateName, count, metadata)
 
 	if (spawnedEnts.length > 0 && !cmpAutoGarrison)
 	{
-		// If a rally point is set, walk towards it (in formation) using a suitable command based on where the
+		// If a rally point is set, walk towards it using a suitable command based on where the
 		// rally point is placed.
 		if (cmpRallyPoint)
 		{

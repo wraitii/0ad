@@ -138,10 +138,6 @@ RallyPoint.prototype.OnOwnershipChanged = function(msg)
  */
 RallyPoint.prototype.TargetIsAlive = function(ent)
 {
-	var cmpFormation = Engine.QueryInterface(ent, IID_Formation);
-	if (cmpFormation)
-		return true;
-
 	var cmpHealth = QueryMiragedInterface(ent, IID_Health);
 	return cmpHealth && cmpHealth.GetHitpoints() != 0;
 };
