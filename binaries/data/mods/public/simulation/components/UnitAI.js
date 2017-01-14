@@ -1700,7 +1700,8 @@ UnitAI.prototype.UnitFsmSpec = {
 					}
 					if (group.state == "arrived")
 					{
-						this.SetNextState("IDLE");
+						if (!this.FinishOrder())
+							this.SetNextState("IDLE");
 						return;
 					}
 					if (group.step < this.step)
