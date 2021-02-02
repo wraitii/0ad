@@ -3,7 +3,7 @@
 <Scenario version="7">
 	<Environment>
 		<SkySet>sunrise</SkySet>
-		<SunColor r="0.752941" g="0.752941" b="0.752941"/>
+		<SunColor r="0.74902" g="0.74902" b="0.74902"/>
 		<SunElevation angle="1.48796"/>
 		<SunRotation angle="-1.60148"/>
 		<AmbientColor r="0.501961" g="0.501961" b="0.501961"/>
@@ -15,8 +15,8 @@
 		<Water>
 			<WaterBody>
 				<Type>clap</Type>
-				<Color r="0.133333" g="0.215686" b="0.152941"/>
-				<Tint r="0" g="0.501961" b="0.25098"/>
+				<Color r="0.129412" g="0.211765" b="0.14902"/>
+				<Tint r="0" g="0.501961" b="0.247059"/>
 				<Height>19.9</Height>
 				<Waviness>1</Waviness>
 				<Murkiness>0.931641</Murkiness>
@@ -32,9 +32,9 @@
 		</Postproc>
 	</Environment>
 	<Camera>
-		<Position x="849.965" y="91.0173" z="939.899"/>
-		<Rotation angle="-0.144318"/>
-		<Declination angle="0.6117"/>
+		<Position x="687.749" y="100.603" z="779.027"/>
+		<Rotation angle="-0.991114"/>
+		<Declination angle="0.610865"/>
 	</Camera>
 	<ScriptSettings><![CDATA[
 {
@@ -45,12 +45,17 @@
   ],
   "Name": "Obedska Bog (4)",
   "PlayerData": [
+    null,
     {},
     {},
     {},
     {}
   ],
   "Preview": "Obedska_Bog_(4).png",
+  "TriggerScripts": [
+    "skirmishes/obedska.js",
+    "scripts/TriggerHelper.js"
+  ],
   "VictoryConditions": [
     "conquest"
   ]
@@ -7280,7 +7285,7 @@
 		<Entity uid="8034">
 			<Template>gaia/tree/bush_temperate</Template>
 			<Player>0</Player>
-			<Position x="669.05921" z="910.08387"/>
+			<Position x="669.22956" z="910.1778"/>
 			<Orientation y="2.35621"/>
 			<Actor seed="62906"/>
 		</Entity>
@@ -9229,21 +9234,21 @@
 		</Entity>
 		<Entity uid="8361">
 			<Template>gaia/fruit/berry_01</Template>
-			<Player>0</Player>
+			<Player>1</Player>
 			<Position x="602.62317" z="846.13697"/>
 			<Orientation y="2.35621"/>
 			<Actor seed="27254"/>
 		</Entity>
 		<Entity uid="8362">
 			<Template>gaia/fruit/berry_01</Template>
-			<Player>0</Player>
+			<Player>1</Player>
 			<Position x="598.07789" z="845.17432"/>
 			<Orientation y="2.35621"/>
 			<Actor seed="1238"/>
 		</Entity>
 		<Entity uid="8363">
 			<Template>gaia/fruit/berry_01</Template>
-			<Player>0</Player>
+			<Player>1</Player>
 			<Position x="592.66932" z="849.96253"/>
 			<Orientation y="2.35621"/>
 			<Actor seed="16962"/>
@@ -111697,6 +111702,186 @@
 			<Position x="216.24003" z="840.51941"/>
 			<Orientation y="2.35621"/>
 			<Actor seed="64308"/>
+		</Entity>
+		<Entity uid="24258">
+			<Template>structures/brit/house</Template>
+			<Player>1</Player>
+			<Position x="563.2588" z="819.581"/>
+			<Orientation y="1.52463"/>
+			<Actor seed="61070"/>
+		</Entity>
+		<Entity uid="24259">
+			<Template>structures/brit/house</Template>
+			<Player>1</Player>
+			<Position x="567.13538" z="807.84852"/>
+			<Orientation y="0.9381"/>
+			<Actor seed="54511"/>
+		</Entity>
+		<Entity uid="24260">
+			<Template>structures/brit/storehouse</Template>
+			<Player>1</Player>
+			<Position x="583.86182" z="846.41816"/>
+			<Orientation y="2.41047"/>
+			<Actor seed="50480"/>
+		</Entity>
+		<Entity uid="24261">
+			<Template>actor|props/special/eyecandy/campfire.xml</Template>
+			<Position x="574.99988" z="817.74555"/>
+			<Orientation y="2.35621"/>
+			<Actor seed="54604"/>
+		</Entity>
+		<Entity uid="24262">
+			<Template>actor|structures/iberians/fishing_ship.xml</Template>
+			<Position x="554.80188" z="838.4184"/>
+			<Orientation y="0.75826"/>
+			<Actor seed="28046"/>
+		</Entity>
+		<Entity uid="24267">
+			<Template>structures/brit/civil_centre</Template>
+			<Player>1</Player>
+			<Position x="659.70228" z="903.19477"/>
+			<Orientation y="2.35621"/>
+			<Actor seed="19880"/>
+		</Entity>
+		<Entity uid="24268">
+			<Template>units/brit/infantry_slinger_b</Template>
+			<Player>1</Player>
+			<Position x="570.15046" z="815.6399"/>
+			<Orientation y="1.17377"/>
+			<Actor seed="12430"/>
+		</Entity>
+		<Entity uid="24269">
+			<Template>units/brit/infantry_slinger_b</Template>
+			<Player>1</Player>
+			<Position x="572.98938" z="822.42127"/>
+			<Orientation y="2.35479"/>
+			<Actor seed="13510"/>
+		</Entity>
+		<Entity uid="24270">
+			<Template>units/brit/infantry_spearman_b</Template>
+			<Player>1</Player>
+			<Position x="582.71338" z="840.86988"/>
+			<Orientation y="2.35621"/>
+			<Actor seed="30701"/>
+		</Entity>
+		<Entity uid="24271">
+			<Template>units/brit/infantry_spearman_b</Template>
+			<Player>1</Player>
+			<Position x="584.6626" z="843.07978"/>
+			<Orientation y="0.5821"/>
+			<Actor seed="42712"/>
+		</Entity>
+		<Entity uid="24272">
+			<Template>units/brit/support_trader</Template>
+			<Player>1</Player>
+			<Position x="523.93519" z="874.83582"/>
+			<Orientation y="2.5499"/>
+			<Actor seed="38988"/>
+		</Entity>
+		<Entity uid="24273">
+			<Template>units/brit/war_dog</Template>
+			<Player>1</Player>
+			<Position x="572.86634" z="813.97303"/>
+			<Orientation y="0.49061"/>
+			<Actor seed="65002"/>
+		</Entity>
+		<Entity uid="24274">
+			<Template>units/brit/support_female_citizen</Template>
+			<Player>1</Player>
+			<Position x="570.31885" z="821.39557"/>
+			<Orientation y="2.35621"/>
+			<Actor seed="14299"/>
+		</Entity>
+		<Entity uid="24275">
+			<Template>units/brit/support_female_citizen</Template>
+			<Player>1</Player>
+			<Position x="579.71552" z="820.09632"/>
+			<Orientation y="3.76513"/>
+			<Actor seed="31923"/>
+		</Entity>
+		<Entity uid="24276">
+			<Template>units/brit/support_female_citizen</Template>
+			<Player>1</Player>
+			<Position x="561.13581" z="838.67566"/>
+			<Orientation y="-1.66066"/>
+			<Actor seed="112"/>
+		</Entity>
+		<Entity uid="24277">
+			<Template>units/brit/support_female_citizen</Template>
+			<Player>1</Player>
+			<Position x="559.39637" z="836.78577"/>
+			<Orientation y="-1.25309"/>
+			<Actor seed="1002"/>
+		</Entity>
+		<Entity uid="24278">
+			<Template>units/brit/cavalry_swordsman_a</Template>
+			<Player>2</Player>
+			<Position x="386.38468" z="834.22889"/>
+			<Orientation y="1.70315"/>
+			<Actor seed="61760"/>
+		</Entity>
+		<Entity uid="24279">
+			<Template>units/brit/cavalry_swordsman_a</Template>
+			<Player>2</Player>
+			<Position x="385.00373" z="837.94568"/>
+			<Orientation y="1.53385"/>
+			<Actor seed="28276"/>
+		</Entity>
+		<Entity uid="24280">
+			<Template>units/brit/cavalry_swordsman_a</Template>
+			<Player>2</Player>
+			<Position x="383.1709" z="842.01984"/>
+			<Orientation y="1.48601"/>
+			<Actor seed="556"/>
+		</Entity>
+		<Entity uid="24281">
+			<Template>units/brit/cavalry_swordsman_a</Template>
+			<Player>2</Player>
+			<Position x="389.01923" z="843.56708"/>
+			<Orientation y="1.58407"/>
+			<Actor seed="60289"/>
+		</Entity>
+		<Entity uid="24282">
+			<Template>units/brit/cavalry_swordsman_e</Template>
+			<Player>2</Player>
+			<Position x="393.2321" z="837.58002"/>
+			<Orientation y="1.80851"/>
+			<Actor seed="2753"/>
+		</Entity>
+		<Entity uid="24283">
+			<Template>units/brit/cavalry_swordsman_e</Template>
+			<Player>2</Player>
+			<Position x="393.81623" z="841.14112"/>
+			<Orientation y="1.86371"/>
+			<Actor seed="30074"/>
+		</Entity>
+		<Entity uid="24285">
+			<Template>units/gaul/champion_cavalry</Template>
+			<Player>2</Player>
+			<Position x="401.49646" z="836.25403"/>
+			<Orientation y="1.83454"/>
+			<Actor seed="53430"/>
+		</Entity>
+		<Entity uid="24286">
+			<Template>trigger/los</Template>
+			<Player>3</Player>
+			<Position x="519.8183" z="860.10792"/>
+			<Orientation y="2.35621"/>
+			<Actor seed="44165"/>
+		</Entity>
+		<Entity uid="24287">
+			<Template>trigger/los</Template>
+			<Player>3</Player>
+			<Position x="587.66004" z="825.84687"/>
+			<Orientation y="2.35621"/>
+			<Actor seed="29505"/>
+		</Entity>
+		<Entity uid="24288">
+			<Template>trigger/los</Template>
+			<Player>3</Player>
+			<Position x="650.25281" z="837.74927"/>
+			<Orientation y="2.35621"/>
+			<Actor seed="2916"/>
 		</Entity>
 	</Entities>
 	<Paths/>

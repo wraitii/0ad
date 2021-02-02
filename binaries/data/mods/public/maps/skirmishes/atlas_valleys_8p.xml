@@ -53,6 +53,10 @@
     {}
   ],
   "Preview": "Atlas_Valleys_(8).png",
+  "TriggerScripts": [
+    "skirmishes/atlas.js",
+    "scripts/TriggerHelper.js"
+  ],
   "VictoryConditions": [
     "conquest"
   ]

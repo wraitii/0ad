@@ -51,6 +51,10 @@
     {}
   ],
   "Preview": "Vesuvius_(6).png",
+  "TriggerScripts": [
+    "skirmishes/vesuvius.js",
+    "scripts/TriggerHelper.js"
+  ],
   "VictoryConditions": [
     "conquest"
   ]
