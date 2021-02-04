@@ -52,6 +52,10 @@
     {}
   ],
   "Preview": "Sahyadri_Buttes_(5).png",
+  "TriggerScripts": [
+    "skirmishes/sayad.js",
+    "scripts/TriggerHelper.js"
+  ],
   "VictoryConditions": [
     "conquest"
   ]

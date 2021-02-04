@@ -49,6 +49,10 @@
     {}
   ],
   "Preview": "farmland.png",
+  "TriggerScripts": [
+    "skirmishes/farmland.js",
+    "scripts/TriggerHelper.js"
+  ],
   "VictoryConditions": [
     "conquest"
   ]

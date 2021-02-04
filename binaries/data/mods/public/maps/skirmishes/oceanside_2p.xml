@@ -49,6 +49,10 @@
     {}
   ],
   "Preview": "oceanside.png",
+  "TriggerScripts": [
+    "skirmishes/oceanside.js",
+    "scripts/TriggerHelper.js"
+  ],
   "VictoryConditions": [
     "conquest"
   ]

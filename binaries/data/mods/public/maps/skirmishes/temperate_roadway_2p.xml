@@ -49,6 +49,10 @@
     {}
   ],
   "Preview": "roadway.png",
+  "TriggerScripts": [
+    "skirmishes/temperate.js",
+    "scripts/TriggerHelper.js"
+  ],
   "VictoryConditions": [
     "conquest"
   ]

@@ -51,6 +51,10 @@
     {}
   ],
   "Preview": "Obedska_Bog_Night_(4).png",
+  "TriggerScripts": [
+    "skirmishes/obed_night.js",
+    "scripts/TriggerHelper.js"
+  ],
   "VictoryConditions": [
     "conquest"
   ]
