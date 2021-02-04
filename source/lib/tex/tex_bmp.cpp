@@ -124,7 +124,7 @@ Status TexCodecBmp::decode(u8* RESTRICT data, size_t UNUSED(size), Tex* RESTRICT
 }
 
 
-Status TexCodecBmp::encode(Tex* RESTRICT t, DynArray* RESTRICT da) const
+Status TexCodecBmp::encode(Tex* RESTRICT t, DynArray* RESTRICT da, int quality) const
 {
 	const size_t hdr_size = sizeof(BmpHeader);	// needed for BITMAPFILEHEADER
 	const size_t img_size = t->img_size();

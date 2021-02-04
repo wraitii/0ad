@@ -461,8 +461,8 @@ static void InitVfs(const CmdLineArgs& args, int flags)
 	MountMods(paths, GetMods(args, flags));
 
 	// We mount these dirs last as otherwise writing could result in files being placed in a mod's dir.
-	g_VFS->Mount(L"screenshots/", paths.UserData()/"screenshots"/"");
 	g_VFS->Mount(L"saves/", paths.UserData()/"saves"/"", VFS_MOUNT_WATCH);
+
 	// Mounting with highest priority, so that a mod supplied user.cfg is harmless
 	g_VFS->Mount(L"config/", readonlyConfig, 0, (size_t)-1);
 	if(readonlyConfig != paths.Config())
@@ -895,6 +895,13 @@ bool Init(const CmdLineArgs& args, int flags)
 
 	// g_ConfigDB, command line args, globals
 	CONFIG_Init(args);
+
+ 	// Mount this after the config was initialized
+ 	CStr screenshotpath;
+ 	CFG_GET_VAL("videorendering.path", screenshotpath);
+ 	if (g_VFS->Mount(L"screenshots/", OsPath(screenshotpath), VFS_MOUNT_MUST_EXIST) == ERR::VFS_DIR_NOT_FOUND)
+ 		LOGERROR("Screenshot directory does not exist! Check the options and restart.");
+
 
 	// Using a global object for the context is a workaround until Simulation and AI use
 	// their own threads and also their own contexts.

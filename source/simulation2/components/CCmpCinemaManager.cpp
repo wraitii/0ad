@@ -238,8 +238,13 @@ public:
 			// TODO: improve m_MapRevealed state and without fade in
 			cmpRangeManager->SetLosRevealAll(-1, enabled);
 		}
+		////////////////////////////////////////////////////////////////
+		// Remove this for the diplomacy colors scene, probably hotkey
+		////////////////////////////////////////////////////////////////
 		if (cmpTerritoryManager)
 			cmpTerritoryManager->SetVisibility(!enabled);
+		////////////////////////////////////////////////////////
+
 		ICmpSelectable::SetOverrideVisibility(!enabled);
 		ICmpOverlayRenderer::SetOverrideVisibility(!enabled);
 

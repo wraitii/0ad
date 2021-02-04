@@ -410,6 +410,22 @@ extern_lib_defs = {
 			})
 		end,
 	},
+	libjpg = {
+		compile_settings = function()
+			if os.istarget("windows") or os.istarget("macosx") then
+				add_default_include_paths("libjpg")
+			end
+		end,
+		link_settings = function()
+			if os.istarget("windows") or os.istarget("macosx") then
+				add_default_lib_paths("libjpg")
+			end
+			add_default_links({
+				win_names  = { "jpeg-6b" },
+				unix_names = { "jpeg" },
+			})
+		end,
+	},
 	libpng = {
 		compile_settings = function()
 			if os.istarget("windows") or os.istarget("macosx") then

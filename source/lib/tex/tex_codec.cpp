@@ -36,11 +36,12 @@
 // Statically allocate all of the codecs...
 TexCodecDds DdsCodec;
 TexCodecPng PngCodec;
+TexCodecJpg JpgCodec;
 TexCodecTga TgaCodec;
 TexCodecBmp BmpCodec;
 // Codecs will be searched in this order
 static const ITexCodec *codecs[] = {(ITexCodec *)&DdsCodec, (ITexCodec *)&PngCodec,
-	(ITexCodec *)&TgaCodec, (ITexCodec *)&BmpCodec};
+	(ITexCodec *)&JpgCodec, (ITexCodec *)&TgaCodec, (ITexCodec *)&BmpCodec};
 static const int codecs_len = sizeof(codecs) / sizeof(ITexCodec*);
 
 // find codec that recognizes the desired output file extension,

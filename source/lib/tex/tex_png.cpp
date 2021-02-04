@@ -304,7 +304,7 @@ TIMER_ACCRUE(tc_png_decode);
 
 
 // limitation: palette images aren't supported
-Status TexCodecPng::encode(Tex* RESTRICT t, DynArray* RESTRICT da) const
+Status TexCodecPng::encode(Tex* RESTRICT t, DynArray* RESTRICT da, int quality) const
 {
 	png_infop info_ptr = 0;
 

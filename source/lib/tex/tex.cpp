@@ -749,7 +749,7 @@ Status Tex::decode(const shared_ptr<u8>& Data, size_t DataSize)
 }
 
 
-Status Tex::encode(const OsPath& extension, DynArray* da)
+Status Tex::encode(const OsPath& extension, DynArray* da, int quality)
 {
 	CHECK_TEX(this);
 	WARN_RETURN_STATUS_IF_ERR(tex_validate_plain_format(m_Bpp, m_Flags));
@@ -766,7 +766,7 @@ Status Tex::encode(const OsPath& extension, DynArray* da)
 	WARN_RETURN_STATUS_IF_ERR(tex_codec_for_filename(extension, &c));
 
 	// encode into <da>
-	Status err = c->encode(this, da);
+	Status err = c->encode(this, da, quality);
 	if(err < 0)
 	{
 		(void)da_free(da);

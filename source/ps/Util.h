@@ -32,7 +32,7 @@ OsPath createDateIndexSubdirectory(const OsPath& parentDir);
 void WriteScreenshot(const VfsPath& extension);
 void WriteBigScreenshot(const VfsPath& extension, int tiles);
 
-Status tex_write(Tex* t, const VfsPath& filename);
+Status tex_write(Tex* t, const VfsPath& filename, int quality);
 
 std::string Hexify(const std::string& s);
 std::string Hexify(const u8* s, size_t length);

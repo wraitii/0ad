@@ -191,6 +191,8 @@ public:
 	inline OsPath GetReplayPath() const
 	{	return m_ReplayPath; }
 
+	int SimTime();
+
 	/**
 	 * Replace the current turn manager.
 	 * This class will take ownership of the pointer.
