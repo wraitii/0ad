@@ -37,6 +37,7 @@ namespace JSI_GameView
 	DECLARE_BOOLEAN_SCRIPT_SETTING(ConstrainCamera);
 
 	JS::Value GetCameraPosition(ScriptInterface::CmptPrivate* pCmptPrivate);
+	JS::Value GetCameraRotation(ScriptInterface::CmptPrivate* pCmptPrivate);
 	JS::Value GetCameraPivot(ScriptInterface::CmptPrivate* pCmptPrivate);
 	void CameraMoveTo(ScriptInterface::CmptPrivate* pCmptPrivate, entity_pos_t x, entity_pos_t z);
 	void SetCameraTarget(ScriptInterface::CmptPrivate* pCmptPrivate, float x, float y, float z);

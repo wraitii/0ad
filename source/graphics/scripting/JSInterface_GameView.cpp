@@ -76,7 +76,19 @@ JS::Value JSI_GameView::GetCameraPosition(ScriptInterface::CmptPrivate* pCmptPri
 		pos = g_Game->GetView()->GetCameraPosition();
 
 	JS::RootedValue val(rq.cx);
-	ScriptInterface::CreateObject(rq, &val, "x", pos.X, "y", pos.X, "z", pos.Z);
+	ScriptInterface::CreateObject(rq, &val, "x", pos.X, "y", pos.Y, "z", pos.Z);
+	return val;
+}
+
+JS::Value JSI_GameView::GetCameraRotation(ScriptInterface::CmptPrivate* pCmptPrivate)
+{
+	ScriptRequest rq(pCmptPrivate->pScriptInterface);
+	CVector3D pos(-1, -1, -1);
+	if (g_Game && g_Game->GetView())
+		pos = g_Game->GetView()->GetCamera()->GetOrientation().GetIn();
+
+	JS::RootedValue val(rq.cx);
+	ScriptInterface::CreateObject(rq, &val, "x", pos.X, "y", pos.Y, "z", pos.Z);
 	return val;
 }
 
@@ -177,6 +189,7 @@ void JSI_GameView::RegisterScriptFunctions(const ScriptInterface& scriptInterfac
 	RegisterScriptFunctions_Settings(scriptInterface);
 
 	scriptInterface.RegisterFunction<JS::Value, &GetCameraPosition>("GetCameraPosition");
+	scriptInterface.RegisterFunction<JS::Value, &GetCameraRotation>("GetCameraRotation");
 	scriptInterface.RegisterFunction<JS::Value, &GetCameraPivot>("GetCameraPivot");
 	scriptInterface.RegisterFunction<void, entity_pos_t, entity_pos_t, &CameraMoveTo>("CameraMoveTo");
 	scriptInterface.RegisterFunction<void, float, float, float, &SetCameraTarget>("SetCameraTarget");

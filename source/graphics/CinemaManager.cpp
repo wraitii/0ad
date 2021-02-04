@@ -65,7 +65,7 @@ void CCinemaManager::Update(const float deltaRealTime) const
 void CCinemaManager::Render() const
 {
 	if (IsEnabled())
-		DrawBars();
+	{}//DrawBars();
 	else if (m_DrawPaths)
 		DrawPaths();
 }
