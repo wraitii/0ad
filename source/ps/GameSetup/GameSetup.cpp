@@ -335,6 +335,7 @@ void Render()
 	g_Renderer.EndFrame();
 
 	PROFILE2_ATTR("draw calls: %d", (int)g_Renderer.GetStats().m_DrawCalls);
+	PROFILE2_ATTR("saved draw calls: %d", (int)g_Renderer.GetStats().m_SavedDrawCalls);
 	PROFILE2_ATTR("terrain tris: %d", (int)g_Renderer.GetStats().m_TerrainTris);
 	PROFILE2_ATTR("water tris: %d", (int)g_Renderer.GetStats().m_WaterTris);
 	PROFILE2_ATTR("model tris: %d", (int)g_Renderer.GetStats().m_ModelTris);

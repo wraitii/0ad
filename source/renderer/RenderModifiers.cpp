@@ -104,9 +104,6 @@ void ShaderRenderModifier::BeginPass(const CShaderProgramPtr& shader)
 
 void ShaderRenderModifier::PrepareModel(const CShaderProgramPtr& shader, CModel* model)
 {
-	if (m_BindingInstancingTransform.Active())
-		shader->Uniform(m_BindingInstancingTransform, model->GetTransform());
-
 	if (m_BindingShadingColor.Active())
 		shader->Uniform(m_BindingShadingColor, model->GetShadingColor());
 

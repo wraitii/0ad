@@ -45,7 +45,9 @@ public:
 	void BeginPass(int streamflags);
 	void EndPass(int streamflags);
 	void PrepareModelDef(const CShaderProgramPtr& shader, int streamflags, const CModelDef& def);
+	bool CanInstance() { return true; }
 	void RenderModel(const CShaderProgramPtr& shader, int streamflags, CModel* model, CModelRData* data);
+	void RenderInstancedModel(const CShaderProgramPtr& shader, const std::vector<CModel*>& model);
 
 protected:
 	InstancingModelRendererInternals* m;

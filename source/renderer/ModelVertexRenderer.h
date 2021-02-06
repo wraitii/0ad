@@ -133,6 +133,7 @@ public:
 	 */
 	virtual void PrepareModelDef(const CShaderProgramPtr& shader, int streamflags, const CModelDef& def) = 0;
 
+	virtual bool CanInstance() { return false; }
 
 	/**
 	 * RenderModel: Invoke the rendering commands for the given model.
@@ -154,6 +155,7 @@ public:
 	 * succeed.
 	 */
 	virtual void RenderModel(const CShaderProgramPtr& shader, int streamflags, CModel* model, CModelRData* data) = 0;
+	virtual void RenderInstancedModel(const CShaderProgramPtr& shader, const std::vector<CModel*>& model) {};
 };
 
 

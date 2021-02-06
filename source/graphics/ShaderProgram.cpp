@@ -909,6 +909,8 @@ void CShaderProgram::BindClientStates()
 		pglClientActiveTextureARB(GL_TEXTURE0);
 	}
 
+	//glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+
 	// Rendering code must subsequently call VertexPointer etc for all of the streams
 	// that were activated in this function, else AssertPointersBound will complain
 	// that some arrays were unspecified

@@ -112,6 +112,8 @@ public:
 	// get the currently playing animation, if any
 	CSkeletonAnim* GetAnimation() const { return m_Anim; }
 
+	float GetAnimTime() const { return m_AnimTime; }
+
 	// set the animation state to be the same as from another; both models should
 	// be compatible types (same type of skeleton)
 	void CopyAnimationFrom(CModel* source);

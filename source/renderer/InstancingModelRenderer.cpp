@@ -247,8 +247,10 @@ struct InstancingModelRendererInternals
 
 	/// Index base for imodeldef
 	u8* imodeldefIndexBase;
-};
 
+	GLuint buff;
+	std::vector<CMatrix3D> transforms;
+};
 
 // Construction and Destruction
 InstancingModelRenderer::InstancingModelRenderer(bool gpuSkinning, bool calculateTangents)
@@ -257,10 +259,13 @@ InstancingModelRenderer::InstancingModelRenderer(bool gpuSkinning, bool calculat
 	m->gpuSkinning = gpuSkinning;
 	m->calculateTangents = calculateTangents;
 	m->imodeldef = 0;
+
+	pglGenBuffersARB(1, &m->buff);
 }
 
 InstancingModelRenderer::~InstancingModelRenderer()
 {
+	pglDeleteBuffersARB(1, &m->buff);
 	delete m;
 }
 
@@ -291,11 +296,15 @@ void InstancingModelRenderer::UpdateModelData(CModel* UNUSED(model), CModelRData
 	// We have no per-CModel data
 }
 
-
 // Setup one rendering pass.
 void InstancingModelRenderer::BeginPass(int streamflags)
 {
 	ENSURE(streamflags == (streamflags & (STREAM_POS|STREAM_NORMAL|STREAM_UV0|STREAM_UV1)));
+
+	pglVertexAttribDivisorARB(10, 1);
+	pglVertexAttribDivisorARB(11, 1);
+	pglVertexAttribDivisorARB(12, 1);
+	pglVertexAttribDivisorARB(13, 1);
 }
 
 // Cleanup rendering pass.
@@ -344,6 +353,8 @@ void InstancingModelRenderer::PrepareModelDef(const CShaderProgramPtr& shader, i
 	}
 
 	shader->AssertPointersBound();
+
+	pglBindBufferARB(GL_ARRAY_BUFFER, m->buff);
 }
 
 
@@ -381,4 +392,67 @@ void InstancingModelRenderer::RenderModel(const CShaderProgramPtr& shader, int U
 	g_Renderer.m_Stats.m_DrawCalls++;
 	g_Renderer.m_Stats.m_ModelTris += numFaces;
 
+}
+
+void InstancingModelRenderer::RenderInstancedModel(const CShaderProgramPtr& shader, const std::vector<CModel*>& models)
+{
+	if (g_Renderer.m_SkipSubmit)
+		return;
+
+	const CModelDefPtr& mdldef = models.front()->GetModelDef();
+
+	if (m->gpuSkinning)
+	{
+		// HACK: this gives the same animation to all similar modeldefs,
+		// which is somewhat obviously broken, but it renders something.
+
+		// Bind matrices for current animation state.
+		// Add 1 to NumBones because of the special 'root' bone.
+		// HACK: NVIDIA drivers return uniform name with "[0]", Intel Windows drivers without;
+		// try uploading both names since one of them should work, and this is easier than
+		// canonicalising the uniform names in CShaderProgramGLSL
+		shader->Uniform(str_skinBlendMatrices_0, mdldef->GetNumBones() + 1, models.front()->GetAnimatedBoneMatrices());
+		shader->Uniform(str_skinBlendMatrices, mdldef->GetNumBones() + 1, models.front()->GetAnimatedBoneMatrices());
+	}
+
+	size_t numFaces = mdldef->GetNumFaces();
+
+	pglBufferDataARB(GL_ARRAY_BUFFER, std::max(64 * (size_t)50, 64 * models.size()), nullptr, GL_STREAM_DRAW);
+
+	// Set up a uniform
+	m->transforms.reserve(64);
+	m->transforms.clear();
+
+	for (CModel* model : models)
+		m->transforms.emplace_back(model->GetTransform());
+
+	/*
+	if (idx + 4 * models.size() * 16 > 1024*1024)
+	{
+		glBufferData(GL_ARRAY_BUFFER, 1024*1024, nullptr, GL_STREAM_DRAW);
+		idx = 0;
+	}
+	glBufferSubData(GL_ARRAY_BUFFER, idx, 4 * models.size() * 16, uniforms.data());
+	idx += 4 * models.size() * 16;
+	*/
+	pglBufferSubDataARB(GL_ARRAY_BUFFER, 0, 64 * models.size(), m->transforms.data());
+
+	/*
+	for (int j = 0; j < 4; ++j)
+		printf("%f %f %f %f\n", m->transforms.front()[j*4], m->transforms.front()[j*4+1], m->transforms.front()[j*4+2], m->transforms.front()[j*4+3]);
+	printf("\n");
+	*/
+
+	shader->VertexAttribPointer(str_a_instancing0, 4, GL_FLOAT, GL_FALSE, 64, (void*)(0));
+	shader->VertexAttribPointer(str_a_instancing1, 4, GL_FLOAT, GL_FALSE, 64, (void*)(0+16));
+	shader->VertexAttribPointer(str_a_instancing2, 4, GL_FLOAT, GL_FALSE, 64, (void*)(0+32));
+	shader->VertexAttribPointer(str_a_instancing3, 4, GL_FLOAT, GL_FALSE, 64, (void*)(0+48));
+
+	pglDrawElementsInstancedARB(GL_TRIANGLES,
+							   (GLsizei)numFaces*3,
+							   GL_UNSIGNED_SHORT,
+							   m->imodeldefIndexBase, models.size());
+	g_Renderer.m_Stats.m_DrawCalls++;
+	g_Renderer.m_Stats.m_SavedDrawCalls += models.size() - 1;
+	g_Renderer.m_Stats.m_ModelTris += numFaces * models.size();
 }

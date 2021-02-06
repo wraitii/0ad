@@ -364,6 +364,10 @@ FUNC2(void, glGetUniformuivEXT, glGetUniformuiv, "3.0", (GLuint program, GLint l
 FUNC2(void, glBindFragDataLocationEXT, glBindFragDataLocation, "3.0", (GLuint program, GLuint colorNumber, const char *name))
 FUNC2(GLint, glGetFragDataLocationEXT, glGetFragDataLocation, "3.0", (GLuint program, const char *name))
 
+// GL_ARB_draw_instanced / GL 3.3
+FUNC2(void, glDrawElementsInstancedARB, glDrawElementsInstanced, "3.3", (GLenum mode, GLsizei count, GLenum type, const GLvoid * indices, GLsizei primcount))
+FUNC2(void, glVertexAttribDivisorARB, glVertexAttribDivisor, "3.3", (GLuint index, GLuint divisor))
+
 // GL_ARB_occlusion_query / GL1.5:
 FUNC2(void, glGenQueriesARB, glGenQueries, "1.5", (GLsizei n, GLuint *ids))
 FUNC2(void, glDeleteQueriesARB, glDeleteQueries, "1.5", (GLsizei n, const GLuint *ids))

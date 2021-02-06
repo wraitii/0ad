@@ -56,6 +56,9 @@ attribute vec2 a_uv1;
   attribute vec4 a_skinWeights;
 #endif
 
+#if USE_INSTANCING
+attribute mat4 a_instancing0;
+#endif
 
 vec4 fakeCos(vec4 x)
 {
@@ -66,6 +69,10 @@ vec4 fakeCos(vec4 x)
 
 void main()
 {
+  #if USE_INSTANCING
+  mat4 inst = a_instancing0;
+  //mat4 inst = instancingTransformReal[gl_InstanceIDARB];
+  #endif
   #if USE_GPU_SKINNING
     vec3 p = vec3(0.0);
     vec3 n = vec3(0.0);
@@ -77,16 +84,16 @@ void main()
         n += vec3(m * vec4(a_normal, 0.0)) * a_skinWeights[i];
       }
     }
-    vec4 position = instancingTransform * vec4(p, 1.0);
-    mat3 normalMatrix = mat3(instancingTransform[0].xyz, instancingTransform[1].xyz, instancingTransform[2].xyz);
+    vec4 position = a_instancing0 * vec4(p, 1.0);
+    mat3 normalMatrix = mat3(a_instancing0[0].xyz, a_instancing0[1].xyz, a_instancing0[2].xyz);
     vec3 normal = normalMatrix * normalize(n);
     #if (USE_NORMAL_MAP || USE_PARALLAX)
       vec3 tangent = normalMatrix * a_tangent.xyz;
     #endif
   #else
   #if (USE_INSTANCING)
-    vec4 position = instancingTransform * vec4(a_vertex, 1.0);
-    mat3 normalMatrix = mat3(instancingTransform[0].xyz, instancingTransform[1].xyz, instancingTransform[2].xyz);
+    vec4 position = inst * vec4(a_vertex, 1.0);
+    mat3 normalMatrix = mat3(inst[0].xyz, inst[1].xyz, inst[2].xyz);
     vec3 normal = normalMatrix * a_normal;
     #if (USE_NORMAL_MAP || USE_PARALLAX)
       vec3 tangent = normalMatrix * a_tangent.xyz;
@@ -102,7 +109,7 @@ void main()
     vec2 wind = windData.xy;
 
     // fractional part of model position, clamped to >.4
-    vec4 modelPos = instancingTransform[3];
+    vec4 modelPos = inst[3];
     modelPos = fract(modelPos);
     modelPos = clamp(modelPos, 0.4, 1.0);
 
@@ -113,7 +120,7 @@ void main()
     // these determine the speed of the wind's "cosine" waves.
     cosVec.w = 0.0;
     cosVec.x = sim_time.x * modelPos[0] + position.x;
-    cosVec.y = sim_time.x * modelPos[2] / 3.0 + instancingTransform[3][0];
+    cosVec.y = sim_time.x * modelPos[2] / 3.0 + inst[3][0];
     cosVec.z = sim_time.x * abswind / 4.0 + position.z;
 
     // calculate "cosines" in parallel, using a smoothed triangle wave

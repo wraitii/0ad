@@ -277,6 +277,11 @@ struct SMRBatchModel
 		if (b->GetMaterial().GetDiffuseTexture() < a->GetMaterial().GetDiffuseTexture())
 			return false;
 
+		if (a->GetPlayerID() < b->GetPlayerID())
+			return true;
+		if (b->GetPlayerID() < a->GetPlayerID())
+			return false;
+
 		return a->GetMaterial().GetStaticUniforms() < b->GetMaterial().GetStaticUniforms();
 	}
 };
@@ -584,7 +589,6 @@ void ShaderModelRenderer::Render(const RenderModifierPtr& modifier, const CShade
 
 	{
 		PROFILE3("rendering bucketed submissions");
-
 		size_t idxTechStart = 0;
 
 		// This vector keeps track of texture changes during rendering. It is kept outside the
@@ -629,6 +633,17 @@ void ShaderModelRenderer::Render(const RenderModifierPtr& modifier, const CShade
 
 				m->vertexRenderer->BeginPass(streamflags);
 
+				// Uniforms remain valid for the duration of the shader linkage,
+				// So just assume someone will request them here.
+				{
+					CShaderProgram::Binding binding = shader->GetUniformBinding(CStrIntern("sim_time"));
+					if (binding.Active())
+					{
+						double time = g_Renderer.GetTimeManager().GetGlobalTime();
+						shader->Uniform(binding, time, 0.0f, 0.0f, 0.0f);
+					}
+				}
+
 				// When the shader technique changes, textures need to be
 				// rebound, so ensure there are no remnants from the last pass.
 				// (the vector size is set to 0, but memory is not freed)
@@ -636,8 +651,33 @@ void ShaderModelRenderer::Render(const RenderModifierPtr& modifier, const CShade
 				texBindings.clear();
 				texBindingNames.clear();
 
-				CModelDef* currentModeldef = NULL;
+				CModelDef* currentModeldef = nullptr;
 				CShaderUniforms currentStaticUniforms;
+				bool rq_water = false;
+				bool rq_skycube = false;
+
+				CSkeletonAnim* currentAnim = nullptr;
+				float currentAnimTime = 0.f;
+
+				CColor shadingcolor;
+				player_id_t playerid = INVALID_PLAYER;
+
+				std::vector<CModel*> keptModels;
+				keptModels.reserve(64);
+
+				// This must be called before changing state.
+				auto RenderKeptModels = [this, &shader, &keptModels, &modifier]()
+				{
+					if (keptModels.empty())
+						return;
+#if 0
+					printf("Rendered %i %s, anim %p\n", keptModels.size(), keptModels.front()->GetModelDef()->GetName().string8().c_str(), (void*)keptModels.front()->GetAnimation());
+#endif
+
+					modifier->PrepareModel(shader, keptModels.front());
+					m->vertexRenderer->RenderInstancedModel(shader, keptModels);
+					keptModels.clear();
+				};
 
 				for (size_t idx = idxTechStart; idx < idxTechEnd; ++idx)
 				{
@@ -684,6 +724,8 @@ void ShaderModelRenderer::Render(const RenderModifierPtr& modifier, const CShade
 							CTexture* newTex = samp.Sampler.get();
 							if (texBindings[s].Active() && newTex != currentTexs[s])
 							{
+								RenderKeptModels();
+
 								shader->BindTexture(texBindings[s], newTex->GetHandle());
 								currentTexs[s] = newTex;
 							}
@@ -693,6 +735,8 @@ void ShaderModelRenderer::Render(const RenderModifierPtr& modifier, const CShade
 						CModelDef* newModeldef = model->GetModelDef().get();
 						if (newModeldef != currentModeldef)
 						{
+							RenderKeptModels();
+
 							currentModeldef = newModeldef;
 							m->vertexRenderer->PrepareModelDef(shader, streamflags, *currentModeldef);
 						}
@@ -701,49 +745,66 @@ void ShaderModelRenderer::Render(const RenderModifierPtr& modifier, const CShade
 						CShaderUniforms newStaticUniforms = model->GetMaterial().GetStaticUniforms();
 						if (newStaticUniforms != currentStaticUniforms)
 						{
+							RenderKeptModels();
+
 							currentStaticUniforms = newStaticUniforms;
 							currentStaticUniforms.BindUniforms(shader);
 						}
 
 						const CShaderRenderQueries& renderQueries = model->GetMaterial().GetRenderQueries();
 
+						// For render-queries, we technically don't need to render immediately
+						// (the state remains valid for pre-existing models)
+						// (though in all likelihood we'll have changed model and/or technique anyways).
 						for (size_t q = 0; q < renderQueries.GetSize(); ++q)
 						{
 							CShaderRenderQueries::RenderQuery rq = renderQueries.GetItem(q);
-							if (rq.first == RQUERY_TIME)
+							if (rq.first == RQUERY_WATER_TEX && !rq_water)
 							{
-								CShaderProgram::Binding binding = shader->GetUniformBinding(rq.second);
-								if (binding.Active())
-								{
-									double time = g_Renderer.GetTimeManager().GetGlobalTime();
-									shader->Uniform(binding, time, 0.0f, 0.0f, 0.0f);
-								}
-							}
-							else if (rq.first == RQUERY_WATER_TEX)
-							{
+								rq_water = true;
 								WaterManager* WaterMgr = g_Renderer.GetWaterManager();
 								double time = WaterMgr->m_WaterTexTimer;
 								double period = 1.6;
 								int curTex = static_cast<int>(time * 60.0 / period) % 60;
-
 								if (WaterMgr->m_RenderWater && WaterMgr->WillRenderFancyWater())
 									shader->BindTexture(str_waterTex, WaterMgr->m_NormalMap[curTex]);
 								else
 									shader->BindTexture(str_waterTex, g_Renderer.GetTextureManager().GetErrorTexture());
 							}
-							else if (rq.first == RQUERY_SKY_CUBE)
+							else if (rq.first == RQUERY_SKY_CUBE && !rq_skycube)
 							{
+								rq_skycube = true;
 								shader->BindTexture(str_skyCube, g_Renderer.GetSkyManager()->GetSkyCube());
 							}
 						}
 
-						modifier->PrepareModel(shader, model);
+						if (model->GetPlayerID() != playerid || model->GetShadingColor() != shadingcolor)
+						{
+							RenderKeptModels();
+							playerid = model->GetPlayerID();
+							shadingcolor = model->GetShadingColor();
+							modifier->PrepareModel(shader, model);
+						}
 
-						CModelRData* rdata = static_cast<CModelRData*>(model->GetRenderData());
-						ENSURE(rdata->GetKey() == m->vertexRenderer.get());
+						if ((!model->GetAnimation() && currentAnim) || (
+							model->GetAnimation() && (model->GetAnimation() != currentAnim ||
+													  model->GetAnimTime() != currentAnimTime)))
+						{
+							RenderKeptModels();
+							currentAnim = model->GetAnimation();
+							currentAnimTime = model->GetAnimTime();
+						}
 
-						m->vertexRenderer->RenderModel(shader, streamflags, model, rdata);
-					}
+						if (m->vertexRenderer->CanInstance() && g_RenderingOptions.GetPreferGLSL())
+							keptModels.push_back(model);
+						else
+						{
+							CModelRData* rdata = static_cast<CModelRData*>(model->GetRenderData());
+							ENSURE(rdata->GetKey() == m->vertexRenderer.get());
+							m->vertexRenderer->RenderModel(shader, streamflags, model, rdata);
+						}
+					} // numModels loop
+					RenderKeptModels();
 				}
 
 				m->vertexRenderer->EndPass(streamflags);

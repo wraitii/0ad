@@ -90,6 +90,8 @@ public:
 		void Reset() { memset(this, 0, sizeof(*this)); }
 		// number of draw calls per frame - total DrawElements + Begin/End immediate mode loops
 		size_t m_DrawCalls;
+		// Number of saved draw calls via instancing each frame.
+		size_t m_SavedDrawCalls;
 		// number of terrain triangles drawn
 		size_t m_TerrainTris;
 		// number of water triangles drawn

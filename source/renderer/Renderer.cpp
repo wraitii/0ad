@@ -114,6 +114,7 @@ private:
 
 	enum {
 		Row_DrawCalls = 0,
+		Row_SavedDrawCalls,
 		Row_TerrainTris,
 		Row_WaterTris,
 		Row_ModelTris,
@@ -169,6 +170,12 @@ CStr CRendererStatsTable::GetCellText(size_t row, size_t col)
 		if (col == 0)
 			return "# draw calls";
 		sprintf_s(buf, sizeof(buf), "%lu", (unsigned long)Stats.m_DrawCalls);
+		return buf;
+
+	case Row_SavedDrawCalls:
+		if (col == 0)
+			return "# saved draw calls";
+		sprintf_s(buf, sizeof(buf), "%lu", (unsigned long)Stats.m_SavedDrawCalls);
 		return buf;
 
 	case Row_TerrainTris:
