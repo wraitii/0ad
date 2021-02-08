@@ -27,6 +27,7 @@
 #include "Terrain.h"
 #include "TerrainTextureEntry.h"
 #include "TerrainTextureManager.h"
+#include "WaterManager.h"
 
 #include "maths/MathUtil.h"
 #include "maths/NUSpline.h"
@@ -36,7 +37,6 @@
 #include "ps/XML/XMLWriter.h"
 #include "renderer/PostprocManager.h"
 #include "renderer/SkyManager.h"
-#include "renderer/WaterManager.h"
 #include "simulation2/Simulation2.h"
 #include "simulation2/components/ICmpCinemaManager.h"
 #include "simulation2/components/ICmpGarrisonHolder.h"
@@ -57,7 +57,7 @@ CMapWriter::CMapWriter()
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // SaveMap: try to save the current map to the given file
 void CMapWriter::SaveMap(const VfsPath& pathname, CTerrain* pTerrain,
-						 WaterManager* pWaterMan, SkyManager* pSkyMan,
+						 const WaterManager* pWaterMan, SkyManager* pSkyMan,
 						 CLightEnv* pLightEnv, CCamera* pCamera, CCinemaManager* UNUSED(pCinema),
 						 CPostprocManager* pPostproc,
 						 CSimulation2* pSimulation2)
@@ -186,7 +186,7 @@ void CMapWriter::PackTerrain(CFilePacker& packer, CTerrain* pTerrain)
 }
 
 void CMapWriter::WriteXML(const VfsPath& filename,
-						  WaterManager* pWaterMan, SkyManager* pSkyMan,
+						  const WaterManager* pWaterMan, SkyManager* pSkyMan,
 						  CLightEnv* pLightEnv, CCamera* pCamera,
 						  CPostprocManager* pPostproc,
 						  CSimulation2* pSimulation2)
@@ -246,7 +246,7 @@ void CMapWriter::WriteXML(const VfsPath& filename,
 					XMLWriter_Element waterBodyTag(xmlMapFile, "WaterBody");
 					CmpPtr<ICmpWaterManager> cmpWaterManager(sim, SYSTEM_ENTITY);
 					ENSURE(cmpWaterManager);
-					waterBodyTag.Setting("Type", pWaterMan->m_WaterType);
+					waterBodyTag.Setting("Type", pWaterMan->GetWaterType());
 					{
 						XMLWriter_Element colorTag(xmlMapFile, "Color");
 						colorTag.Attribute("r", pWaterMan->m_WaterColor.r);

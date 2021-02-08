@@ -21,8 +21,10 @@
 
 #include "../CommandProc.h"
 
+#include "graphics/GameView.h"
 #include "graphics/LightEnv.h"
 #include "graphics/Terrain.h"
+#include "graphics/WaterManager.h"
 #include "maths/MathUtil.h"
 #include "ps/CStr.h"
 #include "ps/Game.h"
@@ -30,7 +32,6 @@
 #include "renderer/PostprocManager.h"
 #include "renderer/Renderer.h"
 #include "renderer/SkyManager.h"
-#include "renderer/WaterManager.h"
 #include "simulation2/Simulation2.h"
 #include "simulation2/components/ICmpWaterManager.h"
 
@@ -45,8 +46,8 @@ sEnvironmentSettings GetSettings()
 
 	s.waterheight = cmpWaterManager->GetExactWaterLevel(0, 0) / (65536.f * HEIGHT_SCALE);
 
-	WaterManager* wm = g_Renderer.GetWaterManager();
-	s.watertype = wm->m_WaterType;
+	const WaterManager* wm = &g_Game->GetView()->GetWaterManager();
+	s.watertype = wm->GetWaterType();
 	s.waterwaviness = wm->m_Waviness;
 	s.watermurkiness = wm->m_Murkiness;
 	s.windangle = wm->m_WindAngle;
@@ -99,15 +100,11 @@ void SetSettings(const sEnvironmentSettings& s)
 
 	cmpWaterManager->SetWaterLevel(entity_pos_t::FromFloat(s.waterheight * (65536.f * HEIGHT_SCALE)));
 
-	WaterManager* wm = g_Renderer.GetWaterManager();
+	WaterManager* wm = &g_Game->GetView()->GetMutableWaterManager();
 	wm->m_Waviness = s.waterwaviness;
 	wm->m_Murkiness = s.watermurkiness;
 	wm->m_WindAngle = s.windangle;
-	if (wm->m_WaterType != *s.watertype)
-	{
-		wm->m_WaterType = *s.watertype;
-		wm->ReloadWaterNormalTextures();
-	}
+	wm->SetWaterType(*s.watertype);
 
 #define COLOR(A, B) B = CColor(A->r/255.f, A->g/255.f, A->b/255.f, 1.f)
 	COLOR(s.watercolor, wm->m_WaterColor);
@@ -141,8 +138,6 @@ void SetSettings(const sEnvironmentSettings& s)
 	COLOR(s.ambientcolor, g_LightEnv.m_AmbientColor);
 	COLOR(s.fogcolor, g_LightEnv.m_FogColor);
 #undef COLOR
-
-	cmpWaterManager->RecomputeWaterData();
 }
 
 BEGIN_COMMAND(SetEnvironmentSettings)
@@ -182,10 +177,11 @@ BEGIN_COMMAND(RecalculateWaterData)
 
 	void Redo()
 	{
-		CmpPtr<ICmpWaterManager> cmpWaterManager(*g_Game->GetSimulation2(), SYSTEM_ENTITY);
-		ENSURE(cmpWaterManager);
-
-		cmpWaterManager->RecomputeWaterData();
+		// Hack to trigger a recomputation.
+		float height = g_Game->GetView()->GetMutableWaterManager().GetWaterHeight();
+		g_Game->GetView()->GetMutableWaterManager().SetWaterHeight(height + 1.f);
+		g_Game->GetView()->GetMutableWaterManager().SetWaterHeight(height);
+		g_Game->GetView()->GetMutableWaterManager().RecomputeWaterDataIfNeeded();
 	}
 
 	void Undo()
@@ -228,7 +224,6 @@ BEGIN_COMMAND(PickWaterHeight)
 		ENSURE(cmpWaterManager);
 
 		cmpWaterManager->SetWaterLevel(height);
-		cmpWaterManager->RecomputeWaterData();
 	}
 };
 END_COMMAND(PickWaterHeight)

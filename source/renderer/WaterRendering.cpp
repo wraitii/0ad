@@ -21,26 +21,21 @@
 
 #include "precompiled.h"
 
+#include "renderer/WaterRendering.h"
+
 #include "graphics/Terrain.h"
 #include "graphics/TextureManager.h"
 #include "graphics/ShaderManager.h"
-#include "graphics/ShaderProgram.h"
+#include "graphics/WaterManager.h"
 #include "lib/bits.h"
-#include "lib/timer.h"
-#include "lib/tex/tex.h"
-#include "lib/res/graphics/ogl_tex.h"
+#include "maths/BoundingBoxAligned.h"
 #include "maths/MathUtil.h"
 #include "maths/Vector2D.h"
-#include "ps/CLogger.h"
 #include "ps/Game.h"
 #include "ps/World.h"
-#include "renderer/WaterManager.h"
-#include "renderer/Renderer.h"
 #include "renderer/RenderingOptions.h"
-#include "simulation2/Simulation2.h"
-#include "simulation2/components/ICmpWaterManager.h"
-#include "simulation2/components/ICmpRangeManager.h"
-
+#include "renderer/Renderer.h"
+#include "renderer/TimeManager.h"
 
 struct CoastalPoint
 {
@@ -72,64 +67,14 @@ struct WaveObject
 	float m_TimeDiff;
 };
 
-WaterManager::WaterManager()
+WaterRendering::WaterRendering()
 {
-	// water
-	m_RenderWater = false; // disabled until textures are successfully loaded
-	m_WaterHeight = 5.0f;
-
-	m_WaterCurrentTex = 0;
-
-	m_ReflectionTexture = 0;
-	m_RefractionTexture = 0;
-	m_RefTextureSize = 0;
-
-	m_ReflectionFbo = 0;
-	m_RefractionFbo = 0;
-	m_FancyEffectsFBO = 0;
-
-	m_WaterTexTimer = 0.0;
-
-	m_WindAngle = 0.0f;
-	m_Waviness = 8.0f;
-	m_WaterColor = CColor(0.3f, 0.35f, 0.7f, 1.0f);
-	m_WaterTint = CColor(0.28f, 0.3f, 0.59f, 1.0f);
-	m_Murkiness = 0.45f;
-	m_RepeatPeriod = 16.0f;
-
-	m_DistanceHeightmap = NULL;
-	m_BlurredNormalMap = NULL;
-	m_WindStrength = NULL;
-
-	m_ShoreWaves_VBIndices = NULL;
-
-	m_WaterEffects = true;
-	m_WaterFancyEffects = false;
-	m_WaterRealDepth = false;
-	m_WaterRefraction = false;
-	m_WaterReflection = false;
-	m_WaterType = L"ocean";
-
-	m_NeedsReloading = false;
-	m_NeedInfoUpdate = true;
-
-	m_FancyTexture = 0;
-	m_FancyTextureDepth = 0;
-	m_ReflFboDepthTexture = 0;
-	m_RefrFboDepthTexture = 0;
-
-	m_MapSize = 0;
-
-	m_updatei0 = 0;
-	m_updatej0 = 0;
-	m_updatei1 = 0;
-	m_updatej1 = 0;
+	ENSURE(CRenderer::IsInitialised());
 }
 
-WaterManager::~WaterManager()
+WaterRendering::~WaterRendering()
 {
-	// Cleanup if the caller messed up
-	UnloadWaterTextures();
+	UnprepareTextures();
 
 	for (WaveObject* const& obj : m_ShoreWaves)
 	{
@@ -137,34 +82,18 @@ WaterManager::~WaterManager()
 			g_VBMan.Release(obj->m_VBvertices);
 		delete obj;
 	}
+	m_ShoreWaves.clear();
 
 	if (m_ShoreWaves_VBIndices)
+	{
 		g_VBMan.Release(m_ShoreWaves_VBIndices);
-
-	delete[] m_DistanceHeightmap;
-	delete[] m_BlurredNormalMap;
-	delete[] m_WindStrength;
-
-	if (!g_Renderer.GetCapabilities().m_PrettyWater)
-		return;
-
-	glDeleteTextures(1, &m_FancyTexture);
-	glDeleteTextures(1, &m_FancyTextureDepth);
-	glDeleteTextures(1, &m_ReflFboDepthTexture);
-	glDeleteTextures(1, &m_RefrFboDepthTexture);
-
-	pglDeleteFramebuffersEXT(1, &m_FancyEffectsFBO);
-	pglDeleteFramebuffersEXT(1, &m_RefractionFbo);
-	pglDeleteFramebuffersEXT(1, &m_ReflectionFbo);
+		m_ShoreWaves_VBIndices = NULL;
+	}
 }
 
-
-///////////////////////////////////////////////////////////////////
-// Progressive load of water textures
-int WaterManager::LoadWaterTextures()
+void WaterRendering::PrepareTextures()
 {
-	// TODO: this doesn't need to be progressive-loading any more
-	// (since texture loading is async now)
+	UnprepareTextures();
 
 	wchar_t pathname[PATH_MAX];
 
@@ -179,19 +108,6 @@ int WaterManager::LoadWaterTextures()
 		texture->Prefetch();
 		m_WaterTexture[i] = texture;
 	}
-
-	if (!g_Renderer.GetCapabilities().m_PrettyWater)
-	{
-		// Enable rendering, now that we've succeeded this far
-		m_RenderWater = true;
-		return 0;
-	}
-
-#if CONFIG2_GLES
-#warning Fix WaterManager::LoadWaterTextures on GLES
-#else
-	// Load normalmaps (for fancy water)
-	ReloadWaterNormalTextures();
 
 	// Load CoastalWaves
 	{
@@ -210,10 +126,9 @@ int WaterManager::LoadWaterTextures()
 		texture->Prefetch();
 		m_FoamTex = texture;
 	}
-
+	
 	// Use screen-sized textures for minimum artifacts.
 	m_RefTextureSize = g_Renderer.GetHeight();
-
 	m_RefTextureSize = round_up_to_pow2(m_RefTextureSize);
 
 	// Create reflection texture
@@ -258,6 +173,7 @@ int WaterManager::LoadWaterTextures()
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexImage2D( GL_TEXTURE_2D, 0, GL_RGBA8, (GLsizei)g_Renderer.GetWidth(), (GLsizei)g_Renderer.GetHeight(), 0,  GL_RGBA, GL_UNSIGNED_SHORT, NULL);
 
 	glGenTextures(1, &m_FancyTextureDepth);
 	glBindTexture(GL_TEXTURE_2D, m_FancyTextureDepth);
@@ -265,10 +181,9 @@ int WaterManager::LoadWaterTextures()
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexImage2D( GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32, (GLsizei)g_Renderer.GetWidth(), (GLsizei)g_Renderer.GetHeight(), 0,  GL_DEPTH_COMPONENT, GL_UNSIGNED_SHORT, NULL);
 
 	glBindTexture(GL_TEXTURE_2D, 0);
-
-	Resize();
 
 	// Create the water framebuffers
 
@@ -288,7 +203,7 @@ int WaterManager::LoadWaterTextures()
 	{
 		LOGWARNING("Reflection framebuffer object incomplete: 0x%04X", status);
 		g_RenderingOptions.SetWaterReflection(false);
-		UpdateQuality();
+		m_ReflectionFbo = 0;
 	}
 
 	m_RefractionFbo = 0;
@@ -304,9 +219,10 @@ int WaterManager::LoadWaterTextures()
 	{
 		LOGWARNING("Refraction framebuffer object incomplete: 0x%04X", status);
 		g_RenderingOptions.SetWaterRefraction(false);
-		UpdateQuality();
+		m_RefractionFbo = 0;
 	}
 
+	m_FancyEffectsFBO = 0;
 	pglGenFramebuffersEXT(1, &m_FancyEffectsFBO);
 	pglBindFramebufferEXT(GL_FRAMEBUFFER_EXT, m_FancyEffectsFBO);
 	pglFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, m_FancyTexture, 0);
@@ -319,37 +235,39 @@ int WaterManager::LoadWaterTextures()
 	{
 		LOGWARNING("Fancy Effects framebuffer object incomplete: 0x%04X", status);
 		g_RenderingOptions.SetWaterRefraction(false);
-		UpdateQuality();
+		m_FancyEffectsFBO = 0;
 	}
 
 	pglBindFramebufferEXT(GL_FRAMEBUFFER_EXT, currentFbo);
-
-	// Enable rendering, now that we've succeeded this far
-	m_RenderWater = true;
-#endif
-	return 0;
 }
 
-
-///////////////////////////////////////////////////////////////////
-// Resize: Updates the fancy water textures.
-void WaterManager::Resize()
+void WaterRendering::UnprepareTextures()
 {
-	glBindTexture(GL_TEXTURE_2D, m_FancyTexture);
-	glTexImage2D( GL_TEXTURE_2D, 0, GL_RGBA8, (GLsizei)g_Renderer.GetWidth(), (GLsizei)g_Renderer.GetHeight(), 0,  GL_RGBA, GL_UNSIGNED_SHORT, NULL);
+	for(size_t i = 0; i < ARRAY_SIZE(m_WaterTexture); i++)
+		m_WaterTexture[i].reset();
 
-	glBindTexture(GL_TEXTURE_2D, m_FancyTextureDepth);
-	glTexImage2D( GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32, (GLsizei)g_Renderer.GetWidth(), (GLsizei)g_Renderer.GetHeight(), 0,  GL_DEPTH_COMPONENT, GL_UNSIGNED_SHORT, NULL);
+	for(size_t i = 0; i < ARRAY_SIZE(m_NormalMap); i++)
+		m_NormalMap[i].reset();
 
-	glBindTexture(GL_TEXTURE_2D, 0);
+	m_WaveTex.reset();
+	m_FoamTex.reset();
+
+	glDeleteTextures(1, &m_ReflectionTexture);
+	glDeleteTextures(1, &m_RefractionTexture);
+	glDeleteTextures(1, &m_ReflFboDepthTexture);
+	glDeleteTextures(1, &m_RefrFboDepthTexture);
+	glDeleteTextures(1, &m_FancyTexture);
+	glDeleteTextures(1, &m_FancyTextureDepth);
 }
 
-void WaterManager::ReloadWaterNormalTextures()
+void WaterRendering::LoadNormalTextures(const std::wstring &type)
 {
 	wchar_t pathname[PATH_MAX];
+
+	// Load normalmaps
 	for (size_t i = 0; i < ARRAY_SIZE(m_NormalMap); ++i)
 	{
-		swprintf_s(pathname, ARRAY_SIZE(pathname), L"art/textures/animated/water/%ls/normal00%02d.png", m_WaterType.c_str(), static_cast<int>(i) + 1);
+		swprintf_s(pathname, ARRAY_SIZE(pathname), L"art/textures/animated/water/%ls/normal00%02d.png", type.c_str(), static_cast<int>(i) + 1);
 		CTextureProperties textureProps(pathname);
 		textureProps.SetWrap(GL_REPEAT);
 		textureProps.SetMaxAnisotropy(4);
@@ -360,108 +278,48 @@ void WaterManager::ReloadWaterNormalTextures()
 	}
 }
 
-///////////////////////////////////////////////////////////////////
-// Unload water textures
-void WaterManager::UnloadWaterTextures()
+void WaterRendering::OnRendererResize()
 {
-	for(size_t i = 0; i < ARRAY_SIZE(m_WaterTexture); i++)
-		m_WaterTexture[i].reset();
-
-	if (!g_Renderer.GetCapabilities().m_PrettyWater)
+	if (!m_ReflectionTexture)
 		return;
 
-	for(size_t i = 0; i < ARRAY_SIZE(m_NormalMap); i++)
-		m_NormalMap[i].reset();
+	// Use screen-sized textures for minimum artifacts.
+	m_RefTextureSize = g_Renderer.GetHeight();
+	m_RefTextureSize = round_up_to_pow2(m_RefTextureSize);
 
-	glDeleteTextures(1, &m_ReflectionTexture);
-	glDeleteTextures(1, &m_RefractionTexture);
-	pglDeleteFramebuffersEXT(1, &m_RefractionFbo);
-	pglDeleteFramebuffersEXT(1, &m_ReflectionFbo);
+	glBindTexture(GL_TEXTURE_2D, m_ReflectionTexture);
+	glTexImage2D( GL_TEXTURE_2D, 0, GL_RGBA8, (GLsizei)m_RefTextureSize, (GLsizei)m_RefTextureSize, 0,  GL_RGBA, GL_UNSIGNED_BYTE, 0);
+
+	glBindTexture(GL_TEXTURE_2D, m_RefractionTexture);
+	glTexImage2D( GL_TEXTURE_2D, 0, GL_RGBA8, (GLsizei)m_RefTextureSize, (GLsizei)m_RefTextureSize, 0,  GL_RGBA, GL_UNSIGNED_BYTE, 0);
+
+	glBindTexture(GL_TEXTURE_2D, m_ReflFboDepthTexture);
+	glTexImage2D( GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32, (GLsizei)m_RefTextureSize, (GLsizei)m_RefTextureSize, 0,  GL_DEPTH_COMPONENT, GL_UNSIGNED_SHORT, NULL);
+
+	glBindTexture(GL_TEXTURE_2D, m_RefrFboDepthTexture);
+	glTexImage2D( GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32, (GLsizei)m_RefTextureSize, (GLsizei)m_RefTextureSize, 0,  GL_DEPTH_COMPONENT, GL_UNSIGNED_SHORT, NULL);
+
+	glBindTexture(GL_TEXTURE_2D, m_FancyTexture);
+	glTexImage2D( GL_TEXTURE_2D, 0, GL_RGBA8, (GLsizei)g_Renderer.GetWidth(), (GLsizei)g_Renderer.GetHeight(), 0,  GL_RGBA, GL_UNSIGNED_SHORT, NULL);
+
+	glBindTexture(GL_TEXTURE_2D, m_FancyTextureDepth);
+	glTexImage2D( GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32, (GLsizei)g_Renderer.GetWidth(), (GLsizei)g_Renderer.GetHeight(), 0,  GL_DEPTH_COMPONENT, GL_UNSIGNED_SHORT, NULL);
 }
 
-template<bool Transpose>
-static inline void ComputeDirection(float* distanceMap, const u16* heightmap, float waterHeight, size_t SideSize, size_t maxLevel)
+CTexturePtr WaterRendering::GetTexture(float time, int advance) const
 {
-#define ABOVEWATER(x, z) (HEIGHT_SCALE * heightmap[z*SideSize + x] >= waterHeight)
-#define UPDATELOOKAHEAD \
-	for (; lookahead <= id2+maxLevel && lookahead < SideSize && \
-	       ((!Transpose && !ABOVEWATER(lookahead, id1)) || (Transpose && !ABOVEWATER(id1, lookahead))); ++lookahead)
-	// Algorithm:
-	// We want to know the distance to the closest shore point. Go through each line/column,
-	// keep track of when we encountered the last shore point and how far ahead the next one is.
-	for (size_t id1 = 0; id1 < SideSize; ++id1)
+	if (g_RenderingOptions.GetWaterEffects())
 	{
-		size_t id2 = 0;
-		const size_t& x = Transpose ? id1 : id2;
-		const size_t& z = Transpose ? id2 : id1;
-
-		size_t level = ABOVEWATER(x, z) ? 0 : maxLevel;
-		size_t lookahead = (size_t)(level > 0);
-
-		UPDATELOOKAHEAD;
-
-		// start moving
-		for (; id2 < SideSize; ++id2)
-		{
-			// update current level
-			if (ABOVEWATER(x, z))
-				level = 0;
-			else
-				level = std::min(level+1, maxLevel);
-
-			// move lookahead
-			if (lookahead == id2)
-				++lookahead;
-			UPDATELOOKAHEAD;
-
-			// This is the important bit: set the distance to either:
-			// - the distance to the previous shore point (level)
-			// - the distance to the next shore point (lookahead-id2)
-			distanceMap[z*SideSize + x] = std::min(distanceMap[z*SideSize + x], (float)std::min(lookahead-id2, level));
-		}
+		double period = 8;
+		return m_NormalMap[((int)(time*60/period) + advance) % 60];
 	}
-#undef ABOVEWATER
-#undef UPDATELOOKAHEAD
+	double period = 1.6f;
+	return m_WaterTexture[((int)(time*60/period) + advance) % 60];
 }
 
-///////////////////////////////////////////////////////////////////
-// Calculate our binary heightmap from the terrain heightmap.
-void WaterManager::RecomputeDistanceHeightmap()
+void WaterRendering::CreateWaveMeshes()
 {
-	CTerrain* terrain = g_Game->GetWorld()->GetTerrain();
-	if (!terrain || !terrain->GetHeightMap())
-		return;
-
-	size_t SideSize = m_MapSize;
-
-	// we want to look ahead some distance, but not too much (less efficient and not interesting). This is our lookahead.
-	const size_t maxLevel = 5;
-
-	if (m_DistanceHeightmap == NULL)
-	{
-		m_DistanceHeightmap = new float[SideSize*SideSize];
-		std::fill(m_DistanceHeightmap, m_DistanceHeightmap + SideSize*SideSize, (float)maxLevel);
-	}
-
-	// Create a manhattan-distance heightmap.
-	// This could be refined to only be done near the coast itself, but it's probably not necessary.
-
-	u16* heightmap = terrain->GetHeightMap();
-
-	ComputeDirection<false>(m_DistanceHeightmap, heightmap, m_WaterHeight, SideSize, maxLevel);
-	ComputeDirection<true>(m_DistanceHeightmap, heightmap, m_WaterHeight, SideSize, maxLevel);
-}
-
-// This requires m_DistanceHeightmap to be defined properly.
-void WaterManager::CreateWaveMeshes()
-{
-	if (m_MapSize == 0)
-		return;
-
-	CTerrain* terrain = g_Game->GetWorld()->GetTerrain();
-	if (!terrain || !terrain->GetHeightMap())
-		return;
-
+	// Cleanup
 	for (WaveObject* const& obj : m_ShoreWaves)
 	{
 		if (obj->m_VBvertices)
@@ -476,17 +334,24 @@ void WaterManager::CreateWaveMeshes()
 		m_ShoreWaves_VBIndices = NULL;
 	}
 
-	if (m_Waviness < 5.0f && m_WaterType != L"ocean")
+	CTerrain* terrain = g_Game->GetWorld()->GetTerrain();
+	if (!terrain || !terrain->GetHeightMap())
 		return;
 
-	size_t SideSize = m_MapSize;
+	if (!m_WaterManager->m_DistanceHeightmap)
+		return;
+
+	if (m_WaterManager->m_Waviness < 5.0f && m_WaterManager->GetWaterType() != L"ocean")
+		return;
+
+	size_t SideSize = m_WaterManager->m_MapSize;
 
 	// First step: get the points near the coast.
 	std::set<int> CoastalPointsSet;
 	for (size_t z = 1; z < SideSize-1; ++z)
 		for (size_t x = 1; x < SideSize-1; ++x)
 			// get the points not on the shore but near it, ocean-side
-			if (m_DistanceHeightmap[z*m_MapSize + x] > 0.5f && m_DistanceHeightmap[z*m_MapSize + x] < 1.5f)
+			if (m_WaterManager->m_DistanceHeightmap[z*SideSize + x] > 0.5f && m_WaterManager->m_DistanceHeightmap[z*SideSize + x] < 1.5f)
 				CoastalPointsSet.insert((z)*SideSize + x);
 
 	// Second step: create chains out of those coastal points.
@@ -668,15 +533,15 @@ void WaterManager::CreateWaveMeshes()
 					break;
 				}
 
-				if (terrain->GetExactGroundLevel(pos.X+perp.X*1.5f, pos.Y+perp.Y*1.5f) > m_WaterHeight)
+				if (terrain->GetExactGroundLevel(pos.X+perp.X*1.5f, pos.Y+perp.Y*1.5f) > m_WaterManager->GetWaterHeight())
 					sign = -1;
 
-				avgDepth += terrain->GetExactGroundLevel(pos.X+sign*perp.X*20.0f, pos.Y+sign*perp.Y*20.0f) - m_WaterHeight;
+				avgDepth += terrain->GetExactGroundLevel(pos.X+sign*perp.X*20.0f, pos.Y+sign*perp.Y*20.0f) - m_WaterManager->GetWaterHeight();
 
 				float localOutmost = -2.0f;
 				while (localOutmost < 0.0f)
 				{
-					float depth = terrain->GetExactGroundLevel(pos.X+sign*perp.X*localOutmost, pos.Y+sign*perp.Y*localOutmost) - m_WaterHeight;
+					float depth = terrain->GetExactGroundLevel(pos.X+sign*perp.X*localOutmost, pos.Y+sign*perp.Y*localOutmost) - m_WaterManager->GetWaterHeight();
 					if (depth < 0.0f || depth > 0.6f)
 						localOutmost += 0.2f;
 					else
@@ -698,7 +563,7 @@ void WaterManager::CreateWaveMeshes()
 				j += 3;
 				continue;
 			}
-			outmost = -2.5f + outmost * m_Waviness/10.0f;
+			outmost = -2.5f + outmost * m_WaterManager->m_Waviness/10.0f;
 
 			avgDepth /= width;
 
@@ -779,27 +644,27 @@ void WaterManager::CreateWaveMeshes()
 				{
 					float terrHeight = 0.05f + terrain->GetExactGroundLevel(pos.X+sign*perp.X*(perpT1[t]+outmost),
 																			pos.Y+sign*perp.Y*(perpT1[t]+outmost));
-					point[t].m_BasePosition = CVector3D(pos.X+sign*perp.X*(perpT1[t]+outmost), baseHeight + heightT1[t]*sideNess + std::max(m_WaterHeight,terrHeight),
+					point[t].m_BasePosition = CVector3D(pos.X+sign*perp.X*(perpT1[t]+outmost), baseHeight + heightT1[t]*sideNess + std::max(m_WaterManager->GetWaterHeight(),terrHeight),
 														pos.Y+sign*perp.Y*(perpT1[t]+outmost));
 				}
 				for (size_t t = 0; t < 9; ++t)
 				{
 					float terrHeight = 0.05f + terrain->GetExactGroundLevel(pos.X+sign*perp.X*(perpT2[t]+outmost),
 																			pos.Y+sign*perp.Y*(perpT2[t]+outmost));
-					point[t].m_ApexPosition = CVector3D(pos.X+sign*perp.X*(perpT2[t]+outmost), baseHeight + heightT1[t]*sideNess + std::max(m_WaterHeight,terrHeight),
+					point[t].m_ApexPosition = CVector3D(pos.X+sign*perp.X*(perpT2[t]+outmost), baseHeight + heightT1[t]*sideNess + std::max(m_WaterManager->GetWaterHeight(),terrHeight),
 														pos.Y+sign*perp.Y*(perpT2[t]+outmost));
 				}
 				for (size_t t = 0; t < 9; ++t)
 				{
 					float terrHeight = 0.05f + terrain->GetExactGroundLevel(pos.X+sign*perp.X*(perpT3[t]+outmost*sideNess),
 																			pos.Y+sign*perp.Y*(perpT3[t]+outmost*sideNess));
-					point[t].m_SplashPosition = CVector3D(pos.X+sign*perp.X*(perpT3[t]+outmost*sideNess), baseHeight + heightT2[t]*sideNess + std::max(m_WaterHeight,terrHeight), pos.Y+sign*perp.Y*(perpT3[t]+outmost*sideNess));
+					point[t].m_SplashPosition = CVector3D(pos.X+sign*perp.X*(perpT3[t]+outmost*sideNess), baseHeight + heightT2[t]*sideNess + std::max(m_WaterManager->GetWaterHeight(),terrHeight), pos.Y+sign*perp.Y*(perpT3[t]+outmost*sideNess));
 				}
 				for (size_t t = 0; t < 9; ++t)
 				{
 					float terrHeight = 0.05f + terrain->GetExactGroundLevel(pos.X+sign*perp.X*(perpT4[t]+outmost),
 																			pos.Y+sign*perp.Y*(perpT4[t]+outmost));
-					point[t].m_RetreatPosition = CVector3D(pos.X+sign*perp.X*(perpT4[t]+outmost), baseHeight + heightT3[t]*sideNess + std::max(m_WaterHeight,terrHeight),
+					point[t].m_RetreatPosition = CVector3D(pos.X+sign*perp.X*(perpT4[t]+outmost), baseHeight + heightT3[t]*sideNess + std::max(m_WaterManager->GetWaterHeight(),terrHeight),
 														   pos.Y+sign*perp.Y*(perpT4[t]+outmost));
 				}
 
@@ -842,12 +707,12 @@ void WaterManager::CreateWaveMeshes()
 	}
 }
 
-void WaterManager::RenderWaves(const CFrustum& frustrum)
+void WaterRendering::RenderWaves(const CFrustum& frustrum)
 {
 #if CONFIG2_GLES
-#warning Fix WaterManager::RenderWaves on GLES
+#warning Fix WaterRendering::RenderWaves on GLES
 #else
-	if (g_Renderer.m_SkipSubmit || !m_WaterFancyEffects)
+	if (g_Renderer.m_SkipSubmit || g_RenderingOptions.GetWaterFancyEffects())
 		return;
 
 	pglBindFramebufferEXT(GL_FRAMEBUFFER_EXT, m_FancyEffectsFBO);
@@ -871,7 +736,7 @@ void WaterManager::RenderWaves(const CFrustum& frustrum)
 	shader->BindTexture(str_waveTex, m_WaveTex);
 	shader->BindTexture(str_foamTex, m_FoamTex);
 
-	shader->Uniform(str_time, (float)m_WaterTexTimer);
+	shader->Uniform(str_time, (float)g_Renderer.GetTimeManager().GetGlobalTime());
 	shader->Uniform(str_transform, g_Renderer.GetViewCamera().GetViewProjection());
 
 	for (size_t a = 0; a < m_ShoreWaves.size(); ++a)
@@ -915,182 +780,4 @@ void WaterManager::RenderWaves(const CFrustum& frustrum)
 	glDisable(GL_BLEND);
 	glDepthFunc(GL_LEQUAL);
 #endif
-}
-
-void WaterManager::RecomputeWaterData()
-{
-	if (!m_MapSize)
-		return;
-
-	RecomputeDistanceHeightmap();
-	RecomputeWindStrength();
-	CreateWaveMeshes();
-}
-
-///////////////////////////////////////////////////////////////////
-// Calculate the strength of the wind at a given point on the map.
-void WaterManager::RecomputeWindStrength()
-{
-	if (m_MapSize <= 0)
-		return;
-
-	if (m_WindStrength == nullptr)
-		m_WindStrength = new float[m_MapSize*m_MapSize];
-
-	CTerrain* terrain = g_Game->GetWorld()->GetTerrain();
-	if (!terrain || !terrain->GetHeightMap())
-		return;
-
-	CVector2D windDir = CVector2D(cos(m_WindAngle),sin(m_WindAngle));
-
-	ssize_t windX = round(1.f / windDir.X);
-	ssize_t windY = round(1.f / windDir.Y);
-
-	struct SWindPoint {
-		SWindPoint(size_t x, size_t y, float strength) : X(x), Y(y), windStrength(strength) {}
-		ssize_t X;
-		ssize_t Y;
-		float windStrength;
-	};
-
-	std::vector<SWindPoint> startingPoints;
-	std::vector<std::pair<int, int>> movement; // Every increment, move each starting point by all of these.
-
-	// Compute starting points (one or two edges of the map) and how much to move each computation increment.
-	if (fabs(windDir.X) < 0.01f)
-	{
-		movement.emplace_back(0, windY);
-		startingPoints.reserve(m_MapSize);
-		size_t start = windY > 0 ? 0 : m_MapSize - 1;
-		for (size_t x = 0; x < m_MapSize; ++x)
-			startingPoints.emplace_back(x, start, 0.f);
-	}
-	else if (fabs(windDir.Y) < 0.01f)
-	{
-		movement.emplace_back(windX, 0);
-		size_t start = windX > 0 ? 0 : m_MapSize - 1;
-		for (size_t z = 0; z < m_MapSize; ++z)
-			startingPoints.emplace_back(start, z, 0.f);
-	}
-	else
-	{
-		startingPoints.reserve(m_MapSize * 2);
-		// Points along X.
-		size_t start = windY > 0 ? 0 : m_MapSize - 1;
-		for (size_t x = 0; x < m_MapSize; ++x)
-			startingPoints.emplace_back(x, start, 0.f);
-		// Points along Z, avoid repeating the corner point.
-		start = windX > 0 ? 0 : m_MapSize - 1;
-		if (windY > 0)
-			for (size_t z = 1; z < m_MapSize; ++z)
-				startingPoints.emplace_back(start, z, 0.f);
-		else
-			for (size_t z = 0; z < m_MapSize-1; ++z)
-				startingPoints.emplace_back(start, z, 0.f);
-
-		// Compute movement array.
-		movement.reserve(std::max(std::abs(windX),std::abs(windY)));
-		while (windX != 0 || windY != 0)
-		{
-			std::pair<ssize_t, ssize_t> move = {
-				windX == 0 ? 0 : windX > 0 ? +1 : -1,
-				windY == 0 ? 0 : windY > 0 ? +1 : -1
-			};
-			windX -= move.first;
-			windY -= move.second;
-			movement.push_back(move);
-		}
-	}
-
-	// We have all starting points ready, move them all until the map is covered.
-	for (SWindPoint& point : startingPoints)
-	{
-		// Starting velocity is 1.0 unless in shallow water.
-		m_WindStrength[point.Y * m_MapSize + point.X] = 1.f;
-		float depth = m_WaterHeight - terrain->GetVertexGroundLevel(point.X, point.Y);
-		if (depth > 0.f && depth < 2.f)
-			m_WindStrength[point.Y * m_MapSize + point.X] = depth / 2.f;
-		point.windStrength = m_WindStrength[point.Y * m_MapSize + point.X];
-
-		bool onMap = true;
-		while (onMap)
-			for (size_t step = 0; step < movement.size(); ++step)
-			{
-				// Move wind speed towards the mean.
-				point.windStrength = 0.15f + point.windStrength * 0.85f;
-
-				// Adjust speed based on height difference, a positive height difference slowly increases speed (simulate venturi effect)
-				// and a lower height reduces speed (wind protection from hills/...)
-				float heightDiff = std::max(m_WaterHeight, terrain->GetVertexGroundLevel(point.X + movement[step].first, point.Y + movement[step].second)) -
-								   std::max(m_WaterHeight, terrain->GetVertexGroundLevel(point.X, point.Y));
-				if (heightDiff > 0.f)
-					point.windStrength = std::min(2.f, point.windStrength + std::min(4.f, heightDiff) / 40.f);
-				else
-					point.windStrength = std::max(0.f, point.windStrength + std::max(-4.f, heightDiff) / 5.f);
-
-				point.X += movement[step].first;
-				point.Y += movement[step].second;
-
-				if (point.X < 0 || point.X >= static_cast<ssize_t>(m_MapSize) || point.Y < 0 || point.Y >= static_cast<ssize_t>(m_MapSize))
-				{
-					onMap = false;
-					break;
-				}
-				m_WindStrength[point.Y * m_MapSize + point.X] = point.windStrength;
-			}
-	}
-	// TODO: should perhaps blur a little, or change the above code to incorporate neighboring tiles a bit.
-}
-
-////////////////////////////////////////////////////////////////////////
-// TODO: This will always recalculate for now
-void WaterManager::SetMapSize(size_t size)
-{
-	// TODO: Im' blindly trusting the user here.
-	m_MapSize = size;
-	m_NeedInfoUpdate = true;
-	m_updatei0 = 0;
-	m_updatei1 = size;
-	m_updatej0 = 0;
-	m_updatej1 = size;
-
-	SAFE_ARRAY_DELETE(m_DistanceHeightmap);
-	SAFE_ARRAY_DELETE(m_BlurredNormalMap);
-	SAFE_ARRAY_DELETE(m_WindStrength);
-}
-
-////////////////////////////////////////////////////////////////////////
-// This will set the bools properly
-void WaterManager::UpdateQuality()
-{
-	if (g_RenderingOptions.GetWaterEffects() != m_WaterEffects)
-	{
-		m_WaterEffects = g_RenderingOptions.GetWaterEffects();
-		m_NeedsReloading = true;
-	}
-	if (g_RenderingOptions.GetWaterFancyEffects() != m_WaterFancyEffects)
-	{
-		m_WaterFancyEffects = g_RenderingOptions.GetWaterFancyEffects();
-		m_NeedsReloading = true;
-	}
-	if (g_RenderingOptions.GetWaterRealDepth() != m_WaterRealDepth)
-	{
-		m_WaterRealDepth = g_RenderingOptions.GetWaterRealDepth();
-		m_NeedsReloading = true;
-	}
-	if (g_RenderingOptions.GetWaterRefraction() != m_WaterRefraction)
-	{
-		m_WaterRefraction = g_RenderingOptions.GetWaterRefraction();
-		m_NeedsReloading = true;
-	}
-	if (g_RenderingOptions.GetWaterReflection() != m_WaterReflection)
-	{
-		m_WaterReflection = g_RenderingOptions.GetWaterReflection();
-		m_NeedsReloading = true;
-	}
-}
-
-bool WaterManager::WillRenderFancyWater()
-{
-	return m_RenderWater && g_RenderingOptions.GetWaterEffects() && g_Renderer.GetCapabilities().m_PrettyWater;
 }

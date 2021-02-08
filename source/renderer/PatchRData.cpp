@@ -27,6 +27,7 @@
 #include "graphics/Terrain.h"
 #include "graphics/TerrainTextureEntry.h"
 #include "graphics/TextRenderer.h"
+#include "graphics/WaterManager.h"
 #include "lib/allocators/DynamicArena.h"
 #include "lib/allocators/STLAllocators.h"
 #include "maths/MathUtil.h"
@@ -39,7 +40,6 @@
 #include "renderer/AlphaMapCalculator.h"
 #include "renderer/Renderer.h"
 #include "renderer/TerrainRenderer.h"
-#include "renderer/WaterManager.h"
 #include "simulation2/components/ICmpWaterManager.h"
 #include "simulation2/Simulation2.h"
 
@@ -1244,7 +1244,7 @@ void CPatchRData::BuildWater()
 	u16 water_shore_index_map[PATCH_SIZE+1][PATCH_SIZE+1];
 	memset(water_shore_index_map, 0xFF, sizeof(water_shore_index_map));
 
-	WaterManager* WaterMgr = g_Renderer.GetWaterManager();
+	const WaterManager& waterMgr = g_Game->GetView()->GetWaterManager();
 
 	CPatch* patch = m_Patch;
 	CTerrain* terrain = patch->m_Parent;
@@ -1315,7 +1315,7 @@ void CPatchRData::BuildWater()
 
 				m_WaterBounds += vertex.m_Position;
 
-				vertex.m_WaterData = CVector2D(WaterMgr->m_WindStrength[xx + zz*mapSize], depth);
+				vertex.m_WaterData = CVector2D(waterMgr.GetWindStrength(xx, zz), depth);
 
 				water_index_map[z+moves[i][1]][x+moves[i][0]] = static_cast<u16>(water_vertex_data.size());
 				water_vertex_data.push_back(vertex);
@@ -1427,9 +1427,7 @@ void CPatchRData::RenderWater(CShaderProgramPtr& shader, bool onlyShore, bool fi
 		g_Renderer.m_Stats.m_WaterTris += m_VBWaterIndices->m_Count / 3;
 	}
 
-	if (m_VBWaterShore &&
-	    g_Renderer.GetWaterManager()->m_WaterEffects &&
-	    g_Renderer.GetWaterManager()->m_WaterFancyEffects)
+	if (m_VBWaterShore && g_RenderingOptions.GetWaterEffects() && g_RenderingOptions.GetWaterFancyEffects())
 	{
 		SWaterVertex *base=(SWaterVertex *)m_VBWaterShore->m_Owner->Bind();
 

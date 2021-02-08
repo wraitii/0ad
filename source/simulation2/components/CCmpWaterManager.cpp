@@ -20,11 +20,14 @@
 #include "simulation2/system/Component.h"
 #include "ICmpWaterManager.h"
 
+#include "graphics/GameView.h"
 #include "graphics/RenderableObject.h"
 #include "graphics/Terrain.h"
+#include "graphics/WaterManager.h"
+#include "ps/Game.h"
 #include "renderer/Renderer.h"
-#include "renderer/WaterManager.h"
 #include "simulation2/MessageTypes.h"
+#include "simulation2/components/ICmpTerrain.h"
 
 #include "tools/atlas/GameInterface/GameLoop.h"
 
@@ -34,7 +37,6 @@ public:
 	static void ClassInit(CComponentManager& componentManager)
 	{
 		// No need to subscribe to WaterChanged since we're actually the one sending those.
-		componentManager.SubscribeToMessageType(MT_Interpolate);
 		componentManager.SubscribeToMessageType(MT_TerrainChanged);
 	}
 
@@ -51,13 +53,13 @@ public:
 
 	virtual void Init(const CParamNode& UNUSED(paramNode))
 	{
+		LOGWARNING("Init");
+		if (CRenderer::IsInitialised())
+			g_Game->GetView()->GetMutableWaterManager().SetRenderingEnabled(true);
 	}
 
 	virtual void Deinit()
 	{
-		// Clear the map size & data.
-		if (CRenderer::IsInitialised())
-			g_Renderer.GetWaterManager()->SetMapSize(0);
 	}
 
 	virtual void Serialize(ISerializer& serialize)
@@ -72,45 +74,26 @@ public:
 		deserialize.NumberFixed_Unbounded("height", m_WaterHeight);
 
 		if (CRenderer::IsInitialised())
-			g_Renderer.GetWaterManager()->SetMapSize(GetSimContext().GetTerrain().GetVerticesPerSide());
-
-		RecomputeWaterData();
+			g_Game->GetView()->GetMutableWaterManager().SetMapSize(GetSimContext().GetTerrain().GetVerticesPerSide());
 	}
 
 	virtual void HandleMessage(const CMessage& msg, bool UNUSED(global))
 	{
 		switch (msg.GetType())
 		{
-			case MT_Interpolate:
-			{
-				const CMessageInterpolate& msgData = static_cast<const CMessageInterpolate&> (msg);
-				if (CRenderer::IsInitialised())
-					g_Renderer.GetWaterManager()->m_WaterTexTimer += msgData.deltaSimTime;
-				break;
-			}
 			case MT_TerrainChanged:
 			{
+				LOGWARNING("TerrainChange");
 				// Tell the renderer to redraw part of the map.
 				if (CRenderer::IsInitialised())
 				{
 					const CMessageTerrainChanged& msgData = static_cast<const CMessageTerrainChanged&> (msg);
-					GetSimContext().GetTerrain().MakeDirty(msgData.i0,msgData.j0,msgData.i1,msgData.j1,RENDERDATA_UPDATE_VERTICES);
+					g_Game->GetView()->GetMutableWaterManager().SetMapSize(GetSimContext().GetTerrain().GetVerticesPerSide());
+					g_Game->GetView()->GetMutableWaterManager().MarkDirty(msgData.i0, msgData.i1, msgData.j0, msgData.j1);
 				}
 				break;
 			}
 		}
-	}
-
-	virtual void RecomputeWaterData()
-	{
-		if (CRenderer::IsInitialised())
-		{
-			g_Renderer.GetWaterManager()->RecomputeWaterData();
-			g_Renderer.GetWaterManager()->m_WaterHeight = m_WaterHeight.ToFloat();
-		}
-
-		// Tell the terrain it'll need to recompute its cached render data
-		GetSimContext().GetTerrain().MakeDirty(RENDERDATA_UPDATE_VERTICES);
 	}
 
 	virtual void SetWaterLevel(entity_pos_t h)
@@ -120,7 +103,18 @@ public:
 
 		m_WaterHeight = h;
 
-		RecomputeWaterData();
+		LOGWARNING("SetWaterLevel");
+
+		if (CRenderer::IsInitialised())
+		{
+			g_Game->GetView()->GetMutableWaterManager().SetWaterHeight(m_WaterHeight.ToFloat());
+			CmpPtr<ICmpTerrain> cmpTerrain(GetSystemEntity());
+			if (cmpTerrain && cmpTerrain->IsLoaded())
+			{
+				i32 size = cmpTerrain->GetVerticesPerSide();
+				g_Game->GetView()->GetMutableWaterManager().MarkDirty(0, size, 0, size);
+			}
+		}
 
 		CMessageWaterChanged msg;
 		GetSimContext().GetComponentManager().BroadcastMessage(msg);

@@ -51,7 +51,7 @@ class RenderPathVertexShader;
 class ShadowMap;
 class SkyManager;
 class TerrainRenderer;
-class WaterManager;
+class WaterRendering;
 
 // rendering modes
 enum ERenderMode { WIREFRAME, SOLID, EDGED_FACES };
@@ -243,13 +243,6 @@ public:
 	const CCamera& GetCullCamera() const { return m_CullCamera; }
 
 	/**
-	 * GetWaterManager: Return the renderer's water manager.
-	 *
-	 * @return the WaterManager object used by the renderer
-	 */
-	WaterManager* GetWaterManager() { return m_WaterManager; }
-
-	/**
 	 * GetSkyManager: Return the renderer's sky manager.
 	 *
 	 * @return the SkyManager object used by the renderer
@@ -263,6 +256,8 @@ public:
 	CParticleManager& GetParticleManager();
 
 	TerrainRenderer& GetTerrainRenderer();
+
+	WaterRendering& GetWaterRendering();
 
 	CMaterialManager& GetMaterialManager();
 
@@ -411,12 +406,6 @@ protected:
 	void EnumCaps();
 	// per-frame renderer stats
 	Stats m_Stats;
-
-	/**
-	 * m_WaterManager: the WaterManager object used for water textures and settings
-	 * (e.g. water color, water height)
-	 */
-	WaterManager* m_WaterManager;
 
 	/**
 	 * m_SkyManager: the SkyManager object used for sky textures and settings

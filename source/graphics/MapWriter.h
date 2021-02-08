@@ -45,7 +45,7 @@ public:
 	CMapWriter();
 	// SaveMap: try to save the current map to the given file
 	void SaveMap(const VfsPath& pathname, CTerrain* pTerr,
-									WaterManager* pWaterMan, SkyManager* pSkyMan,
+									const WaterManager* pWaterMan, SkyManager* pSkyMan,
 									CLightEnv* pLightEnv, CCamera* pCamera,
 									CCinemaManager* pCinema, CPostprocManager* pPostproc,
 									CSimulation2* pSimulation2);
@@ -62,7 +62,7 @@ private:
 		std::vector<STileDesc>& tileIndices);
 
 	// WriteXML: output some other data (entities, etc) in XML format
-	void WriteXML(const VfsPath& pathname, WaterManager* pWaterMan,
+	void WriteXML(const VfsPath& pathname, const WaterManager* pWaterMan,
 								SkyManager* pSkyMan, CLightEnv* pLightEnv, CCamera* pCamera,
 								CPostprocManager* pPostproc,
 								CSimulation2* pSimulation2);

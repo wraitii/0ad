@@ -41,6 +41,7 @@ struct SOverlayTexturedLine;
 struct SOverlaySprite;
 struct SOverlayQuad;
 struct SOverlaySphere;
+class WaterManager;
 
 class SceneCollector;
 

@@ -28,7 +28,6 @@
 class CPatch;
 class CSimulation2;
 class ShadowMap;
-class WaterManager;
 
 struct TerrainRendererInternals;
 

@@ -76,7 +76,6 @@ void CWorld::RegisterInit(const CStrW& mapFile, const ScriptContext& cx, JS::Han
 		{
 			CTriggerManager* pTriggerManager = NULL;
 			m_MapReader->LoadMap(mapfilename, cx, settings, m_Terrain,
-				CRenderer::IsInitialised() ? g_Renderer.GetWaterManager() : NULL,
 				CRenderer::IsInitialised() ? g_Renderer.GetSkyManager() : NULL,
 				&g_LightEnv, m_pGame->GetView(),
 				m_pGame->GetView() ? m_pGame->GetView()->GetCinema() : NULL,
@@ -99,7 +98,6 @@ void CWorld::RegisterInitRMS(const CStrW& scriptFile, const ScriptContext& cx, J
 	// If scriptFile is empty, a blank map will be generated using settings (no RMS run)
 	CTriggerManager* pTriggerManager = NULL;
 	m_MapReader->LoadRandomMap(scriptFile, cx, settings, m_Terrain,
-		CRenderer::IsInitialised() ? g_Renderer.GetWaterManager() : NULL,
 		CRenderer::IsInitialised() ? g_Renderer.GetSkyManager() : NULL,
 		&g_LightEnv, m_pGame->GetView(),
 		m_pGame->GetView() ? m_pGame->GetView()->GetCinema() : NULL,

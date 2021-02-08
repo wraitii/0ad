@@ -24,6 +24,7 @@
 #include "graphics/ModelDef.h"
 #include "graphics/ShaderManager.h"
 #include "graphics/TextureManager.h"
+#include "graphics/WaterManager.h"
 #include "lib/allocators/DynamicArena.h"
 #include "lib/allocators/STLAllocators.h"
 #include "lib/hash.h"
@@ -39,7 +40,7 @@
 #include "renderer/RenderModifiers.h"
 #include "renderer/SkyManager.h"
 #include "renderer/TimeManager.h"
-#include "renderer/WaterManager.h"
+#include "renderer/WaterRendering.h"
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
 // ModelRenderer implementation
@@ -721,13 +722,10 @@ void ShaderModelRenderer::Render(const RenderModifierPtr& modifier, const CShade
 							}
 							else if (rq.first == RQUERY_WATER_TEX)
 							{
-								WaterManager* WaterMgr = g_Renderer.GetWaterManager();
-								double time = WaterMgr->m_WaterTexTimer;
-								double period = 1.6;
-								int curTex = static_cast<int>(time * 60.0 / period) % 60;
-
-								if (WaterMgr->m_RenderWater && WaterMgr->WillRenderFancyWater())
-									shader->BindTexture(str_waterTex, WaterMgr->m_NormalMap[curTex]);
+								double time = g_Renderer.GetTimeManager().GetGlobalTime();
+								CTexturePtr waterTex = g_Renderer.GetWaterRendering().GetTexture(time);
+								if (waterTex)
+									shader->BindTexture(str_waterTex, waterTex);
 								else
 									shader->BindTexture(str_waterTex, g_Renderer.GetTextureManager().GetErrorTexture());
 							}

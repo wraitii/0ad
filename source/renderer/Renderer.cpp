@@ -58,6 +58,7 @@
 #include "graphics/Terrain.h"
 #include "graphics/Texture.h"
 #include "graphics/TextureManager.h"
+#include "graphics/WaterManager.h"
 #include "renderer/HWLightingModelRenderer.h"
 #include "renderer/InstancingModelRenderer.h"
 #include "renderer/ModelRenderer.h"
@@ -73,7 +74,7 @@
 #include "renderer/TerrainRenderer.h"
 #include "renderer/TimeManager.h"
 #include "renderer/VertexBufferManager.h"
-#include "renderer/WaterManager.h"
+#include "renderer/WaterRendering.h"
 #include "scriptinterface/ScriptInterface.h"
 
 struct SScreenRect
@@ -265,8 +266,7 @@ public:
 	/// Shader manager
 	CShaderManager shaderManager;
 
-	/// Water manager
-	WaterManager waterManager;
+	WaterRendering waterRendering;
 
 	/// Sky manager
 	SkyManager skyManager;
@@ -412,7 +412,6 @@ public:
 CRenderer::CRenderer()
 {
 	m = new CRendererInternals;
-	m_WaterManager = &m->waterManager;
 	m_SkyManager = &m->skyManager;
 
 	g_ProfileViewer.AddRootTable(&m->profileTable);
@@ -630,7 +629,7 @@ void CRenderer::Resize(int width, int height)
 
 	m->postprocManager.Resize();
 
-	m_WaterManager->Resize();
+	m->waterRendering.OnRendererResize();
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -924,7 +923,7 @@ void CRenderer::SetObliqueFrustumClipping(CCamera& camera, const CVector4D& worl
 
 void CRenderer::ComputeReflectionCamera(CCamera& camera, const CBoundingBoxAligned& scissor) const
 {
-	WaterManager& wm = m->waterManager;
+	const WaterManager& wm = g_Game->GetView()->GetWaterManager();
 
 	ENSURE(m_ViewCamera.GetProjectionType() == CCamera::PERSPECTIVE);
 	float fov = m_ViewCamera.GetFOV();
@@ -942,15 +941,15 @@ void CRenderer::ComputeReflectionCamera(CCamera& camera, const CBoundingBoxAlign
 	// the whole screen despite being rendered into a square, and cover slightly more
 	// of the view so we can see wavy reflections of slightly off-screen objects.
 	camera.m_Orientation.Scale(1, -1, 1);
-	camera.m_Orientation.Translate(0, 2*wm.m_WaterHeight, 0);
+	camera.m_Orientation.Translate(0, 2*wm.GetWaterHeight(), 0);
 	camera.UpdateFrustum(scissor);
 	// Clip slightly above the water to improve reflections of objects on the water
 	// when the reflections are distorted.
-	camera.ClipFrustum(CVector4D(0, 1, 0, -wm.m_WaterHeight + 2.0f));
+	camera.ClipFrustum(CVector4D(0, 1, 0, -wm.GetWaterHeight() + 2.0f));
 
 	SViewPort vp;
-	vp.m_Height = wm.m_RefTextureSize;
-	vp.m_Width = wm.m_RefTextureSize;
+	vp.m_Height = m->waterRendering.GetTextureSize();
+	vp.m_Width = m->waterRendering.GetTextureSize();
 	vp.m_X = 0;
 	vp.m_Y = 0;
 	camera.SetViewPort(vp);
@@ -959,14 +958,14 @@ void CRenderer::ComputeReflectionCamera(CCamera& camera, const CBoundingBoxAlign
 	scaleMat.SetScaling(m_Height/float(std::max(1, m_Width)), 1.0f, 1.0f);
 	camera.SetProjection(scaleMat * camera.GetProjection());
 
-	CVector4D camPlane(0, 1, 0, -wm.m_WaterHeight + 0.5f);
+	CVector4D camPlane(0, 1, 0, -wm.GetWaterHeight() + 0.5f);
 	SetObliqueFrustumClipping(camera, camPlane);
 
 }
 
 void CRenderer::ComputeRefractionCamera(CCamera& camera, const CBoundingBoxAligned& scissor) const
 {
-	WaterManager& wm = m->waterManager;
+	const WaterManager& wm = g_Game->GetView()->GetWaterManager();
 
 	ENSURE(m_ViewCamera.GetProjectionType() == CCamera::PERSPECTIVE);
 	float fov = m_ViewCamera.GetFOV();
@@ -983,11 +982,11 @@ void CRenderer::ComputeRefractionCamera(CCamera& camera, const CBoundingBoxAlign
 	// the whole screen despite being rendered into a square, and cover slightly more
 	// of the view so we can see wavy refractions of slightly off-screen objects.
 	camera.UpdateFrustum(scissor);
-	camera.ClipFrustum(CVector4D(0, -1, 0, wm.m_WaterHeight + 0.5f));	// add some to avoid artifacts near steep shores.
+	camera.ClipFrustum(CVector4D(0, -1, 0, wm.GetWaterHeight() + 0.5f));	// add some to avoid artifacts near steep shores.
 
 	SViewPort vp;
-	vp.m_Height = wm.m_RefTextureSize;
-	vp.m_Width = wm.m_RefTextureSize;
+	vp.m_Height = m->waterRendering.GetTextureSize();
+	vp.m_Width = m->waterRendering.GetTextureSize();
 	vp.m_X = 0;
 	vp.m_Y = 0;
 	camera.SetViewPort(vp);
@@ -1003,8 +1002,6 @@ void CRenderer::RenderReflections(const CShaderDefines& context, const CBounding
 {
 	PROFILE3_GPU("water reflections");
 
-	WaterManager& wm = m->waterManager;
-
 	// Remember old camera
 	CCamera normalCamera = m_ViewCamera;
 
@@ -1013,10 +1010,10 @@ void CRenderer::RenderReflections(const CShaderDefines& context, const CBounding
 	m->SetOpenGLCamera(m_ViewCamera);
 
 	// Save the model-view-projection matrix so the shaders can use it for projective texturing
-	wm.m_ReflectionMatrix = m_ViewCamera.GetViewProjection();
+	m->waterRendering.m_ReflectionMatrix = m_ViewCamera.GetViewProjection();
 
-	float vpHeight = wm.m_RefTextureSize;
-	float vpWidth = wm.m_RefTextureSize;
+	float vpHeight = m->waterRendering.GetTextureSize();
+	float vpWidth = m->waterRendering.GetTextureSize();
 
 	SScreenRect screenScissor;
 	screenScissor.x1 = (GLint)floor((scissor[0].X*0.5f+0.5f)*vpWidth);
@@ -1028,7 +1025,7 @@ void CRenderer::RenderReflections(const CShaderDefines& context, const CBounding
 	glScissor(screenScissor.x1, screenScissor.y1, screenScissor.x2 - screenScissor.x1, screenScissor.y2 - screenScissor.y1);
 
 	// try binding the framebuffer
-	pglBindFramebufferEXT(GL_FRAMEBUFFER_EXT, wm.m_ReflectionFbo);
+	pglBindFramebufferEXT(GL_FRAMEBUFFER_EXT, m->waterRendering.m_ReflectionFbo);
 
 	glClearColor(0.5f,0.5f,1.0f,0.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -1076,25 +1073,23 @@ void CRenderer::RenderRefractions(const CShaderDefines& context, const CBounding
 {
 	PROFILE3_GPU("water refractions");
 
-	WaterManager& wm = m->waterManager;
-
 	// Remember old camera
 	CCamera normalCamera = m_ViewCamera;
 
 	ComputeRefractionCamera(m_ViewCamera, scissor);
 
-	CVector4D camPlane(0, -1, 0, wm.m_WaterHeight + 2.0f);
+	CVector4D camPlane(0, -1, 0, g_Game->GetView()->GetWaterManager().GetWaterHeight() + 2.0f);
 	SetObliqueFrustumClipping(m_ViewCamera, camPlane);
 
 	m->SetOpenGLCamera(m_ViewCamera);
 
 	// Save the model-view-projection matrix so the shaders can use it for projective texturing
-	wm.m_RefractionMatrix = m_ViewCamera.GetViewProjection();
-	wm.m_RefractionProjInvMatrix = m_ViewCamera.GetProjection().GetInverse();
-	wm.m_RefractionViewInvMatrix = m_ViewCamera.GetOrientation();
+	m->waterRendering.m_RefractionMatrix = m_ViewCamera.GetViewProjection();
+	m->waterRendering.m_RefractionProjInvMatrix = m_ViewCamera.GetProjection().GetInverse();
+	m->waterRendering.m_RefractionViewInvMatrix = m_ViewCamera.GetOrientation();
 
-	float vpHeight = wm.m_RefTextureSize;
-	float vpWidth = wm.m_RefTextureSize;
+	float vpHeight = m->waterRendering.GetTextureSize();
+	float vpWidth = m->waterRendering.GetTextureSize();
 
 	SScreenRect screenScissor;
 	screenScissor.x1 = (GLint)floor((scissor[0].X*0.5f+0.5f)*vpWidth);
@@ -1106,7 +1101,7 @@ void CRenderer::RenderRefractions(const CShaderDefines& context, const CBounding
 	glScissor(screenScissor.x1, screenScissor.y1, screenScissor.x2 - screenScissor.x1, screenScissor.y2 - screenScissor.y1);
 
 	// try binding the framebuffer
-	pglBindFramebufferEXT(GL_FRAMEBUFFER_EXT, wm.m_RefractionFbo);
+	pglBindFramebufferEXT(GL_FRAMEBUFFER_EXT, m->waterRendering.m_RefractionFbo);
 
 	glClearColor(1.0f,0.0f,0.0f,0.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -1301,9 +1296,10 @@ void CRenderer::RenderSubmissions(const CBoundingBoxAligned& waterScissor)
 
 	ogl_WarnIfError();
 
-	if (m_WaterManager->m_RenderWater)
+	bool renderWater = g_Game->GetView()->GetWaterManager().IsRenderingEnabled();
+	if (renderWater)
 	{
-		if (waterScissor.GetVolume() > 0 && m_WaterManager->WillRenderFancyWater())
+		if (waterScissor.GetVolume() > 0 && g_RenderingOptions.GetWaterEffects())
 		{
 			PROFILE3_GPU("water scissor");
 			RenderReflections(context, waterScissor);
@@ -1348,9 +1344,9 @@ void CRenderer::RenderSubmissions(const CBoundingBoxAligned& waterScissor)
 	ogl_WarnIfError();
 
 	// render water
-	if (m_WaterManager->m_RenderWater && g_Game && waterScissor.GetVolume() > 0)
+	if (renderWater && g_Game && waterScissor.GetVolume() > 0)
 	{
-		if (m_WaterManager->WillRenderFancyWater())
+		if (g_RenderingOptions.GetWaterEffects())
 		{
 			// Render transparent stuff, but only the solid parts that can occlude block water.
 			RenderTransparentModels(context, cullGroup, TRANSPARENT_OPAQUE, false);
@@ -1666,11 +1662,11 @@ void CRenderer::RenderScene(Scene& scene)
 	}
 
 	CBoundingBoxAligned waterScissor;
-	if (m_WaterManager->m_RenderWater)
+	if (g_Game->GetView()->GetWaterManager().IsRenderingEnabled())
 	{
 		waterScissor = m->terrainRenderer.ScissorWater(CULL_DEFAULT, m_ViewCamera.GetViewProjection());
 
-		if (waterScissor.GetVolume() > 0 && m_WaterManager->WillRenderFancyWater())
+		if (waterScissor.GetVolume() > 0 && g_RenderingOptions.GetWaterEffects())
 		{
 			if (g_RenderingOptions.GetWaterReflection())
 			{
@@ -1693,7 +1689,7 @@ void CRenderer::RenderScene(Scene& scene)
 			}
 
 			// Render the waves to the Fancy effects texture
-			m_WaterManager->RenderWaves(frustum);
+			m->waterRendering.RenderWaves(frustum);
 		}
 	}
 
@@ -1906,7 +1902,7 @@ Status CRenderer::ReloadChangedFileCB(void* param, const VfsPath& path)
 void CRenderer::MakeShadersDirty()
 {
 	m->ShadersDirty = true;
-	m_WaterManager->m_NeedsReloading = true;
+	m->waterRendering.fancyWaterShader.reset();
 }
 
 CTextureManager& CRenderer::GetTextureManager()
@@ -1927,6 +1923,11 @@ CParticleManager& CRenderer::GetParticleManager()
 TerrainRenderer& CRenderer::GetTerrainRenderer()
 {
 	return m->terrainRenderer;
+}
+
+WaterRendering& CRenderer::GetWaterRendering()
+{
+	return m->waterRendering;
 }
 
 CTimeManager& CRenderer::GetTimeManager()

@@ -25,8 +25,8 @@
 #include "simulation2/MessageTypes.h"
 
 #include "graphics/Terrain.h"
+#include "graphics/WaterManager.h"
 #include "renderer/Renderer.h"
-#include "renderer/WaterManager.h"
 #include "maths/Vector3D.h"
 
 class CCmpTerrain : public ICmpTerrain
@@ -119,7 +119,7 @@ public:
 		return m_Terrain;
 	}
 
-	virtual void ReloadTerrain(bool ReloadWater)
+	virtual void ReloadTerrain()
 	{
 		// TODO: should refactor this code to be nicer
 
@@ -143,11 +143,6 @@ public:
 					vertices);
 		}
 
-		if (ReloadWater && CRenderer::IsInitialised())
-		{
-			g_Renderer.GetWaterManager()->SetMapSize(vertices);
-			g_Renderer.GetWaterManager()->RecomputeWaterData();
-		}
 		MakeDirty(0, 0, tiles+1, tiles+1);
 	}
 

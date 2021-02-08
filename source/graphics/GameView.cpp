@@ -35,6 +35,7 @@
 #include "graphics/TerritoryTexture.h"
 #include "graphics/Unit.h"
 #include "graphics/UnitManager.h"
+#include "graphics/WaterManager.h"
 #include "graphics/scripting/JSInterface_GameView.h"
 #include "lib/input.h"
 #include "lib/timer.h"
@@ -56,7 +57,6 @@
 #include "ps/TouchInput.h"
 #include "ps/World.h"
 #include "renderer/Renderer.h"
-#include "renderer/WaterManager.h"
 #include "simulation2/Simulation2.h"
 #include "simulation2/components/ICmpPosition.h"
 #include "simulation2/components/ICmpRangeManager.h"
@@ -88,6 +88,7 @@ public:
 	CObjectManager ObjectManager;
 	CLOSTexture LOSTexture;
 	CTerritoryTexture TerritoryTexture;
+	WaterManager WaterManager;
 
 	/**
 	 * this camera controls the eye position when rendering
@@ -206,6 +207,17 @@ CTerritoryTexture& CGameView::GetTerritoryTexture()
 	return m->TerritoryTexture;
 }
 
+const WaterManager& CGameView::GetWaterManager() const
+{
+	return m->WaterManager;
+}
+
+WaterManager& CGameView::GetMutableWaterManager()
+{
+	return m->WaterManager;
+}
+
+
 int CGameView::Initialize()
 {
 	m->CameraController->LoadConfig();
@@ -232,6 +244,8 @@ void CGameView::BeginFrame()
 
 	CheckLightEnv();
 
+	m->WaterManager.RecomputeWaterDataIfNeeded();
+
 	m->Game->CachePlayerColors();
 }
 
@@ -249,7 +263,7 @@ void CGameView::EnumerateObjects(const CFrustum& frustum, SceneCollector* c)
 	PROFILE3("submit terrain");
 
 	CTerrain* pTerrain = m->Game->GetWorld()->GetTerrain();
-	float waterHeight = g_Renderer.GetWaterManager()->m_WaterHeight + 0.001f;
+	float waterHeight = g_Game->GetView()->GetWaterManager().GetWaterHeight() + 0.001f;
 	const ssize_t patchesPerSide = pTerrain->GetPatchesPerSide();
 
 	// find out which patches will be drawn
@@ -298,7 +312,6 @@ void CGameView::UnloadResources()
 {
 	g_TexMan.UnloadTerrainTextures();
 	g_Renderer.UnloadAlphaMaps();
-	g_Renderer.GetWaterManager()->UnloadWaterTextures();
 }
 
 void CGameView::Update(const float deltaRealTime)

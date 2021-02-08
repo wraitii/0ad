@@ -24,15 +24,16 @@
 
 #include "Camera.h"
 
+#include "graphics/GameView.h"
 #include "graphics/HFTracer.h"
 #include "graphics/Terrain.h"
+#include "graphics/WaterManager.h"
 #include "lib/ogl.h"
 #include "maths/MathUtil.h"
 #include "maths/Vector4D.h"
 #include "ps/Game.h"
 #include "ps/World.h"
 #include "renderer/Renderer.h"
-#include "renderer/WaterManager.h"
 
 CCamera::CCamera()
 	: m_NearPlane(0.0f), m_FarPlane(0.0f), m_FOV(0.0f), m_ProjType(CUSTOM)
@@ -229,7 +230,7 @@ CVector3D CCamera::GetWorldCoordinates(int px, int py, bool aboveWater) const
 
 	CPlane plane;
 	plane.Set(CVector3D(0.f, 1.f, 0.f),										// upwards normal
-		CVector3D(0.f, g_Renderer.GetWaterManager()->m_WaterHeight, 0.f));	// passes through water plane
+		CVector3D(0.f, g_Game->GetView()->GetWaterManager().GetWaterHeight(), 0.f));	// passes through water plane
 
 	bool gotWater = plane.FindRayIntersection( origin, dir, &waterPoint );
 
@@ -307,7 +308,7 @@ CVector3D CCamera::GetFocus() const
 
 	CPlane plane;
 	plane.Set(CVector3D(0.f, 1.f, 0.f),										// upwards normal
-		CVector3D(0.f, g_Renderer.GetWaterManager()->m_WaterHeight, 0.f));	// passes through water plane
+		CVector3D(0.f, g_Game->GetView()->GetWaterManager().GetWaterHeight(), 0.f));	// passes through water plane
 
 	bool gotWater = plane.FindRayIntersection( origin, dir, &waterPoint );
 

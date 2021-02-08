@@ -36,6 +36,7 @@
 #include "graphics/TerritoryTexture.h"
 #include "graphics/UnitManager.h"
 #include "graphics/Overlay.h"
+#include "graphics/WaterManager.h"
 #include "maths/MathUtil.h"
 #include "ps/Filesystem.h"
 #include "ps/CLogger.h"
@@ -45,7 +46,6 @@
 #include "renderer/RenderingOptions.h"
 #include "renderer/Scene.h"
 #include "renderer/SkyManager.h"
-#include "renderer/WaterManager.h"
 #include "scriptinterface/ScriptInterface.h"
 #include "simulation2/Simulation2.h"
 #include "simulation2/components/ICmpAttack.h"
@@ -72,7 +72,8 @@ public:
 		Simulation2(&UnitManager, g_ScriptContext, &Terrain),
 		ObjectManager(MeshManager, SkeletonAnimManager, Simulation2),
 		LOSTexture(Simulation2),
-		TerritoryTexture(Simulation2)
+		TerritoryTexture(Simulation2),
+		WaterManager()
 	{
 		UnitManager.SetObjectManager(ObjectManager);
 	}
@@ -86,10 +87,9 @@ public:
 	bool WaterEnabled;
 	bool ShadowsEnabled;
 
-	// Whether shadows, sky and water are enabled outside of the actor viewer.
+	// Whether shadows, sky are enabled outside of the actor viewer.
 	bool OldShadows;
 	bool OldSky;
-	bool OldWater;
 
 	bool SelectionBoxEnabled;
 	bool AxesMarkerEnabled;
@@ -107,6 +107,7 @@ public:
 	CSimulation2 Simulation2;
 	CLOSTexture LOSTexture;
 	CTerritoryTexture TerritoryTexture;
+	WaterManager WaterManager;
 
 	SOverlayLine SelectionBoxOverlay;
 	SOverlayLine AxesMarkerOverlays[3];
@@ -300,7 +301,7 @@ ActorViewer::ActorViewer()
 	// Tell the simulation we've already loaded the terrain
 	CmpPtr<ICmpTerrain> cmpTerrain(m.Simulation2, SYSTEM_ENTITY);
 	if (cmpTerrain)
-		cmpTerrain->ReloadTerrain(false);
+		cmpTerrain->ReloadTerrain();
 
 	// Remove FOW since we're in Atlas
 	CmpPtr<ICmpRangeManager> cmpRangeManager(m.Simulation2, SYSTEM_ENTITY);
@@ -443,15 +444,13 @@ void ActorViewer::SetEnabled(bool enabled)
 		m.OldSky = g_Renderer.GetSkyManager()->GetRenderSky();
 		g_Renderer.GetSkyManager()->SetRenderSky(false);
 
-		m.OldWater = g_Renderer.GetWaterManager()->m_RenderWater;
-		g_Renderer.GetWaterManager()->m_RenderWater = m.WaterEnabled;
+		m.WaterManager.SetRenderingEnabled(m.WaterEnabled);
 	}
 	else
 	{
 		// Restore the old renderer state
 		g_RenderingOptions.SetShadows(m.OldShadows);
 		g_Renderer.GetSkyManager()->SetRenderSky(m.OldSky);
-		g_Renderer.GetWaterManager()->m_RenderWater = m.OldWater;
 	}
 }
 

@@ -28,6 +28,7 @@
 #include "graphics/Terrain.h"
 #include "graphics/TerrainTextureEntry.h"
 #include "graphics/TerrainTextureManager.h"
+#include "graphics/WaterManager.h"
 #include "lib/timer.h"
 #include "lib/external_libraries/libsdl.h"
 #include "maths/MathUtil.h"
@@ -38,7 +39,6 @@
 #include "ps/XML/Xeromyces.h"
 #include "renderer/PostprocManager.h"
 #include "renderer/SkyManager.h"
-#include "renderer/WaterManager.h"
 #include "scriptinterface/ScriptContext.h"
 #include "simulation2/Simulation2.h"
 #include "simulation2/components/ICmpCinemaManager.h"
@@ -67,15 +67,14 @@ CMapReader::CMapReader()
 }
 
 // LoadMap: try to load the map from given file; reinitialise the scene to new data if successful
-void CMapReader::LoadMap(const VfsPath& pathname, const ScriptContext& cx,  JS::HandleValue settings, CTerrain *pTerrain_,
-						 WaterManager* pWaterMan_, SkyManager* pSkyMan_,
+void CMapReader::LoadMap(const VfsPath& pathname, const ScriptContext& cx,  JS::HandleValue settings, CTerrain *pTerrain_, SkyManager* pSkyMan_,
 						 CLightEnv *pLightEnv_, CGameView *pGameView_, CCinemaManager* pCinema_, CTriggerManager* pTrigMan_, CPostprocManager* pPostproc_,
 						 CSimulation2 *pSimulation2_, const CSimContext* pSimContext_, int playerID_, bool skipEntities)
 {
 	pTerrain = pTerrain_;
 	pLightEnv = pLightEnv_;
 	pGameView = pGameView_;
-	pWaterMan = pWaterMan_;
+	pWaterMan = pGameView_ ? &pGameView_->GetMutableWaterManager() : nullptr;
 	pSkyMan = pSkyMan_;
 	pCinema = pCinema_;
 	pTrigMan = pTrigMan_;
@@ -149,8 +148,7 @@ void CMapReader::LoadMap(const VfsPath& pathname, const ScriptContext& cx,  JS::
 }
 
 // LoadRandomMap: try to load the map data; reinitialise the scene to new data if successful
-void CMapReader::LoadRandomMap(const CStrW& scriptFile, const ScriptContext& cx, JS::HandleValue settings, CTerrain *pTerrain_,
-						 WaterManager* pWaterMan_, SkyManager* pSkyMan_,
+void CMapReader::LoadRandomMap(const CStrW& scriptFile, const ScriptContext& cx, JS::HandleValue settings, CTerrain *pTerrain_, SkyManager* pSkyMan_,
 						 CLightEnv *pLightEnv_, CGameView *pGameView_, CCinemaManager* pCinema_, CTriggerManager* pTrigMan_, CPostprocManager* pPostproc_,
 						 CSimulation2 *pSimulation2_, int playerID_)
 {
@@ -161,7 +159,7 @@ void CMapReader::LoadRandomMap(const CStrW& scriptFile, const ScriptContext& cx,
 	pTerrain = pTerrain_;
 	pLightEnv = pLightEnv_;
 	pGameView = pGameView_;
-	pWaterMan = pWaterMan_;
+	pWaterMan = pGameView_ ? &pGameView_->GetMutableWaterManager() : nullptr;
 	pSkyMan = pSkyMan_;
 	pCinema = pCinema_;
 	pTrigMan = pTrigMan_;
@@ -309,6 +307,9 @@ int CMapReader::ApplyData()
 		*pLightEnv = m_LightEnv;
 
 	CmpPtr<ICmpPlayerManager> cmpPlayerManager(*pSimContext, SYSTEM_ENTITY);
+
+	if (pGameView)
+		pWaterMan->RecomputeWaterDataIfNeeded();
 
 	if (pGameView && cmpPlayerManager)
 	{
@@ -725,9 +726,9 @@ void CXMLReader::ReadEnvironment(XMBElement parent)
 					if (water_element_name == el_type)
 					{
 						if (waterelement.GetText() == "default")
-							m_MapReader.pWaterMan->m_WaterType = L"ocean";
+							m_MapReader.pWaterMan->SetWaterType(L"ocean");
 						else
-							m_MapReader.pWaterMan->m_WaterType =  waterelement.GetText().FromUTF8();
+							m_MapReader.pWaterMan->SetWaterType(waterelement.GetText().FromUTF8());
 					}
 #define READ_COLOR(el, out) \
 					else if (water_element_name == el) \
@@ -1516,9 +1517,12 @@ int CMapReader::ParseEnvironment()
 	// If we have graphics, get rest of settings
 	if (pWaterMan)
 	{
-		GET_ENVIRONMENT_PROPERTY(waterBodyObj, Type, pWaterMan->m_WaterType)
-		if (pWaterMan->m_WaterType == L"default")
-			pWaterMan->m_WaterType = L"ocean";
+		std::wstring type;
+		GET_ENVIRONMENT_PROPERTY(waterBodyObj, Type, type)
+		if (type == L"default")
+			pWaterMan->SetWaterType(L"ocean");
+		else
+			pWaterMan->SetWaterType(type);
 		GET_ENVIRONMENT_PROPERTY(waterBodyObj, Color, pWaterMan->m_WaterColor)
 		GET_ENVIRONMENT_PROPERTY(waterBodyObj, Tint, pWaterMan->m_WaterTint)
 		GET_ENVIRONMENT_PROPERTY(waterBodyObj, Waviness, pWaterMan->m_Waviness)

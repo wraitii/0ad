@@ -87,6 +87,12 @@ public:
 	CLOSTexture& GetLOSTexture() override;
 	CTerritoryTexture& GetTerritoryTexture() override;
 
+	/**
+	 * Return the graphics handler for water.
+	 */
+	const WaterManager& GetWaterManager() const;
+	WaterManager& GetMutableWaterManager();
+
 private:
 	// Unloads all graphics resources loaded by RegisterInit.
 	void UnloadResources();

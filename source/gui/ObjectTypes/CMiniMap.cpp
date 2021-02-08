@@ -26,6 +26,7 @@
 #include "graphics/TerrainTextureEntry.h"
 #include "graphics/TerrainTextureManager.h"
 #include "graphics/TerritoryTexture.h"
+#include "graphics/WaterManager.h"
 #include "gui/CGUI.h"
 #include "gui/GUIManager.h"
 #include "gui/GUIMatrix.h"
@@ -42,7 +43,6 @@
 #include "ps/XML/Xeromyces.h"
 #include "renderer/Renderer.h"
 #include "renderer/RenderingOptions.h"
-#include "renderer/WaterManager.h"
 #include "scriptinterface/ScriptInterface.h"
 #include "simulation2/Simulation2.h"
 #include "simulation2/components/ICmpMinimap.h"
@@ -263,7 +263,7 @@ void CMiniMap::DrawViewRect(CMatrix3D transform) const
 {
 	// Compute the camera frustum intersected with a fixed-height plane.
 	// Use the water height as a fixed base height, which should be the lowest we can go
-	float h = g_Renderer.GetWaterManager()->m_WaterHeight;
+	float h = g_Game->GetView()->GetWaterManager().GetWaterHeight();
 	const float width = m_CachedActualSize.GetWidth();
 	const float height = m_CachedActualSize.GetHeight();
 	const float invTileMapSize = 1.0f / float(TERRAIN_TILE_SIZE * m_MapSize);
@@ -418,7 +418,7 @@ void CMiniMap::Draw()
 	if (doUpdate)
 	{
 		last_time = cur_time;
-		if (m_TerrainDirty || m_WaterHeight != g_Renderer.GetWaterManager()->m_WaterHeight)
+		if (m_TerrainDirty || m_WaterHeight != g_Game->GetView()->GetWaterManager().GetWaterHeight())
 			RebuildTerrainTexture();
 	}
 
@@ -672,7 +672,7 @@ void CMiniMap::RebuildTerrainTexture()
 	u32 y = 0;
 	u32 w = m_MapSize - 1;
 	u32 h = m_MapSize - 1;
-	m_WaterHeight = g_Renderer.GetWaterManager()->m_WaterHeight;
+	m_WaterHeight = g_Game->GetView()->GetWaterManager().GetWaterHeight();
 
 	m_TerrainDirty = false;
 

@@ -30,6 +30,7 @@
 #include "graphics/Terrain.h"
 #include "graphics/TerrainTextureEntry.h"
 #include "graphics/TerrainTextureManager.h"
+#include "graphics/WaterManager.h"
 #include "gui/ObjectTypes/CMiniMap.h"
 #include "lib/bits.h"
 #include "lib/file/vfs/vfs_path.h"
@@ -43,7 +44,6 @@
 #include "ps/Shapes.h"
 #include "ps/World.h"
 #include "renderer/Renderer.h"
-#include "renderer/WaterManager.h"
 #include "scriptinterface/ScriptInterface.h"
 #include "simulation2/Simulation2.h"
 #include "simulation2/components/ICmpOwnership.h"
@@ -225,7 +225,7 @@ MESSAGEHANDLER(SaveMap)
 	VfsPath pathname = VfsPath(*msg->filename).ChangeExtension(L".pmp");
 	writer.SaveMap(pathname,
 		g_Game->GetWorld()->GetTerrain(),
-		g_Renderer.GetWaterManager(), g_Renderer.GetSkyManager(),
+		&g_Game->GetView()->GetWaterManager(), g_Renderer.GetSkyManager(),
 		&g_LightEnv, g_Game->GetView()->GetCamera(), g_Game->GetView()->GetCinema(),
 		&g_Renderer.GetPostprocManager(),
 		g_Game->GetSimulation2());
@@ -297,7 +297,7 @@ QUERYHANDLER(RasterizeMinimap)
 
 	ssize_t w = dimension;
 	ssize_t h = dimension;
-	float waterHeight = g_Renderer.GetWaterManager()->m_WaterHeight;
+	float waterHeight = g_Game->GetView()->GetWaterManager().GetWaterHeight();
 
 	for (ssize_t j = 0; j < h; ++j)
 	{
