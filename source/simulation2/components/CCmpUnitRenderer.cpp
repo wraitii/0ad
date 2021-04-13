@@ -37,6 +37,7 @@
 #include "maths/Matrix3D.h"
 #include "ps/GameSetup/Config.h"
 #include "ps/Profile.h"
+#include "ps/ThreadPool.h"
 #include "renderer/RenderingOptions.h"
 #include "renderer/Scene.h"
 
@@ -395,49 +396,135 @@ void CCmpUnitRenderer::RenderSubmit(SceneCollector& collector, const CFrustum& f
 	for (size_t i = 0; i < m_Units.size(); ++i)
 	{
 		SUnit& unit = m_Units[i];
-
-		unit.culled = true;
-
 		if (!unit.actor)
 			continue;
 
 		if (unit.visibilityDirty)
 			UpdateVisibility(unit);
+	}
 
-		if (unit.visibility == LosVisibility::HIDDEN)
-			continue;
+	std::atomic<size_t> index = 0;
 
-		if (!g_AtlasGameLoop->running && !g_RenderingOptions.GetRenderActors() && (unit.flags & ACTOR_ONLY))
-			continue;
-
-		if (!g_AtlasGameLoop->running && (unit.flags & VISIBLE_IN_ATLAS_ONLY))
-			continue;
-
-		if (culling && !frustum.IsSphereVisible(unit.sweptBounds.GetCenter(), unit.sweptBounds.GetRadius()))
-			continue;
-
-		unit.culled = false;
-
-		CModelAbstract& unitModel = unit.actor->GetModel();
-
-		if (unit.lastTransformFrame != m_FrameNumber)
+	std::vector<Future<void>> futures;
+	futures.reserve(ThreadPool::TaskManager::Instance().GetNbOfWorkers());
+	std::vector<std::vector<CModelAbstract*>> modelModels(ThreadPool::TaskManager::Instance().GetNbOfWorkers() + 1);
+	int i = 0;
+	for (ThreadPool::ThreadExecutor& executor : ThreadPool::TaskManager::Instance().GetAllWorkers())
+	{
+		auto run = [this, &models=modelModels[i++ + 1], &index, &frustum, &culling]()
 		{
-			CmpPtr<ICmpPosition> cmpPosition(unit.entity);
-			if (!cmpPosition)
+			PROFILE2("RenderSubmitLoop");
+			size_t maxI = m_Units.size();
+			do
+			{
+				size_t i = index++;
+				if (i >= maxI)
+					break;
+				SUnit& unit = m_Units[i];
+
+				unit.culled = true;
+
+				if (!unit.actor)
+					continue;
+
+				if (unit.visibility == LosVisibility::HIDDEN)
+					continue;
+
+				if (!g_AtlasGameLoop->running && !g_RenderingOptions.GetRenderActors() && (unit.flags & ACTOR_ONLY))
+					continue;
+
+				if (!g_AtlasGameLoop->running && (unit.flags & VISIBLE_IN_ATLAS_ONLY))
+					continue;
+
+				if (culling && !frustum.IsSphereVisible(unit.sweptBounds.GetCenter(), unit.sweptBounds.GetRadius()))
+					continue;
+
+				unit.culled = false;
+
+				CModelAbstract& unitModel = unit.actor->GetModel();
+
+				if (unit.lastTransformFrame != m_FrameNumber)
+				{
+					CmpPtr<ICmpPosition> cmpPosition(unit.entity);
+					if (!cmpPosition)
+						continue;
+
+					CMatrix3D transform(cmpPosition->GetInterpolatedTransform(m_FrameOffset));
+
+					unitModel.SetTransform(transform);
+
+					unit.lastTransformFrame = m_FrameNumber;
+				}
+
+				if (culling && !frustum.IsBoxVisible(unitModel.GetWorldBoundsRec()))
+					continue;
+
+				models.push_back(&unitModel);
+			}
+			while (true);
+		};
+		futures.emplace_back(executor.Submit(run));
+	}
+
+	[this, &models=modelModels[0], &index, &frustum, &culling]()
+	{
+		PROFILE2("RenderSubmitLoop");
+		size_t maxI = m_Units.size();
+		do
+		{
+			size_t i = index++;
+			if (i >= maxI)
+				break;
+			SUnit& unit = m_Units[i];
+
+			unit.culled = true;
+
+			if (!unit.actor)
 				continue;
 
-			CMatrix3D transform(cmpPosition->GetInterpolatedTransform(m_FrameOffset));
+			if (unit.visibility == LosVisibility::HIDDEN)
+				continue;
 
-			unitModel.SetTransform(transform);
+			if (!g_AtlasGameLoop->running && !g_RenderingOptions.GetRenderActors() && (unit.flags & ACTOR_ONLY))
+				continue;
 
-			unit.lastTransformFrame = m_FrameNumber;
+			if (!g_AtlasGameLoop->running && (unit.flags & VISIBLE_IN_ATLAS_ONLY))
+				continue;
+
+			if (culling && !frustum.IsSphereVisible(unit.sweptBounds.GetCenter(), unit.sweptBounds.GetRadius()))
+				continue;
+
+			unit.culled = false;
+
+			CModelAbstract& unitModel = unit.actor->GetModel();
+
+			if (unit.lastTransformFrame != m_FrameNumber)
+			{
+				CmpPtr<ICmpPosition> cmpPosition(unit.entity);
+				if (!cmpPosition)
+					continue;
+
+				CMatrix3D transform(cmpPosition->GetInterpolatedTransform(m_FrameOffset));
+
+				unitModel.SetTransform(transform);
+
+				unit.lastTransformFrame = m_FrameNumber;
+			}
+
+			if (culling && !frustum.IsBoxVisible(unitModel.GetWorldBoundsRec()))
+				continue;
+
+			models.push_back(&unitModel);
 		}
+		while (true);
+	}();
 
-		if (culling && !frustum.IsBoxVisible(unitModel.GetWorldBoundsRec()))
-			continue;
+	for (Future<void>& f : futures)
+		f.CancelOrWait();
 
-		collector.SubmitRecursive(&unitModel);
-	}
+	for (std::vector<CModelAbstract*> models : modelModels)
+		for (CModelAbstract* model : models)
+			collector.SubmitRecursive(model);
 
 	for (size_t i = 0; i < m_DebugSpheres.size(); ++i)
 		collector.Submit(&m_DebugSpheres[i]);
