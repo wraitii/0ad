@@ -27,7 +27,7 @@
 #include "ps/CLogger.h"
 #include "ps/CStr.h"
 #include "ps/Profiler2.h"
-#include "ps/Threading.h"
+#include "ps/ThreadPool.h"
 #include "ps/XML/Xeromyces.h"
 
 #if CONFIG2_NVTT
@@ -69,18 +69,6 @@ struct BufferOutputHandler : public nvtt::OutputHandler
 	virtual void endImage()
 	{
 	}
-};
-
-/**
- * Request for worker thread to process.
- */
-struct CTextureConverter::ConversionRequest
-{
-	VfsPath dest;
-	CTexturePtr texture;
-	nvtt::InputOptions inputOptions;
-	nvtt::CompressionOptions compressionOptions;
-	nvtt::OutputOptions outputOptions;
 };
 
 /**
@@ -291,45 +279,94 @@ CTextureConverter::Settings CTextureConverter::ComputeSettings(const std::wstrin
 }
 
 CTextureConverter::CTextureConverter(PIVFS vfs, bool highQuality) :
-	m_VFS(vfs), m_HighQuality(highQuality), m_Shutdown(false)
+	m_VFS(vfs), m_HighQuality(highQuality)
 {
 	// Verify that we are running with at least the version we were compiled with,
 	// to avoid bugs caused by ABI changes
 #if CONFIG2_NVTT
 	ENSURE(nvtt::version() >= NVTT_VERSION);
 #endif
-
-	m_WorkerThread = std::thread(Threading::HandleExceptions<RunThread>::Wrapper, this);
-
-	// Maybe we should share some centralised pool of worker threads?
-	// For now we'll just stick with a single thread for this specific use.
 }
 
 CTextureConverter::~CTextureConverter()
 {
-	// Tell the thread to shut down
-	{
-		std::lock_guard<std::mutex> lock(m_WorkerMutex);
-		m_Shutdown = true;
-	}
-
-	while (true)
-	{
-		// Wake the thread up so that it shutdowns.
-		// If we send the message once, there is a chance it will be missed,
-		// so keep sending until shtudown becomes false again, indicating that the thread has shut down.
-		std::lock_guard<std::mutex> lock(m_WorkerMutex);
-		m_WorkerCV.notify_all();
-		if (!m_Shutdown)
-			break;
-	}
-
-	// Wait for it to shut down cleanly
-	m_WorkerThread.join();
 }
 
-bool CTextureConverter::ConvertTexture(const CTexturePtr& texture, const VfsPath& src, const VfsPath& dest, const Settings& settings)
+bool CTextureConverter::Poll(CTexturePtr& texture, VfsPath& dest, bool& ok)
 {
+#if CONFIG2_NVTT
+	std::unique_ptr<ConversionResult> result;
+
+	// Grab the first result (if any)
+	{
+		std::lock_guard<std::mutex> lock(m_WorkerMutex);
+		if (!m_ResultQueue.empty())
+		{
+			result = std::move(m_ResultQueue.front());
+			m_ResultQueue.pop_front();
+			m_PendingConversions--;
+		}
+		else
+			return false;
+	}
+
+	if (!result || !result->ret)
+	{
+		// conversion had failed
+		ok = false;
+		return true;
+	}
+
+	// Move output into a correctly-aligned buffer
+	size_t size = result->output.buffer.size();
+	shared_ptr<u8> file;
+	AllocateAligned(file, size, maxSectorSize);
+	memcpy(file.get(), &result->output.buffer[0], size);
+	if (m_VFS->CreateFile(result->dest, file, size) < 0)
+	{
+		// error writing file
+		ok = false;
+		return true;
+	}
+
+	// Succeeded in converting texture
+	texture = result->texture;
+	dest = result->dest;
+	ok = true;
+	return true;
+
+#else // #if CONFIG2_NVTT
+	return false;
+#endif
+}
+
+bool CTextureConverter::IsBusy()
+{
+	// Completely arbitrary constant - there is some main-thread cost to loading textures,
+	// so probably should not be too high.
+	return m_PendingConversions >= 4;
+}
+
+Future<bool> CTextureConverter::ConvertTexture(const CTexturePtr& texture, const VfsPath& src, const VfsPath& dest, const Settings& settings)
+{
+	m_PendingConversions++;
+	// Since we want to keep track of our # of in-flight conversions, we'll push a nullptr on the result queue on error.
+	return ThreadPool::TaskManager::Instance().GetExecutor().Submit([=]() mutable {
+		if (!DoConvertTexture(texture, src, dest, settings))
+		{
+			std::lock_guard<std::mutex> wait_lock(m_WorkerMutex);
+			m_ResultQueue.emplace_back();
+			return false;
+		}
+		return true;
+	});
+}
+
+bool CTextureConverter::DoConvertTexture(const CTexturePtr& texture, const VfsPath& src, const VfsPath& dest, const Settings& settings)
+{
+	PROFILE2("TexConv::convert");
+	PROFILE2_ATTR("name: %ls", src.string().c_str());
+
 	shared_ptr<u8> file;
 	size_t fileSize;
 	if (m_VFS->LoadFile(src, file, fileSize) < 0)
@@ -385,71 +422,69 @@ bool CTextureConverter::ConvertTexture(const CTexturePtr& texture, const VfsPath
 
 #if CONFIG2_NVTT
 
-	shared_ptr<ConversionRequest> request = std::make_shared<ConversionRequest>();
-	request->dest = dest;
-	request->texture = texture;
-
 	// Apply the chosen settings:
+	nvtt::InputOptions inputOptions;
+	nvtt::CompressionOptions compressionOptions;
 
-	request->inputOptions.setMipmapGeneration(settings.mipmap == MIP_TRUE);
+	inputOptions.setMipmapGeneration(settings.mipmap == MIP_TRUE);
 
 	if (settings.alpha == ALPHA_TRANSPARENCY)
-		request->inputOptions.setAlphaMode(nvtt::AlphaMode_Transparency);
+		inputOptions.setAlphaMode(nvtt::AlphaMode_Transparency);
 	else
-		request->inputOptions.setAlphaMode(nvtt::AlphaMode_None);
+		inputOptions.setAlphaMode(nvtt::AlphaMode_None);
 
 	if (settings.format == FMT_RGBA)
 	{
-		request->compressionOptions.setFormat(nvtt::Format_RGBA);
+		compressionOptions.setFormat(nvtt::Format_RGBA);
 		// Change the default component order (see tex_dds.cpp decode_pf)
-		request->compressionOptions.setPixelFormat(32, 0xFF, 0xFF00, 0xFF0000, 0xFF000000u);
+		compressionOptions.setPixelFormat(32, 0xFF, 0xFF00, 0xFF0000, 0xFF000000u);
 	}
 	else if (settings.format == FMT_ALPHA)
 	{
-		request->compressionOptions.setFormat(nvtt::Format_RGBA);
-		request->compressionOptions.setPixelFormat(8, 0x00, 0x00, 0x00, 0xFF);
+		compressionOptions.setFormat(nvtt::Format_RGBA);
+		compressionOptions.setPixelFormat(8, 0x00, 0x00, 0x00, 0xFF);
 	}
 	else if (!hasAlpha)
 	{
 		// if no alpha channel then there's no point using DXT3 or DXT5
-		request->compressionOptions.setFormat(nvtt::Format_DXT1);
+		compressionOptions.setFormat(nvtt::Format_DXT1);
 	}
 	else if (settings.format == FMT_DXT1)
 	{
-		request->compressionOptions.setFormat(nvtt::Format_DXT1a);
+		compressionOptions.setFormat(nvtt::Format_DXT1a);
 	}
 	else if (settings.format == FMT_DXT3)
 	{
-		request->compressionOptions.setFormat(nvtt::Format_DXT3);
+		compressionOptions.setFormat(nvtt::Format_DXT3);
 	}
 	else if (settings.format == FMT_DXT5)
 	{
-		request->compressionOptions.setFormat(nvtt::Format_DXT5);
+		compressionOptions.setFormat(nvtt::Format_DXT5);
 	}
 
 	if (settings.filter == FILTER_BOX)
-		request->inputOptions.setMipmapFilter(nvtt::MipmapFilter_Box);
+		inputOptions.setMipmapFilter(nvtt::MipmapFilter_Box);
 	else if (settings.filter == FILTER_TRIANGLE)
-		request->inputOptions.setMipmapFilter(nvtt::MipmapFilter_Triangle);
+		inputOptions.setMipmapFilter(nvtt::MipmapFilter_Triangle);
 	else if (settings.filter == FILTER_KAISER)
-		request->inputOptions.setMipmapFilter(nvtt::MipmapFilter_Kaiser);
+		inputOptions.setMipmapFilter(nvtt::MipmapFilter_Kaiser);
 
 	if (settings.normal == NORMAL_TRUE)
-		request->inputOptions.setNormalMap(true);
+		inputOptions.setNormalMap(true);
 
-	request->inputOptions.setKaiserParameters(settings.kaiserWidth, settings.kaiserAlpha, settings.kaiserStretch);
+	inputOptions.setKaiserParameters(settings.kaiserWidth, settings.kaiserAlpha, settings.kaiserStretch);
 
-	request->inputOptions.setWrapMode(nvtt::WrapMode_Mirror); // TODO: should this be configurable?
+	inputOptions.setWrapMode(nvtt::WrapMode_Mirror); // TODO: should this be configurable?
 
-	request->compressionOptions.setQuality(m_HighQuality ? nvtt::Quality_Production : nvtt::Quality_Fastest);
+	compressionOptions.setQuality(m_HighQuality ? nvtt::Quality_Production : nvtt::Quality_Fastest);
 
 	// TODO: normal maps, gamma, etc
 
 	// Load the texture data
-	request->inputOptions.setTextureLayout(nvtt::TextureType_2D, tex.m_Width, tex.m_Height);
+	inputOptions.setTextureLayout(nvtt::TextureType_2D, tex.m_Width, tex.m_Height);
 	if (tex.m_Bpp == 32)
 	{
-		request->inputOptions.setMipmapData(tex.get_data(), tex.m_Width, tex.m_Height);
+		inputOptions.setMipmapData(tex.get_data(), tex.m_Width, tex.m_Height);
 	}
 	else // bpp == 8
 	{
@@ -462,138 +497,34 @@ bool CTextureConverter::ConvertTexture(const CTexturePtr& texture, const VfsPath
 			p[0] = p[1] = p[2] = p[3] = *input++;
 			p += 4;
 		}
-		request->inputOptions.setMipmapData(rgba, tex.m_Width, tex.m_Height);
+		inputOptions.setMipmapData(rgba, tex.m_Width, tex.m_Height);
 		delete[] rgba;
 	}
 
+	// Set up the result object
+	auto result = std::make_unique<CTextureConverter::ConversionResult>();
+
+	result->dest = dest;
+	result->texture = texture;
+
+	nvtt::OutputOptions outputOptions;
+	outputOptions.setOutputHandler(&result->output);
+
 	{
-		std::lock_guard<std::mutex> lock(m_WorkerMutex);
-		m_RequestQueue.push_back(request);
+		PROFILE2("TexConv::compress");
+
+		// Perform the compression
+		nvtt::Compressor compressor;
+		result->ret = compressor.process(inputOptions, compressionOptions, outputOptions);
 	}
 
-	// Wake up the worker thread
-	m_WorkerCV.notify_all();
+	// Push the result onto the queue
+	std::lock_guard<std::mutex> wait_lock(m_WorkerMutex);
+	m_ResultQueue.emplace_back(std::move(result));
 
 	return true;
-
 #else
 	LOGERROR("Failed to convert texture \"%s\" (NVTT not available)", src.string8());
 	return false;
-#endif
-}
-
-bool CTextureConverter::Poll(CTexturePtr& texture, VfsPath& dest, bool& ok)
-{
-#if CONFIG2_NVTT
-	shared_ptr<ConversionResult> result;
-
-	// Grab the first result (if any)
-	{
-		std::lock_guard<std::mutex> lock(m_WorkerMutex);
-		if (!m_ResultQueue.empty())
-		{
-			result = m_ResultQueue.front();
-			m_ResultQueue.pop_front();
-		}
-	}
-
-	if (!result)
-	{
-		// no work to do
-		return false;
-	}
-
-	if (!result->ret)
-	{
-		// conversion had failed
-		ok = false;
-		return true;
-	}
-
-	// Move output into a correctly-aligned buffer
-	size_t size = result->output.buffer.size();
-	shared_ptr<u8> file;
-	AllocateAligned(file, size, maxSectorSize);
-	memcpy(file.get(), &result->output.buffer[0], size);
-	if (m_VFS->CreateFile(result->dest, file, size) < 0)
-	{
-		// error writing file
-		ok = false;
-		return true;
-	}
-
-	// Succeeded in converting texture
-	texture = result->texture;
-	dest = result->dest;
-	ok = true;
-	return true;
-
-#else // #if CONFIG2_NVTT
-	return false;
-#endif
-}
-
-bool CTextureConverter::IsBusy()
-{
-	std::lock_guard<std::mutex> lock(m_WorkerMutex);
-	return !m_RequestQueue.empty();
-}
-
-void CTextureConverter::RunThread(CTextureConverter* textureConverter)
-{
-	debug_SetThreadName("TextureConverter");
-	g_Profiler2.RegisterCurrentThread("texconv");
-
-#if CONFIG2_NVTT
-
-	// Wait until the main thread wakes us up
-	while (true)
-	{
-		// We may have several textures in the incoming queue, process them all before going back to sleep.
-		if (!textureConverter->IsBusy()) {
-			std::unique_lock<std::mutex> wait_lock(textureConverter->m_WorkerMutex);
-			// Use the no-condition variant because spurious wake-ups don't matter that much here.
-			textureConverter->m_WorkerCV.wait(wait_lock);
-		}
-
-		g_Profiler2.RecordSyncMarker();
-		PROFILE2_EVENT("wakeup");
-
-		shared_ptr<ConversionRequest> request;
-
-		{
-			std::lock_guard<std::mutex> wait_lock(textureConverter->m_WorkerMutex);
-			if (textureConverter->m_Shutdown)
-				break;
-			// If we weren't woken up for shutdown, we must have been woken up for
-			// a new request, so grab it from the queue
-			request = textureConverter->m_RequestQueue.front();
-			textureConverter->m_RequestQueue.pop_front();
-		}
-
-		// Set up the result object
-		shared_ptr<ConversionResult> result = std::make_shared<ConversionResult>();
-		result->dest = request->dest;
-		result->texture = request->texture;
-
-		request->outputOptions.setOutputHandler(&result->output);
-
-//		TIMER(L"TextureConverter compress");
-
-		{
-			PROFILE2("compress");
-
-			// Perform the compression
-			nvtt::Compressor compressor;
-			result->ret = compressor.process(request->inputOptions, request->compressionOptions, request->outputOptions);
-		}
-
-		// Push the result onto the queue
-		std::lock_guard<std::mutex> wait_lock(textureConverter->m_WorkerMutex);
-		textureConverter->m_ResultQueue.push_back(result);
-	}
-
-	std::lock_guard<std::mutex> wait_lock(textureConverter->m_WorkerMutex);
-	textureConverter->m_Shutdown = false;
 #endif
 }

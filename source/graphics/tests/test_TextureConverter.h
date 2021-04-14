@@ -22,6 +22,7 @@
 #include "lib/file/vfs/vfs.h"
 #include "lib/res/h_mgr.h"
 #include "lib/tex/tex.h"
+#include "ps/ThreadPool.h"
 #include "ps/XML/Xeromyces.h"
 
 class TestTextureConverter : public CxxTest::TestSuite
@@ -51,9 +52,11 @@ public:
 
 		VfsPath src = L"art/textures/b/test.png";
 
+		ThreadPool::TaskManager::Initialise();
+
 		CTextureConverter converter(m_VFS, false);
 		CTextureConverter::Settings settings = converter.ComputeSettings(L"", std::vector<CTextureConverter::SettingsFile*>());
-		TS_ASSERT(converter.ConvertTexture(CTexturePtr(), src, L"cache/test.png", settings));
+		TS_ASSERT(converter.ConvertTexture(CTexturePtr(), src, L"cache/test.png", settings).Get());
 
 		VfsPath dest;
 		for (size_t i = 0; i < 100; ++i)

@@ -30,6 +30,7 @@
 #include "ps/CacheLoader.h"
 #include "ps/CLogger.h"
 #include "ps/Filesystem.h"
+#include "ps/Future.h"
 #include "ps/Profile.h"
 
 #include <boost/filesystem.hpp>
@@ -292,9 +293,6 @@ public:
 	{
 		VfsPath sourcePath = texture->m_Properties.m_Path;
 
-		PROFILE2("convert texture");
-		PROFILE2_ATTR("name: %ls", sourcePath.string().c_str());
-
 		MD5 hash;
 		u32 version;
 		PrepareCacheKey(texture, hash, version);
@@ -321,7 +319,7 @@ public:
 		CTexturePtr texture = CreateTexture(textureProps);
 		CTextureConverter::Settings settings = GetConverterSettings(texture);
 
-		if (!m_TextureConverter.ConvertTexture(texture, sourcePath, VfsPath("cache") / archiveCachePath, settings))
+		if (!m_TextureConverter.ConvertTexture(texture, sourcePath, VfsPath("cache") / archiveCachePath, settings).Get())
 			return false;
 
 		while (true)

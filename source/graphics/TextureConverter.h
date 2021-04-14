@@ -19,15 +19,15 @@
 #define INCLUDED_TEXTURECONVERTER
 
 #include "lib/file/vfs/vfs.h"
+#include "ps/FutureForward.h"
 
 #include "TextureManager.h"
 
-#include <condition_variable>
 #include <deque>
 #include <mutex>
-#include <thread>
 
 class MD5;
+
 
 /**
  * Texture conversion helper class.
@@ -177,12 +177,10 @@ public:
 
 	/**
 	 * Begin converting a texture, using the given settings.
-	 * This will load src and return false on failure.
-	 * Otherwise it will return true and start an asynchronous conversion request,
-	 * whose result will be returned from Poll() (with the texture and dest passed
-	 * into this function).
+	 * Returns a future holding the success state of the conversion.
+	 * (the converted textures will be available via polling on success).
 	 */
-	bool ConvertTexture(const CTexturePtr& texture, const VfsPath& src, const VfsPath& dest, const Settings& settings);
+	Future<bool> ConvertTexture(const CTexturePtr& texture, const VfsPath& src, const VfsPath& dest, const Settings& settings);
 
 	/**
 	 * Returns the result of a successful ConvertTexture call.
@@ -196,27 +194,21 @@ public:
 	bool Poll(CTexturePtr& texture, VfsPath& dest, bool& ok);
 
 	/**
-	 * Returns whether there is currently a queued request from ConvertTexture().
-	 * (Note this may return false while the worker thread is still converting the last texture.)
+	 * Returns true if we already pending conversions.
 	 */
 	bool IsBusy();
 
 private:
-	static void RunThread(CTextureConverter* data);
+	// Implementation of ConvertTexture.
+	bool DoConvertTexture(const CTexturePtr& texture, const VfsPath& src, const VfsPath& dest, const Settings& settings);
 
 	PIVFS m_VFS;
 	bool m_HighQuality;
 
-	std::thread m_WorkerThread;
-	std::mutex m_WorkerMutex;
-	std::condition_variable m_WorkerCV;
-
-	struct ConversionRequest;
+	size_t m_PendingConversions = 0;
 	struct ConversionResult;
-
-	std::deque<shared_ptr<ConversionRequest> > m_RequestQueue; // protected by m_WorkerMutex
-	std::deque<shared_ptr<ConversionResult> > m_ResultQueue; // protected by m_WorkerMutex
-	bool m_Shutdown; // protected by m_WorkerMutex
+	std::mutex m_WorkerMutex;
+	std::deque<std::unique_ptr<ConversionResult>> m_ResultQueue; // protected by m_WorkerMutex
 };
 
 #endif // INCLUDED_TEXTURECONVERTER
