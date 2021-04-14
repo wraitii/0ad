@@ -43,6 +43,7 @@
 #include "ps/CLogger.h"
 #include "ps/Filesystem.h"
 #include "ps/Pyrogenesis.h"
+#include "ps/ThreadPool.h"
 #include "ps/VideoMode.h"
 #include "renderer/Renderer.h"
 #include "maths/MathUtil.h"
@@ -281,19 +282,23 @@ void WriteScreenshot(const VfsPath& extension)
 		return;
 	glReadPixels(0, 0, (GLsizei)w, (GLsizei)h, fmt, GL_UNSIGNED_BYTE, img);
 
-	if (tex_write(&t, filename) == INFO::OK)
-	{
-		OsPath realPath;
-		g_VFS->GetRealPath(filename, realPath);
+	LOGMESSAGERENDER(g_L10n.Translate("...Writing screenshot..."));
+	ThreadPool::TaskManager::Instance().GetExecutor().Execute([t, filename]() mutable {
+		PROFILE2("Writing screenshot");
+		if (tex_write(&t, filename) == INFO::OK)
+		{
+			OsPath realPath;
+			g_VFS->GetRealPath(filename, realPath);
 
-		LOGMESSAGERENDER(g_L10n.Translate("Screenshot written to '%s'"), realPath.string8());
+			LOGMESSAGERENDER(g_L10n.Translate("Screenshot written to '%s'"), realPath.string8());
 
-		debug_printf(
-			CStr(g_L10n.Translate("Screenshot written to '%s'") + "\n").c_str(),
-			realPath.string8().c_str());
-	}
-	else
-		LOGERROR("Error writing screenshot to '%s'", filename.string8());
+			debug_printf(
+						 CStr(g_L10n.Translate("Screenshot written to '%s'") + "\n").c_str(),
+						 realPath.string8().c_str());
+		}
+		else
+			LOGERROR("Error writing screenshot to '%s'", filename.string8());
+	});
 }
 
 
@@ -429,6 +434,7 @@ void WriteBigScreenshot(const VfsPath& extension, int tiles, int tileWidth, int 
 		g_Game->GetView()->GetCamera()->SetProjectionFromCamera(oldCamera);
 	}
 
+	// Not worth threading, it's the rendering that's long here.
 	if (tex_write(&t, filename) == INFO::OK)
 	{
 		OsPath realPath;
