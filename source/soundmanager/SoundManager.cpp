@@ -31,6 +31,7 @@
 #include "ps/Filesystem.h"
 #include "ps/Profiler2.h"
 #include "ps/Threading.h"
+#include "ps/ThreadPool.h"
 #include "ps/XML/Xeromyces.h"
 
 #include <thread>
@@ -52,7 +53,8 @@ public:
 		m_DeadItems = new ItemsList;
 		m_Shutdown = false;
 
-		m_WorkerThread = std::thread(Threading::HandleExceptions<RunThread>::Wrapper, this);
+		//m_WorkerThread = std::thread(Threading::HandleExceptions<RunThread>::Wrapper, this);
+		RunRecurrentTask();
 	}
 
 	~CSoundManagerWorker()
@@ -78,15 +80,19 @@ public:
 
 		}
 
-		m_WorkerThread.join();
+		*killswitch = true;
+
+		//m_WorkerThread.join();
 
 		return true;
 	}
 
 	void addItem(ISoundItem* anItem)
 	{
-		std::lock_guard<std::mutex> lock(m_WorkerMutex);
-		m_Items->push_back(anItem);
+		{
+			std::lock_guard<std::mutex> lock(m_WorkerMutex);
+			m_Items->push_back(anItem);
+		}
 	}
 
 	void CleanupItems()
@@ -108,56 +114,68 @@ private:
 	static void RunThread(CSoundManagerWorker* data)
 	{
 		debug_SetThreadName("CSoundManagerWorker");
-		g_Profiler2.RegisterCurrentThread("soundmanager");
-
-		data->Run();
+		static int n = 0;
+		g_Profiler2.RegisterCurrentThread("soundmanager #" + std::to_string(n++));
 	}
 
-	void Run()
+	bool* killswitch;
+
+	void RunRecurrentTask()
 	{
-		while (true)
-		{
+		killswitch = new bool;
+		*killswitch = false;
+		ThreadPool::TaskManager::Instance().AddRecurrentTask(30, [killswitch=killswitch, this, fut=Future<void>()](ThreadPool::GlobalExecutor<ThreadPool::Priority::NORMAL>& pe) mutable {
+			if (fut.Valid() && !fut.IsReady())
+				return ThreadPool::RecurrentTaskStatus::RETRY;
+
+			if (*killswitch)
+			{
+				delete killswitch;
+				return ThreadPool::RecurrentTaskStatus::STOP;
+			}
+
 			// Handle shutdown requests as soon as possible
 			if (GetShutdown())
-				return;
+				return ThreadPool::RecurrentTaskStatus::STOP;
 
-			int pauseTime = 500;
-			if (g_SoundManager->InDistress())
-				pauseTime = 50;
+			fut = pe.Submit([this]() { SoundUpdate(); });
+			return ThreadPool::RecurrentTaskStatus::OK;
+		});
+	}
 
+
+	void SoundUpdate()
+	{
+		PROFILE2("SoundProcess");
+		std::lock_guard<std::mutex> workerLock(m_WorkerMutex);
+
+		ItemsList::iterator lstr = m_Items->begin();
+		ItemsList* nextItemList = new ItemsList;
+
+		while (lstr != m_Items->end())
+		{
+			AL_CHECK;
+			if ((*lstr)->IdleTask())
 			{
-				std::lock_guard<std::mutex> workerLock(m_WorkerMutex);
+				//if ((pauseTime == 500) && (*lstr)->IsFading())
+				//	pauseTime = 100;
 
-				ItemsList::iterator lstr = m_Items->begin();
-				ItemsList* nextItemList = new ItemsList;
-
-				while (lstr != m_Items->end())
-				{
-					AL_CHECK;
-					if ((*lstr)->IdleTask())
-					{
-						if ((pauseTime == 500) && (*lstr)->IsFading())
-							pauseTime = 100;
-
-						nextItemList->push_back(*lstr);
-					}
-					else
-					{
-						std::lock_guard<std::mutex> deadItemsLock(m_DeadItemsMutex);
-						m_DeadItems->push_back(*lstr);
-					}
-					++lstr;
-
-					AL_CHECK;
-				}
-
-				delete m_Items;
-				m_Items = nextItemList;
-
-				AL_CHECK;
+				nextItemList->push_back(*lstr);
 			}
-			SDL_Delay(pauseTime);
+			else
+			{
+				std::lock_guard<std::mutex> deadItemsLock(m_DeadItemsMutex);
+				m_DeadItems->push_back(*lstr);
+			}
+			++lstr;
+
+			AL_CHECK;
 		}
+
+		delete m_Items;
+		m_Items = nextItemList;
+
+		AL_CHECK;
 	}
 
 	bool GetShutdown()
