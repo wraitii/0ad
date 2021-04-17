@@ -157,6 +157,8 @@ bool CXeromyces::GenerateCachedXMB(const PIVFS& vfs, const VfsPath& sourcePath, 
 	return (ConvertFile(vfs, sourcePath, VfsPath("cache") / archiveCachePath, validatorName) == PSRETURN_OK);
 }
 
+#include "ps/ThreadPool.h"
+
 PSRETURN CXeromyces::ConvertFile(const PIVFS& vfs, const VfsPath& filename, const VfsPath& xmbPath, const std::string& validatorName)
 {
 	CVFSFile input;
@@ -187,7 +189,7 @@ PSRETURN CXeromyces::ConvertFile(const PIVFS& vfs, const VfsPath& filename, cons
 	WriteBuffer writeBuffer;
 	CreateXMB(doc, writeBuffer);
 
-	xmlFreeDoc(doc);
+	ThreadPool::TaskManager::Instance().GetExecutor().Execute([doc]() { PROFILE2("xmlFreeDoc"); xmlFreeDoc(doc); });
 
 	// Save the file to disk, so it can be loaded quickly next time.
 	// Don't save if invalid, because we want the syntax error every program start.
