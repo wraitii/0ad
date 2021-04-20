@@ -38,6 +38,14 @@ class CNetServerWorker;
 
 class CNetStatsTable;
 
+template <typename T>
+class Future;
+namespace ThreadPool
+{
+class PoolExecutor;
+enum class RecurrentTaskStatus;
+}
+
 typedef struct _ENetHost ENetHost;
 
 /**
@@ -78,7 +86,8 @@ public:
 	 * The client NetSession is threaded to avoid getting timeouts if the main thread hangs.
 	 * Call Connect() before starting this loop.
 	 */
-	static void RunNetLoop(CNetClientSession* session);
+	static void StartRecurrentTask(CNetClientSession* session);
+	ThreadPool::RecurrentTaskStatus RunNetUpdate(Future<void>& future, ThreadPool::PoolExecutor& exec);
 
 	/**
 	 * Shut down the net session.
@@ -110,7 +119,7 @@ private:
 	/**
 	 * Process queued incoming messages.
 	 */
-	void Poll();
+	void Poll(const ENetEvent& event);
 
 	/**
 	 * Flush queued outgoing network messages.

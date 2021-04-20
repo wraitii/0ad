@@ -27,7 +27,6 @@
 
 #include <ctime>
 #include <deque>
-#include <thread>
 
 class CGame;
 class CNetClientSession;
@@ -313,8 +312,6 @@ private:
 
 	/// Current network session (or NULL if not connected)
 	CNetClientSession* m_Session;
-
-	std::thread m_PollingThread;
 
 	/// Turn manager associated with the current game (or NULL if we haven't started the game yet)
 	CNetClientTurnManager* m_ClientTurnManager;

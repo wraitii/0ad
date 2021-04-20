@@ -108,6 +108,11 @@ public:
 	 */
 	void Poll();
 
+	/**
+	 * @return true if there is some work to be done.
+	 */
+	bool HasWork() const;
+
 private:
 	Status OnFileTransferResponse(const CFileTransferResponseMessage& message);
 	Status OnFileTransferData(const CFileTransferDataMessage& message);

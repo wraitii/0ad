@@ -25,9 +25,8 @@
 #include "NetStats.h"
 #include "ps/CLogger.h"
 #include "ps/Profile.h"
+#include "ps/ThreadPool.h"
 #include "scriptinterface/ScriptInterface.h"
-
-constexpr int NETCLIENT_POLL_TIMEOUT = 50;
 
 constexpr int CHANNEL_COUNT = 1;
 
@@ -92,44 +91,61 @@ bool CNetClientSession::Connect(const CStr& server, const u16 port, ENetHost* en
 	return true;
 }
 
-void CNetClientSession::RunNetLoop(CNetClientSession* session)
+void CNetClientSession::StartRecurrentTask(CNetClientSession* session)
 {
-	ENSURE(!session->m_LoopRunning);
 	session->m_LoopRunning = true;
+	/*ThreadPool::TaskManager::Instance().AddRecurrentTask(30, [session, future=Future<void>()](ThreadPool::PoolExecutor& exec) mutable {
+		return session->RunNetUpdate(future, exec);
+	});*/
+}
 
-	debug_SetThreadName("NetClientSession loop");
+ThreadPool::RecurrentTaskStatus CNetClientSession::RunNetUpdate(Future<void>& future, ThreadPool::PoolExecutor& exec)
+{
+	/*
+	if (future.Valid() && !future.IsReady())
+		return ThreadPool::RecurrentTaskStatus::RETRY;
 
-	while (!session->m_ShouldShutdown)
+	if (m_ShouldShutdown)
 	{
-		ENSURE(session->m_Host && session->m_Server);
-
-		session->m_FileTransferer.Poll();
-		session->Poll();
-		session->Flush();
-
-		session->m_LastReceivedTime = enet_time_get() - session->m_Server->lastReceiveTime;
-		session->m_MeanRTT = session->m_Server->roundTripTime;
+		m_LoopRunning = false;
+		delete this;
+		return ThreadPool::RecurrentTaskStatus::STOP;
 	}
 
-	session->m_LoopRunning = false;
+	ENSURE(m_Host && m_Server);
 
-	// Deleting the session is handled in this thread as it might outlive the CNetClient.
-	SAFE_DELETE(session);
+	m_LastReceivedTime = enet_time_get() - m_Server->lastReceiveTime;
+	m_MeanRTT = m_Server->roundTripTime;
+
+	// Check if we have some work to do, if not exit early.
+	ENetEvent event;
+	// TODO: handle errors.
+	bool hasWork = enet_host_service(m_Host, &event, 0) > 0;
+	if (!hasWork && m_FileTransferer.HasWork())
+		hasWork = true;
+	else if (!m_OutgoingMessages.empty())
+		hasWork = true;
+	if (hasWork)
+		future = exec.Submit([event, this]() mutable {
+			PROFILE2("NetClient - Update");
+			m_FileTransferer.Poll();
+			Flush();
+			do
+				Poll(event);
+			while (enet_host_service(m_Host, &event, 0) > 0);
+		});
+	 */
+	return ThreadPool::RecurrentTaskStatus::OK;
 }
 
 void CNetClientSession::Shutdown()
 {
+	// On the next timer loop, this will clean up the net session.
 	m_ShouldShutdown = true;
 }
 
-void CNetClientSession::Poll()
+void CNetClientSession::Poll(const ENetEvent& event)
 {
-	ENetEvent event;
-
-	// Use the timeout to make the thread wait and save CPU time.
-	if (enet_host_service(m_Host, &event, NETCLIENT_POLL_TIMEOUT) <= 0)
-		return;
-
 	if (event.type == ENET_EVENT_TYPE_CONNECT)
 	{
 		ENSURE(event.peer == m_Server);

@@ -31,6 +31,16 @@ namespace ThreadPool
 class TaskManager;
 class WorkerThread;
 
+enum class RecurrentTaskStatus
+{
+	// Task went OK - nothing special to report.
+	OK,
+	// Retry next timer call.
+	RETRY,
+	// Drop the recurrent task
+	STOP,
+};
+
 enum class Priority
 {
 	NORMAL,
@@ -123,6 +133,18 @@ public:
 	 * Returns an executor that can be used to start (optionally different) work on (optionally all) threads.
 	 */
 	EachThreadExecutor& GetAllWorkers();
+
+	/**
+	 * Add a recurrent task running approximately every X ms.
+	 * Recurrent tasks are run on the timer thread, and should run in microseconds or less.
+	 * A typical use-case is to check if some actual work needs to be performed, and use the PoolExecutor
+	 * passed as argument to do this on one of the regular workers.
+	 * Note that the timer is allowed to drift over time.
+	 * @param repeatms - Time, in milliseconds, between two calls.
+	 *  The actual value will depend on the threadpool timer.
+	 * @param func - Function to run.
+	 */
+	void AddRecurrentTask(u32 repeatms, std::function<RecurrentTaskStatus(GlobalExecutor<Priority::NORMAL>&)>&& func);
 
 private:
 	class Impl;

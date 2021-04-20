@@ -188,3 +188,9 @@ void CNetFileTransferer::Poll()
 
 	// TODO: need to garbage-collect finished tasks
 }
+
+bool CNetFileTransferer::HasWork() const
+{
+	return !m_FileSendTasks.empty();
+}
+

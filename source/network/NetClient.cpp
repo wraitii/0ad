@@ -35,7 +35,6 @@
 #include "ps/Game.h"
 #include "ps/Loader.h"
 #include "ps/Profile.h"
-#include "ps/Threading.h"
 #include "scriptinterface/ScriptInterface.h"
 #include "simulation2/Simulation2.h"
 #include "network/StunClient.h"
@@ -191,13 +190,12 @@ void CNetClient::SetControllerSecret(const std::string& secret)
 	m_ControllerSecret = secret;
 }
 
-
 bool CNetClient::SetupConnection(ENetHost* enetClient)
 {
 	CNetClientSession* session = new CNetClientSession(*this);
 	bool ok = session->Connect(m_ServerAddress, m_ServerPort, enetClient);
 	SetAndOwnSession(session);
-	m_PollingThread = std::thread(Threading::HandleExceptions<CNetClientSession::RunNetLoop>::Wrapper, m_Session);
+	CNetClientSession::StartRecurrentTask(session);
 	return ok;
 }
 
@@ -297,16 +295,11 @@ void CNetClient::SetAndOwnSession(CNetClientSession* session)
 void CNetClient::DestroyConnection()
 {
 	if (m_Session)
+	{
+		// This deletes session on its own.
 		m_Session->Shutdown();
-
-	if (m_PollingThread.joinable())
-		// Use detach() over join() because we don't want to wait for the session
-		// (which may be polling or trying to send messages).
-		m_PollingThread.detach();
-
-	// The polling thread will cleanup the session on its own,
-	// mark it as nullptr here so we know we're done using it.
-	m_Session = nullptr;
+		m_Session = nullptr;
+	}
 }
 
 void CNetClient::Poll()
