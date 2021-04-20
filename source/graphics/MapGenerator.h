@@ -20,6 +20,7 @@
 
 #include "lib/posix/posix_pthread.h"
 #include "ps/FileIo.h"
+#include "ps/Future.h"
 #include "ps/TemplateLoader.h"
 #include "scriptinterface/ScriptInterface.h"
 
@@ -28,7 +29,6 @@
 #include <mutex>
 #include <set>
 #include <string>
-#include <thread>
 
 class CMapGeneratorWorker;
 
@@ -231,7 +231,7 @@ private:
 	/**
 	 * Holds the mapgeneration thread identifier.
 	 */
-	std::thread m_WorkerThread;
+	Future<void> m_WorkerThread;
 
 	/**
 	 * Avoids thread synchronization issues.

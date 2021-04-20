@@ -68,6 +68,7 @@
 #include "ps/Profiler2.h"
 #include "ps/Pyrogenesis.h"	// psSetLogDir
 #include "ps/scripting/JSInterface_Console.h"
+#include "ps/ThreadPool.h"
 #include "ps/TouchInput.h"
 #include "ps/UserReport.h"
 #include "ps/Util.h"

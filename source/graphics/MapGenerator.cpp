@@ -30,7 +30,7 @@
 #include "ps/CLogger.h"
 #include "ps/FileIo.h"
 #include "ps/Profile.h"
-#include "ps/Threading.h"
+#include "ps/ThreadPool.h"
 #include "ps/scripting/JSInterface_VFS.h"
 #include "scriptinterface/FunctionWrapper.h"
 #include "scriptinterface/ScriptContext.h"
@@ -68,9 +68,8 @@ CMapGeneratorWorker::CMapGeneratorWorker(ScriptInterface* scriptInterface) :
 
 CMapGeneratorWorker::~CMapGeneratorWorker()
 {
-	// Wait for thread to end
-	if (m_WorkerThread.joinable())
-		m_WorkerThread.join();
+	// Cancel or wait for the task to end.
+	m_WorkerThread.CancelOrWait();
 }
 
 void CMapGeneratorWorker::Initialize(const VfsPath& scriptFile, const std::string& settings)
@@ -83,13 +82,12 @@ void CMapGeneratorWorker::Initialize(const VfsPath& scriptFile, const std::strin
 	m_Settings = settings;
 
 	// Launch the worker thread
-	m_WorkerThread = std::thread(Threading::HandleExceptions<RunThread>::Wrapper, this);
+	m_WorkerThread = ThreadPool::TaskManager::Instance().GetWorker().Submit([this]() { RunThread(this); });
 }
 
 void CMapGeneratorWorker::RunThread(CMapGeneratorWorker* self)
 {
-	debug_SetThreadName("MapGenerator");
-	g_Profiler2.RegisterCurrentThread("MapGenerator");
+	PROFILE2("Map Generation");
 
 	shared_ptr<ScriptContext> mapgenContext = ScriptContext::CreateContext(RMS_CONTEXT_SIZE);
 

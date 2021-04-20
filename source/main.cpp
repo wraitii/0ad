@@ -58,6 +58,7 @@ that of Atlas depending on commandline parameters.
 #include "ps/UserReport.h"
 #include "ps/Util.h"
 #include "ps/VideoMode.h"
+#include "ps/ThreadPool.h"
 #include "ps/World.h"
 #include "ps/GameSetup/GameSetup.h"
 #include "ps/GameSetup/Atlas.h"
@@ -576,6 +577,9 @@ static void RunGameOrAtlas(int argc, const char* argv[])
 	ScriptEngine scriptEngine;
 	CXeromyces::Startup();
 
+	// Initialise the global thread pool at this point (JS & Profiler2 are set up).
+	ThreadPool::TaskManager::Initialise();
+
 	if (ATLAS_RunIfOnCmdLine(args, false))
 	{
 		CXeromyces::Terminate();
@@ -710,6 +714,7 @@ static void RunGameOrAtlas(int argc, const char* argv[])
 		ATLAS_RunIfOnCmdLine(args, true);
 #endif
 
+	ThreadPool::TaskManager::Instance().Clear();
 	CXeromyces::Terminate();
 }
 
