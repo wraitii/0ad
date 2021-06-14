@@ -1,4 +1,4 @@
-/* Copyright (C) 2010 Wildfire Games.
+/* Copyright (C) 2021 Wildfire Games.
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -63,7 +63,7 @@ public:
 	 * by the caller.
 	 * @return Status
 	 **/
-	virtual Status encode(Tex* RESTRICT t, DynArray* RESTRICT da) const = 0;
+	virtual Status encode(Tex* RESTRICT t, DynArray* RESTRICT da, int quality) const = 0;
 
 	/**
 	 * transform the texture's pixel format.
@@ -120,7 +120,7 @@ public:
 class TexCodecPng:ITexCodec {
 public:
 	virtual Status decode(u8* data, size_t size, Tex* RESTRICT t) const;
-	virtual Status encode(Tex* RESTRICT t, DynArray* RESTRICT da) const;
+	virtual Status encode(Tex* RESTRICT t, DynArray* RESTRICT da, int quality) const;
 	virtual Status transform(Tex* t, size_t transforms) const;
 	virtual bool is_hdr(const u8* file) const;
 	virtual bool is_ext(const OsPath& extension) const;
@@ -131,10 +131,24 @@ public:
 	};
 };
 
+class TexCodecJpg:ITexCodec {
+public:
+	virtual Status decode(u8* data, size_t size, Tex* RESTRICT t) const;
+	virtual Status encode(Tex* RESTRICT t, DynArray* RESTRICT da, int quality) const;
+	virtual Status transform(Tex* t, size_t transforms) const;
+	virtual bool is_hdr(const u8* file) const;
+	virtual bool is_ext(const OsPath& extension) const;
+	virtual size_t hdr_size(const u8* file) const;
+	virtual const wchar_t* get_name() const {
+		static const wchar_t *name = L"jpg";
+		return name;
+	};
+};
+
 class TexCodecDds:ITexCodec {
 public:
 	virtual Status decode(u8* data, size_t size, Tex* RESTRICT t) const;
-	virtual Status encode(Tex* RESTRICT t, DynArray* RESTRICT da) const;
+	virtual Status encode(Tex* RESTRICT t, DynArray* RESTRICT da, int quality) const;
 	virtual Status transform(Tex* t, size_t transforms) const;
 	virtual bool is_hdr(const u8* file) const;
 	virtual bool is_ext(const OsPath& extension) const;
@@ -148,7 +162,7 @@ public:
 class TexCodecTga:ITexCodec {
 public:
 	virtual Status decode(u8* data, size_t size, Tex* RESTRICT t) const;
-	virtual Status encode(Tex* RESTRICT t, DynArray* RESTRICT da) const;
+	virtual Status encode(Tex* RESTRICT t, DynArray* RESTRICT da, int quality) const;
 	virtual Status transform(Tex* t, size_t transforms) const;
 	virtual bool is_hdr(const u8* file) const;
 	virtual bool is_ext(const OsPath& extension) const;
@@ -162,7 +176,7 @@ public:
 class TexCodecBmp:ITexCodec {
 public:
 	virtual Status decode(u8* data, size_t size, Tex* RESTRICT t) const;
-	virtual Status encode(Tex* RESTRICT t, DynArray* RESTRICT da) const;
+	virtual Status encode(Tex* RESTRICT t, DynArray* RESTRICT da, int quality) const;
 	virtual Status transform(Tex* t, size_t transforms) const;
 	virtual bool is_hdr(const u8* file) const;
 	virtual bool is_ext(const OsPath& extension) const;

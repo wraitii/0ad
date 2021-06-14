@@ -357,6 +357,19 @@ static void Frame()
 
 	ogl_WarnIfError();
 
+	bool takeScreenshots;
+	int screenshotsFPS;
+	int screenshotsStartTime;
+	std::string screenshotFormat;
+
+	CFG_GET_VAL("videorendering.enabled", takeScreenshots);
+	CFG_GET_VAL("videorendering.fps", screenshotsFPS);
+	CFG_GET_VAL("videorendering.start", screenshotsStartTime);
+	CFG_GET_VAL("videorendering.format", screenshotFormat);
+
+	bool doScreenshot = takeScreenshots && g_Game &&
+		g_Game->IsGameStarted() && g_Game->SimTime() >= screenshotsStartTime * 1000;
+
 	// get elapsed time
 	const double time = timer_Time();
 	g_frequencyFilter->Update(time);
@@ -370,12 +383,21 @@ static void Frame()
 
 	// .. new method - filtered and more smooth, but errors may accumulate
 #else
-	const float realTimeSinceLastFrame = 1.0 / g_frequencyFilter->SmoothedFrequency();
+	// Fake target FPS when rendering a video using screenshots
+	float realTimeSinceLastFrame;
+	if (doScreenshot)
+		realTimeSinceLastFrame = 1.0 / ((float) screenshotsFPS);
+	else
+		realTimeSinceLastFrame = 1.0 / g_frequencyFilter->SmoothedFrequency();
 #endif
+
 	ENSURE(realTimeSinceLastFrame > 0.0f);
 
 	// Decide if update is necessary
 	bool need_update = true;
+
+	// Don't pause renderer nor GameView Update on focus loss
+	g_app_has_focus = g_app_has_focus || doScreenshot;
 
 	// If we are not running a multiplayer game, disable updates when the game is
 	// minimized or out of focus and relinquish the CPU a bit, in order to make
@@ -443,7 +465,7 @@ static void Frame()
 	if (g_SoundManager)
 		g_SoundManager->IdleTask();
 
-	if (ShouldRender())
+	if (doScreenshot || ShouldRender())
 	{
 		Render();
 
@@ -455,6 +477,9 @@ static void Frame()
 
 		g_Renderer.OnSwapBuffers();
 	}
+
+	if (doScreenshot)
+		WriteScreenshot(wstring_from_utf8(screenshotFormat));
 
 	g_Profiler.Frame();
 

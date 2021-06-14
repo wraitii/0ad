@@ -150,6 +150,7 @@ public:
 	void QuickLoad();
 
 	u32 GetCurrentTurn() const { return m_CurrentTurn; }
+	u32 GetCurrentTurnLength() { return m_TurnLength; }
 
 	/**
 	 * @return how many turns are ready to be computed.

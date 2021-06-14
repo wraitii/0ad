@@ -216,6 +216,7 @@ bool CSimulation2Impl::LoadTriggerScripts(CComponentManager& componentManager, J
 	{
 		std::vector<std::string> scriptNames;
 		Script::GetProperty(rq, mapSettings, "TriggerScripts", scriptNames);
+		scriptNames.emplace_back("cinematics/CinemaHelper.js");
 		for (const std::string& triggerScript : scriptNames)
 		{
 			std::string scriptName = "maps/" + triggerScript;

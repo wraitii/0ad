@@ -1,4 +1,4 @@
-/* Copyright (C) 2020 Wildfire Games.
+/* Copyright (C) 2021 Wildfire Games.
  * This file is part of 0 A.D.
  *
  * 0 A.D. is free software: you can redistribute it and/or modify
@@ -238,8 +238,13 @@ public:
 			// TODO: improve m_MapRevealed state and without fade in
 			cmpRangeManager->SetLosRevealAll(-1, enabled);
 		}
+		////////////////////////////////////////////////////////////////
+		// Remove this for the diplomacy colors scene, probably hotkey
+		////////////////////////////////////////////////////////////////
 		if (cmpTerritoryManager)
 			cmpTerritoryManager->SetVisibility(!enabled);
+		////////////////////////////////////////////////////////
+
 		ICmpSelectable::SetOverrideVisibility(!enabled);
 		ICmpOverlayRenderer::SetOverrideVisibility(!enabled);
 

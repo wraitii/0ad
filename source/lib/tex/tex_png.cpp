@@ -1,4 +1,4 @@
-/* Copyright (C) 2018 Wildfire Games.
+/* Copyright (C) 2021 Wildfire Games.
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -304,7 +304,7 @@ TIMER_ACCRUE(tc_png_decode);
 
 
 // limitation: palette images aren't supported
-Status TexCodecPng::encode(Tex* RESTRICT t, DynArray* RESTRICT da) const
+Status TexCodecPng::encode(Tex* RESTRICT t, DynArray* RESTRICT da, int quality) const
 {
 	png_infop info_ptr = 0;
 

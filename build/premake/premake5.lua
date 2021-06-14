@@ -851,6 +851,7 @@ function setup_all_libs ()
 		"opengl",
 		"libpng",
 		"zlib",
+		"libjpg",
 		"valgrind",
 		"cxxtest",
 		"fmt",
@@ -947,6 +948,7 @@ used_extern_libs = {
 	"opengl",
 	"sdl",
 
+	"libjpg",
 	"libpng",
 	"zlib",
 

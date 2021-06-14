@@ -679,12 +679,13 @@ function updateCinemaPath()
 	let isPlayingCinemaPath = GetSimState().cinemaPlaying && !g_Disconnected;
 
 	Engine.GetGUIObjectByName("session").hidden = !g_ShowGUI || isPlayingCinemaPath;
-	Engine.GetGUIObjectByName("cinemaOverlay").hidden = !isPlayingCinemaPath;
+	Engine.GetGUIObjectByName("cinemaOverlay").hidden = true;//!isPlayingCinemaPath;
 	Engine.ConfigDB_CreateValue("user", "silhouettes", !isPlayingCinemaPath && Engine.ConfigDB_GetValue("user", "silhouettes") == "true" ? "true" : "false");
 }
 
 function updateCinemaOverlay()
 {
+	/*
 	let cinemaOverlay = Engine.GetGUIObjectByName("cinemaOverlay");
 	let width = cinemaOverlay.getComputedSize().right;
 	let height = cinemaOverlay.getComputedSize().bottom;
@@ -701,6 +702,7 @@ function updateCinemaOverlay()
 	let cinemaBarBottomSize = cinemaBarBottom.size;
 	cinemaBarBottomSize.top = -barHeight;
 	cinemaBarBottom.size = cinemaBarBottomSize;
+	*/
 }
 
 // TODO: Use event subscription onSimulationUpdate, onEntitySelectionChange, onPlayerViewChange, ... instead

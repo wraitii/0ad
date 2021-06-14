@@ -72,6 +72,27 @@ void RegisterScriptFunctions_Settings(const ScriptRequest& rq)
 
 #undef REGISTER_BOOLEAN_SCRIPT_SETTING
 
+JS::Value GetCameraPosition(const ScriptRequest& rq)
+{
+	CVector3D pos(-1, -1, -1);
+	if (g_Game && g_Game->GetView())
+		pos = g_Game->GetView()->GetCameraPosition();
+	JS::RootedValue val(rq.cx);
+	Script::CreateObject(rq, &val, "x", pos.X, "y", pos.Y, "z", pos.Z);
+	return val;
+}
+
+JS::Value GetCameraRotation(const ScriptRequest& rq)
+{
+	CVector3D pos(-1, -1, -1);
+	if (g_Game && g_Game->GetView())
+		pos = g_Game->GetView()->GetCamera()->GetOrientation().GetIn();
+
+	JS::RootedValue val(rq.cx);
+	Script::CreateObject(rq, &val, "x", pos.X, "y", pos.Y, "z", pos.Z);
+	return val;
+}
+
 JS::Value GetCameraPivot(const ScriptRequest& rq)
 {
 	CVector3D pivot(-1, -1, -1);
@@ -166,6 +187,8 @@ void RegisterScriptFunctions(const ScriptRequest& rq)
 {
 	RegisterScriptFunctions_Settings(rq);
 
+	ScriptFunction::Register<&GetCameraPosition>(rq, "GetCameraPosition");
+	ScriptFunction::Register<&GetCameraRotation>(rq, "GetCameraRotation");
 	ScriptFunction::Register<&GetCameraPivot>(rq, "GetCameraPivot");
 	ScriptFunction::Register<&CameraMoveTo>(rq, "CameraMoveTo");
 	ScriptFunction::Register<&SetCameraTarget>(rq, "SetCameraTarget");
