@@ -3,7 +3,7 @@
 <Scenario version="7">
 	<Environment>
 		<SkySet>cloudless</SkySet>
-		<SunColor r="0.956863" g="0.92549" b="0.807843"/>
+		<SunColor r="0.956863" g="0.921569" b="0.803922"/>
 		<SunElevation angle="0.510983"/>
 		<SunRotation angle="-1.15355"/>
 		<AmbientColor r="0.329412" g="0.419608" b="0.501961"/>
@@ -32,8 +32,8 @@
 		</Postproc>
 	</Environment>
 	<Camera>
-		<Position x="687.198" y="113.021" z="145.694"/>
-		<Rotation angle="0"/>
+		<Position x="673.498" y="106.925" z="1226.09"/>
+		<Rotation angle="-2.49895"/>
 		<Declination angle="0.610865"/>
 	</Camera>
 	<ScriptSettings><![CDATA[
@@ -45,6 +45,7 @@
   ],
   "Name": "Coele-Syria (2)",
   "PlayerData": [
+    null,
     {},
     {}
   ],
@@ -27889,7 +27890,7 @@
 		</Entity>
 		<Entity uid="4746">
 			<Template>structures/trading_post_desert</Template>
-			<Player>0</Player>
+			<Player>1</Player>
 			<Position x="635.62067" z="1185.05274"/>
 			<Orientation y="2.35621"/>
 			<Actor seed="49056"/>
@@ -31471,6 +31472,1210 @@
 			<Position x="947.55884" z="1095.3108"/>
 			<Orientation y="-2.17148"/>
 			<Actor seed="22662"/>
+		</Entity>
+		<Entity uid="5290">
+			<Template>structures/fence_stone</Template>
+			<Player>0</Player>
+			<Position x="602.7204" z="1134.81165"/>
+			<Orientation y="-3.98981"/>
+			<Actor seed="42079"/>
+		</Entity>
+		<Entity uid="5291">
+			<Template>structures/fence_stone</Template>
+			<Player>0</Player>
+			<Position x="611.63727" z="1131.85035"/>
+			<Orientation y="8.05549"/>
+			<Actor seed="47631"/>
+		</Entity>
+		<Entity uid="5292">
+			<Template>structures/fence_stone</Template>
+			<Player>0</Player>
+			<Position x="627.59913" z="1122.24036"/>
+			<Orientation y="2.47761"/>
+			<Actor seed="23710"/>
+		</Entity>
+		<Entity uid="5293">
+			<Template>structures/fence_stone</Template>
+			<Player>0</Player>
+			<Position x="642.86493" z="1117.80774"/>
+			<Orientation y="1.19799"/>
+			<Actor seed="56407"/>
+		</Entity>
+		<Entity uid="5294">
+			<Template>structures/fence_stone</Template>
+			<Player>0</Player>
+			<Position x="649.70368" z="1121.68665"/>
+			<Orientation y="0.83658"/>
+			<Actor seed="6927"/>
+		</Entity>
+		<Entity uid="5295">
+			<Template>structures/fence_stone</Template>
+			<Player>0</Player>
+			<Position x="656.21393" z="1127.88819"/>
+			<Orientation y="0.7655"/>
+			<Actor seed="4781"/>
+		</Entity>
+		<Entity uid="5296">
+			<Template>structures/fence_stone</Template>
+			<Player>0</Player>
+			<Position x="662.62037" z="1134.46839"/>
+			<Orientation y="0.75344"/>
+			<Actor seed="62191"/>
+		</Entity>
+		<Entity uid="5297">
+			<Template>structures/fence_stone</Template>
+			<Player>0</Player>
+			<Position x="620.4834" z="1128.31653"/>
+			<Orientation y="2.19819"/>
+			<Actor seed="23710"/>
+		</Entity>
+		<Entity uid="5298">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="656.3675" z="1149.19227"/>
+			<Orientation y="2.62168"/>
+			<Actor seed="37976"/>
+		</Entity>
+		<Entity uid="5299">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="652.85553" z="1149.4491"/>
+			<Orientation y="-2.93595"/>
+			<Actor seed="39736"/>
+		</Entity>
+		<Entity uid="5300">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="648.90955" z="1150.21607"/>
+			<Orientation y="-2.55193"/>
+			<Actor seed="28642"/>
+		</Entity>
+		<Entity uid="5301">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="644.58423" z="1151.60157"/>
+			<Orientation y="-2.79036"/>
+			<Actor seed="31069"/>
+		</Entity>
+		<Entity uid="5302">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="646.01801" z="1145.64515"/>
+			<Orientation y="-2.79036"/>
+			<Actor seed="31069"/>
+		</Entity>
+		<Entity uid="5303">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="650.34333" z="1144.25965"/>
+			<Orientation y="-2.55193"/>
+			<Actor seed="28642"/>
+		</Entity>
+		<Entity uid="5304">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="654.42975" z="1143.57667"/>
+			<Orientation y="-2.93595"/>
+			<Actor seed="39736"/>
+		</Entity>
+		<Entity uid="5305">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="657.80127" z="1143.23584"/>
+			<Orientation y="2.62168"/>
+			<Actor seed="37976"/>
+		</Entity>
+		<Entity uid="5306">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="629.84644" z="1148.56897"/>
+			<Orientation y="-2.79036"/>
+			<Actor seed="31069"/>
+		</Entity>
+		<Entity uid="5307">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="634.17176" z="1147.18348"/>
+			<Orientation y="-2.55193"/>
+			<Actor seed="28642"/>
+		</Entity>
+		<Entity uid="5308">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="638.11774" z="1146.41651"/>
+			<Orientation y="-2.93595"/>
+			<Actor seed="39736"/>
+		</Entity>
+		<Entity uid="5309">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="641.6297" z="1146.15967"/>
+			<Orientation y="2.62168"/>
+			<Actor seed="37976"/>
+		</Entity>
+		<Entity uid="5310">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="629.48823" z="1155.95044"/>
+			<Orientation y="-2.79036"/>
+			<Actor seed="31069"/>
+		</Entity>
+		<Entity uid="5311">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="633.81354" z="1154.56495"/>
+			<Orientation y="-2.55193"/>
+			<Actor seed="28642"/>
+		</Entity>
+		<Entity uid="5312">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="637.75953" z="1153.79798"/>
+			<Orientation y="-2.93595"/>
+			<Actor seed="39736"/>
+		</Entity>
+		<Entity uid="5313">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="641.27149" z="1153.54114"/>
+			<Orientation y="2.62168"/>
+			<Actor seed="37976"/>
+		</Entity>
+		<Entity uid="5314">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="639.8711" z="1149.64039"/>
+			<Orientation y="2.62168"/>
+			<Actor seed="37976"/>
+		</Entity>
+		<Entity uid="5315">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="636.35914" z="1149.89722"/>
+			<Orientation y="-2.93595"/>
+			<Actor seed="39736"/>
+		</Entity>
+		<Entity uid="5316">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="632.41315" z="1150.66419"/>
+			<Orientation y="-2.55193"/>
+			<Actor seed="28642"/>
+		</Entity>
+		<Entity uid="5317">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="628.08783" z="1152.04969"/>
+			<Orientation y="-2.79036"/>
+			<Actor seed="31069"/>
+		</Entity>
+		<Entity uid="5318">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="640.22931" z="1142.25892"/>
+			<Orientation y="2.62168"/>
+			<Actor seed="37976"/>
+		</Entity>
+		<Entity uid="5319">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="636.71735" z="1142.51575"/>
+			<Orientation y="-2.93595"/>
+			<Actor seed="39736"/>
+		</Entity>
+		<Entity uid="5320">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="632.77137" z="1143.28272"/>
+			<Orientation y="-2.55193"/>
+			<Actor seed="28642"/>
+		</Entity>
+		<Entity uid="5321">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="628.44605" z="1144.66822"/>
+			<Orientation y="-2.79036"/>
+			<Actor seed="31069"/>
+		</Entity>
+		<Entity uid="5322">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="656.40088" z="1139.33509"/>
+			<Orientation y="2.62168"/>
+			<Actor seed="37976"/>
+		</Entity>
+		<Entity uid="5323">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="653.02936" z="1139.67591"/>
+			<Orientation y="-2.93595"/>
+			<Actor seed="39736"/>
+		</Entity>
+		<Entity uid="5324">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="648.94294" z="1140.3589"/>
+			<Orientation y="-2.55193"/>
+			<Actor seed="28642"/>
+		</Entity>
+		<Entity uid="5325">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="644.61762" z="1141.7444"/>
+			<Orientation y="-2.79036"/>
+			<Actor seed="31069"/>
+		</Entity>
+		<Entity uid="5326">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="643.18384" z="1147.70081"/>
+			<Orientation y="-2.79036"/>
+			<Actor seed="31069"/>
+		</Entity>
+		<Entity uid="5327">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="647.50916" z="1146.31531"/>
+			<Orientation y="-2.55193"/>
+			<Actor seed="28642"/>
+		</Entity>
+		<Entity uid="5328">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="651.45514" z="1145.54834"/>
+			<Orientation y="-2.93595"/>
+			<Actor seed="39736"/>
+		</Entity>
+		<Entity uid="5329">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="654.96711" z="1145.29151"/>
+			<Orientation y="2.62168"/>
+			<Actor seed="37976"/>
+		</Entity>
+		<Entity uid="5330">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="649.22272" z="1156.66211"/>
+			<Orientation y="2.62168"/>
+			<Actor seed="37976"/>
+		</Entity>
+		<Entity uid="5331">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="645.71076" z="1156.91895"/>
+			<Orientation y="-2.93595"/>
+			<Actor seed="39736"/>
+		</Entity>
+		<Entity uid="5332">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="641.76478" z="1157.68592"/>
+			<Orientation y="-2.55193"/>
+			<Actor seed="28642"/>
+		</Entity>
+		<Entity uid="5333">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="637.43946" z="1159.07142"/>
+			<Orientation y="-2.79036"/>
+			<Actor seed="31069"/>
+		</Entity>
+		<Entity uid="5334">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="649.58094" z="1149.28064"/>
+			<Orientation y="2.62168"/>
+			<Actor seed="37976"/>
+		</Entity>
+		<Entity uid="5335">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="646.06897" z="1149.53748"/>
+			<Orientation y="-2.93595"/>
+			<Actor seed="39736"/>
+		</Entity>
+		<Entity uid="5336">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="642.123" z="1150.30445"/>
+			<Orientation y="-2.55193"/>
+			<Actor seed="28642"/>
+		</Entity>
+		<Entity uid="5337">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="637.79767" z="1151.68995"/>
+			<Orientation y="-2.79036"/>
+			<Actor seed="31069"/>
+		</Entity>
+		<Entity uid="5338">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="665.75251" z="1146.35682"/>
+			<Orientation y="2.62168"/>
+			<Actor seed="37976"/>
+		</Entity>
+		<Entity uid="5339">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="662.38099" z="1146.69764"/>
+			<Orientation y="-2.93595"/>
+			<Actor seed="39736"/>
+		</Entity>
+		<Entity uid="5340">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="658.29456" z="1147.38062"/>
+			<Orientation y="-2.55193"/>
+			<Actor seed="28642"/>
+		</Entity>
+		<Entity uid="5341">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="653.96924" z="1148.76612"/>
+			<Orientation y="-2.79036"/>
+			<Actor seed="31069"/>
+		</Entity>
+		<Entity uid="5342">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="652.53547" z="1154.72254"/>
+			<Orientation y="-2.79036"/>
+			<Actor seed="31069"/>
+		</Entity>
+		<Entity uid="5343">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="656.86078" z="1153.33704"/>
+			<Orientation y="-2.55193"/>
+			<Actor seed="28642"/>
+		</Entity>
+		<Entity uid="5344">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="660.80677" z="1152.57007"/>
+			<Orientation y="-2.93595"/>
+			<Actor seed="39736"/>
+		</Entity>
+		<Entity uid="5345">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="664.31873" z="1152.31324"/>
+			<Orientation y="2.62168"/>
+			<Actor seed="37976"/>
+		</Entity>
+		<Entity uid="5346">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="638.13941" z="1163.26734"/>
+			<Orientation y="2.62168"/>
+			<Actor seed="37976"/>
+		</Entity>
+		<Entity uid="5347">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="634.62745" z="1163.52417"/>
+			<Orientation y="-2.93595"/>
+			<Actor seed="39736"/>
+		</Entity>
+		<Entity uid="5348">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="630.68146" z="1164.29114"/>
+			<Orientation y="-2.55193"/>
+			<Actor seed="28642"/>
+		</Entity>
+		<Entity uid="5349">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="626.35615" z="1165.67664"/>
+			<Orientation y="-2.79036"/>
+			<Actor seed="31069"/>
+		</Entity>
+		<Entity uid="5350">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="638.49762" z="1155.88587"/>
+			<Orientation y="2.62168"/>
+			<Actor seed="37976"/>
+		</Entity>
+		<Entity uid="5351">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="634.98566" z="1156.14271"/>
+			<Orientation y="-2.93595"/>
+			<Actor seed="39736"/>
+		</Entity>
+		<Entity uid="5352">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="631.03968" z="1156.90967"/>
+			<Orientation y="-2.55193"/>
+			<Actor seed="28642"/>
+		</Entity>
+		<Entity uid="5353">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="626.71436" z="1158.29517"/>
+			<Orientation y="-2.79036"/>
+			<Actor seed="31069"/>
+		</Entity>
+		<Entity uid="5354">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="654.6692" z="1152.96204"/>
+			<Orientation y="2.62168"/>
+			<Actor seed="37976"/>
+		</Entity>
+		<Entity uid="5355">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="651.29767" z="1153.30286"/>
+			<Orientation y="-2.93595"/>
+			<Actor seed="39736"/>
+		</Entity>
+		<Entity uid="5356">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="647.21125" z="1153.98584"/>
+			<Orientation y="-2.55193"/>
+			<Actor seed="28642"/>
+		</Entity>
+		<Entity uid="5357">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="642.88593" z="1155.37134"/>
+			<Orientation y="-2.79036"/>
+			<Actor seed="31069"/>
+		</Entity>
+		<Entity uid="5358">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="641.45215" z="1161.32776"/>
+			<Orientation y="-2.79036"/>
+			<Actor seed="31069"/>
+		</Entity>
+		<Entity uid="5359">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="645.77747" z="1159.94227"/>
+			<Orientation y="-2.55193"/>
+			<Actor seed="28642"/>
+		</Entity>
+		<Entity uid="5360">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="649.72345" z="1159.1753"/>
+			<Orientation y="-2.93595"/>
+			<Actor seed="39736"/>
+		</Entity>
+		<Entity uid="5361">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="653.23542" z="1158.91846"/>
+			<Orientation y="2.62168"/>
+			<Actor seed="37976"/>
+		</Entity>
+		<Entity uid="5362">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="654.18165" z="1163.58216"/>
+			<Orientation y="2.62168"/>
+			<Actor seed="37976"/>
+		</Entity>
+		<Entity uid="5363">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="650.66968" z="1163.839"/>
+			<Orientation y="-2.93595"/>
+			<Actor seed="39736"/>
+		</Entity>
+		<Entity uid="5364">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="646.7237" z="1164.60596"/>
+			<Orientation y="-2.55193"/>
+			<Actor seed="28642"/>
+		</Entity>
+		<Entity uid="5365">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="642.39838" z="1165.99146"/>
+			<Orientation y="-2.79036"/>
+			<Actor seed="31069"/>
+		</Entity>
+		<Entity uid="5366">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="654.53986" z="1156.20069"/>
+			<Orientation y="2.62168"/>
+			<Actor seed="37976"/>
+		</Entity>
+		<Entity uid="5367">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="651.0279" z="1156.45752"/>
+			<Orientation y="-2.93595"/>
+			<Actor seed="39736"/>
+		</Entity>
+		<Entity uid="5368">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="647.08191" z="1157.2245"/>
+			<Orientation y="-2.55193"/>
+			<Actor seed="28642"/>
+		</Entity>
+		<Entity uid="5369">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="642.7566" z="1158.61"/>
+			<Orientation y="-2.79036"/>
+			<Actor seed="31069"/>
+		</Entity>
+		<Entity uid="5370">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="670.71143" z="1153.27686"/>
+			<Orientation y="2.62168"/>
+			<Actor seed="37976"/>
+		</Entity>
+		<Entity uid="5371">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="667.33991" z="1153.61768"/>
+			<Orientation y="-2.93595"/>
+			<Actor seed="39736"/>
+		</Entity>
+		<Entity uid="5372">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="663.25348" z="1154.30066"/>
+			<Orientation y="-2.55193"/>
+			<Actor seed="28642"/>
+		</Entity>
+		<Entity uid="5373">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="658.92817" z="1155.68616"/>
+			<Orientation y="-2.79036"/>
+			<Actor seed="31069"/>
+		</Entity>
+		<Entity uid="5374">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="657.4944" z="1161.64258"/>
+			<Orientation y="-2.79036"/>
+			<Actor seed="31069"/>
+		</Entity>
+		<Entity uid="5375">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="661.81971" z="1160.25709"/>
+			<Orientation y="-2.55193"/>
+			<Actor seed="28642"/>
+		</Entity>
+		<Entity uid="5376">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="665.7657" z="1159.49012"/>
+			<Orientation y="-2.93595"/>
+			<Actor seed="39736"/>
+		</Entity>
+		<Entity uid="5377">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="669.27765" z="1159.23328"/>
+			<Orientation y="2.62168"/>
+			<Actor seed="37976"/>
+		</Entity>
+		<Entity uid="5378">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="632.53211" z="1156.72535"/>
+			<Orientation y="2.62168"/>
+			<Actor seed="37976"/>
+		</Entity>
+		<Entity uid="5379">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="629.02015" z="1156.98218"/>
+			<Orientation y="-2.93595"/>
+			<Actor seed="39736"/>
+		</Entity>
+		<Entity uid="5380">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="625.07416" z="1157.74915"/>
+			<Orientation y="-2.55193"/>
+			<Actor seed="28642"/>
+		</Entity>
+		<Entity uid="5381">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="620.74885" z="1159.13465"/>
+			<Orientation y="-2.79036"/>
+			<Actor seed="31069"/>
+		</Entity>
+		<Entity uid="5382">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="632.89032" z="1149.34388"/>
+			<Orientation y="2.62168"/>
+			<Actor seed="37976"/>
+		</Entity>
+		<Entity uid="5383">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="629.37836" z="1149.60071"/>
+			<Orientation y="-2.93595"/>
+			<Actor seed="39736"/>
+		</Entity>
+		<Entity uid="5384">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="625.43238" z="1150.36768"/>
+			<Orientation y="-2.55193"/>
+			<Actor seed="28642"/>
+		</Entity>
+		<Entity uid="5385">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="621.10706" z="1151.75318"/>
+			<Orientation y="-2.79036"/>
+			<Actor seed="31069"/>
+		</Entity>
+		<Entity uid="5386">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="649.0619" z="1146.42005"/>
+			<Orientation y="2.62168"/>
+			<Actor seed="37976"/>
+		</Entity>
+		<Entity uid="5387">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="645.69037" z="1146.76087"/>
+			<Orientation y="-2.93595"/>
+			<Actor seed="39736"/>
+		</Entity>
+		<Entity uid="5388">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="641.60395" z="1147.44385"/>
+			<Orientation y="-2.55193"/>
+			<Actor seed="28642"/>
+		</Entity>
+		<Entity uid="5389">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="637.27863" z="1148.82935"/>
+			<Orientation y="-2.79036"/>
+			<Actor seed="31069"/>
+		</Entity>
+		<Entity uid="5390">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="635.84485" z="1154.78577"/>
+			<Orientation y="-2.79036"/>
+			<Actor seed="31069"/>
+		</Entity>
+		<Entity uid="5391">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="640.17017" z="1153.40027"/>
+			<Orientation y="-2.55193"/>
+			<Actor seed="28642"/>
+		</Entity>
+		<Entity uid="5392">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="644.11615" z="1152.63331"/>
+			<Orientation y="-2.93595"/>
+			<Actor seed="39736"/>
+		</Entity>
+		<Entity uid="5393">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="647.62812" z="1152.37647"/>
+			<Orientation y="2.62168"/>
+			<Actor seed="37976"/>
+		</Entity>
+		<Entity uid="5394">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="622.20484" z="1163.62061"/>
+			<Orientation y="2.62168"/>
+			<Actor seed="37976"/>
+		</Entity>
+		<Entity uid="5395">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="618.69288" z="1163.87745"/>
+			<Orientation y="-2.93595"/>
+			<Actor seed="39736"/>
+		</Entity>
+		<Entity uid="5396">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="614.7469" z="1164.64441"/>
+			<Orientation y="-2.55193"/>
+			<Actor seed="28642"/>
+		</Entity>
+		<Entity uid="5397">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="610.42157" z="1166.02991"/>
+			<Orientation y="-2.79036"/>
+			<Actor seed="31069"/>
+		</Entity>
+		<Entity uid="5398">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="622.56305" z="1156.23914"/>
+			<Orientation y="2.62168"/>
+			<Actor seed="37976"/>
+		</Entity>
+		<Entity uid="5399">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="619.0511" z="1156.49598"/>
+			<Orientation y="-2.93595"/>
+			<Actor seed="39736"/>
+		</Entity>
+		<Entity uid="5400">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="615.10511" z="1157.26294"/>
+			<Orientation y="-2.55193"/>
+			<Actor seed="28642"/>
+		</Entity>
+		<Entity uid="5401">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="610.7798" z="1158.64844"/>
+			<Orientation y="-2.79036"/>
+			<Actor seed="31069"/>
+		</Entity>
+		<Entity uid="5402">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="638.73462" z="1153.31531"/>
+			<Orientation y="2.62168"/>
+			<Actor seed="37976"/>
+		</Entity>
+		<Entity uid="5403">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="635.3631" z="1153.65613"/>
+			<Orientation y="-2.93595"/>
+			<Actor seed="39736"/>
+		</Entity>
+		<Entity uid="5404">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="631.27668" z="1154.33912"/>
+			<Orientation y="-2.55193"/>
+			<Actor seed="28642"/>
+		</Entity>
+		<Entity uid="5405">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="626.95136" z="1155.72461"/>
+			<Orientation y="-2.79036"/>
+			<Actor seed="31069"/>
+		</Entity>
+		<Entity uid="5406">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="625.51758" z="1161.68104"/>
+			<Orientation y="-2.79036"/>
+			<Actor seed="31069"/>
+		</Entity>
+		<Entity uid="5407">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="629.8429" z="1160.29554"/>
+			<Orientation y="-2.55193"/>
+			<Actor seed="28642"/>
+		</Entity>
+		<Entity uid="5408">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="633.78888" z="1159.52857"/>
+			<Orientation y="-2.93595"/>
+			<Actor seed="39736"/>
+		</Entity>
+		<Entity uid="5409">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="637.30085" z="1159.27173"/>
+			<Orientation y="2.62168"/>
+			<Actor seed="37976"/>
+		</Entity>
+		<Entity uid="5410">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="624.59687" z="1167.92005"/>
+			<Orientation y="2.62168"/>
+			<Actor seed="37976"/>
+		</Entity>
+		<Entity uid="5411">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="621.0849" z="1168.17688"/>
+			<Orientation y="-2.93595"/>
+			<Actor seed="39736"/>
+		</Entity>
+		<Entity uid="5412">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="617.13892" z="1168.94385"/>
+			<Orientation y="-2.55193"/>
+			<Actor seed="28642"/>
+		</Entity>
+		<Entity uid="5413">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="612.8136" z="1170.32935"/>
+			<Orientation y="-2.79036"/>
+			<Actor seed="31069"/>
+		</Entity>
+		<Entity uid="5414">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="624.95508" z="1160.53858"/>
+			<Orientation y="2.62168"/>
+			<Actor seed="37976"/>
+		</Entity>
+		<Entity uid="5415">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="621.44312" z="1160.79542"/>
+			<Orientation y="-2.93595"/>
+			<Actor seed="39736"/>
+		</Entity>
+		<Entity uid="5416">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="617.49714" z="1161.56238"/>
+			<Orientation y="-2.55193"/>
+			<Actor seed="28642"/>
+		</Entity>
+		<Entity uid="5417">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="613.17182" z="1162.94788"/>
+			<Orientation y="-2.79036"/>
+			<Actor seed="31069"/>
+		</Entity>
+		<Entity uid="5418">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="641.12665" z="1157.61475"/>
+			<Orientation y="2.62168"/>
+			<Actor seed="37976"/>
+		</Entity>
+		<Entity uid="5419">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="637.75513" z="1157.95557"/>
+			<Orientation y="-2.93595"/>
+			<Actor seed="39736"/>
+		</Entity>
+		<Entity uid="5420">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="633.66871" z="1158.63855"/>
+			<Orientation y="-2.55193"/>
+			<Actor seed="28642"/>
+		</Entity>
+		<Entity uid="5421">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="629.34339" z="1160.02405"/>
+			<Orientation y="-2.79036"/>
+			<Actor seed="31069"/>
+		</Entity>
+		<Entity uid="5422">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="627.90961" z="1165.98047"/>
+			<Orientation y="-2.79036"/>
+			<Actor seed="31069"/>
+		</Entity>
+		<Entity uid="5423">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="632.23493" z="1164.59498"/>
+			<Orientation y="-2.55193"/>
+			<Actor seed="28642"/>
+		</Entity>
+		<Entity uid="5424">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="636.18091" z="1163.82801"/>
+			<Orientation y="-2.93595"/>
+			<Actor seed="39736"/>
+		</Entity>
+		<Entity uid="5425">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="639.69288" z="1163.57117"/>
+			<Orientation y="2.62168"/>
+			<Actor seed="37976"/>
+		</Entity>
+		<Entity uid="5426">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="656.08191" z="1162.12195"/>
+			<Orientation y="2.62168"/>
+			<Actor seed="37976"/>
+		</Entity>
+		<Entity uid="5427">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="652.56995" z="1162.37879"/>
+			<Orientation y="-2.93595"/>
+			<Actor seed="39736"/>
+		</Entity>
+		<Entity uid="5428">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="648.62397" z="1163.14576"/>
+			<Orientation y="-2.55193"/>
+			<Actor seed="28642"/>
+		</Entity>
+		<Entity uid="5429">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="644.29865" z="1164.53125"/>
+			<Orientation y="-2.79036"/>
+			<Actor seed="31069"/>
+		</Entity>
+		<Entity uid="5430">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="656.44013" z="1154.74048"/>
+			<Orientation y="2.62168"/>
+			<Actor seed="37976"/>
+		</Entity>
+		<Entity uid="5431">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="652.92817" z="1154.99732"/>
+			<Orientation y="-2.93595"/>
+			<Actor seed="39736"/>
+		</Entity>
+		<Entity uid="5432">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="648.98218" z="1155.76429"/>
+			<Orientation y="-2.55193"/>
+			<Actor seed="28642"/>
+		</Entity>
+		<Entity uid="5433">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="644.65687" z="1157.14979"/>
+			<Orientation y="-2.79036"/>
+			<Actor seed="31069"/>
+		</Entity>
+		<Entity uid="5434">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="672.6117" z="1151.81666"/>
+			<Orientation y="2.62168"/>
+			<Actor seed="37976"/>
+		</Entity>
+		<Entity uid="5435">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="669.24018" z="1152.15748"/>
+			<Orientation y="-2.93595"/>
+			<Actor seed="39736"/>
+		</Entity>
+		<Entity uid="5436">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="665.15375" z="1152.84046"/>
+			<Orientation y="-2.55193"/>
+			<Actor seed="28642"/>
+		</Entity>
+		<Entity uid="5437">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="660.82844" z="1154.22596"/>
+			<Orientation y="-2.79036"/>
+			<Actor seed="31069"/>
+		</Entity>
+		<Entity uid="5438">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="659.39466" z="1160.18238"/>
+			<Orientation y="-2.79036"/>
+			<Actor seed="31069"/>
+		</Entity>
+		<Entity uid="5439">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="663.71998" z="1158.79688"/>
+			<Orientation y="-2.55193"/>
+			<Actor seed="28642"/>
+		</Entity>
+		<Entity uid="5440">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="667.66596" z="1158.02991"/>
+			<Orientation y="-2.93595"/>
+			<Actor seed="39736"/>
+		</Entity>
+		<Entity uid="5441">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="671.17792" z="1157.77308"/>
+			<Orientation y="2.62168"/>
+			<Actor seed="37976"/>
+		</Entity>
+		<Entity uid="5442">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="652.80665" z="1160.1471"/>
+			<Orientation y="2.62168"/>
+			<Actor seed="37976"/>
+		</Entity>
+		<Entity uid="5443">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="649.29468" z="1160.40394"/>
+			<Orientation y="-2.93595"/>
+			<Actor seed="39736"/>
+		</Entity>
+		<Entity uid="5444">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="645.3487" z="1161.1709"/>
+			<Orientation y="-2.55193"/>
+			<Actor seed="28642"/>
+		</Entity>
+		<Entity uid="5445">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="641.02338" z="1162.5564"/>
+			<Orientation y="-2.79036"/>
+			<Actor seed="31069"/>
+		</Entity>
+		<Entity uid="5446">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="653.16486" z="1152.76563"/>
+			<Orientation y="2.62168"/>
+			<Actor seed="37976"/>
+		</Entity>
+		<Entity uid="5447">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="649.6529" z="1153.02247"/>
+			<Orientation y="-2.93595"/>
+			<Actor seed="39736"/>
+		</Entity>
+		<Entity uid="5448">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="645.70691" z="1153.78943"/>
+			<Orientation y="-2.55193"/>
+			<Actor seed="28642"/>
+		</Entity>
+		<Entity uid="5449">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="641.3816" z="1155.17493"/>
+			<Orientation y="-2.79036"/>
+			<Actor seed="31069"/>
+		</Entity>
+		<Entity uid="5450">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="669.33643" z="1149.8418"/>
+			<Orientation y="2.62168"/>
+			<Actor seed="37976"/>
+		</Entity>
+		<Entity uid="5451">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="665.96491" z="1150.18262"/>
+			<Orientation y="-2.93595"/>
+			<Actor seed="39736"/>
+		</Entity>
+		<Entity uid="5452">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="661.87848" z="1150.86561"/>
+			<Orientation y="-2.55193"/>
+			<Actor seed="28642"/>
+		</Entity>
+		<Entity uid="5453">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="657.55317" z="1152.2511"/>
+			<Orientation y="-2.79036"/>
+			<Actor seed="31069"/>
+		</Entity>
+		<Entity uid="5454">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="656.1194" z="1158.20752"/>
+			<Orientation y="-2.79036"/>
+			<Actor seed="31069"/>
+		</Entity>
+		<Entity uid="5455">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="660.44471" z="1156.82203"/>
+			<Orientation y="-2.55193"/>
+			<Actor seed="28642"/>
+		</Entity>
+		<Entity uid="5456">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="664.3907" z="1156.05506"/>
+			<Orientation y="-2.93595"/>
+			<Actor seed="39736"/>
+		</Entity>
+		<Entity uid="5457">
+			<Template>gaia/fauna_sheep</Template>
+			<Player>1</Player>
+			<Position x="667.90265" z="1155.79822"/>
+			<Orientation y="2.62168"/>
+			<Actor seed="37976"/>
+		</Entity>
+		<Entity uid="5458">
+			<Template>structures/fence_stone</Template>
+			<Player>0</Player>
+			<Position x="669.396" z="1141.68702"/>
+			<Orientation y="0.75344"/>
+			<Actor seed="62191"/>
+		</Entity>
+		<Entity uid="5459">
+			<Template>structures/fence_stone</Template>
+			<Player>0</Player>
+			<Position x="676.6905" z="1147.69446"/>
+			<Orientation y="0.93418"/>
+			<Actor seed="62191"/>
+		</Entity>
+		<Entity uid="5460">
+			<Template>structures/fence_stone</Template>
+			<Player>0</Player>
+			<Position x="593.6955" z="1138.84327"/>
+			<Orientation y="-1.30997"/>
+			<Actor seed="62191"/>
+		</Entity>
+		<Entity uid="5462">
+			<Template>structures/iber/farmstead</Template>
+			<Player>0</Player>
+			<Position x="583.77417" z="1143.56775"/>
+			<Orientation y="0.46483"/>
+			<Actor seed="21030"/>
 		</Entity>
 	</Entities>
 	<Paths/>

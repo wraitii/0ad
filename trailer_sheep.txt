@@ -1,0 +1,521 @@
+start {"settings":{"CheatsEnabled":true,"CircularMap":true,"DisableSpies":false,"DisableTreasures":false,"LastManStanding":false,"LockTeams":false,"RevealMap":false,"ExploreMap":false,"Name":"Coele-Syria (2)","PlayerData":[{"AI":false,"Civ":"athen","Color":{"r":21,"g":55,"b":149},"Name":"wraitii","Team":-1},{"AI":false,"Civ":"gaul","Color":{"r":150,"g":20,"b":20},"Name":"Player 2","Team":-1}],"PopulationCap":300,"RegicideGarrison":false,"Seed":2408447894,"AISeed":294128511,"StartingResources":300,"TriggerScripts":[],"VictoryConditions":[]},"gameSpeed":1,"map":"maps/skirmishes/syria_2p","mapType":"skirmish","mapPreview":"cropped:0.78125,0.5859375:session/icons/mappreview/coele-syria_2p.png","matchID":"1F7E923B4F955FFF","timestamp":1623686568,"engine_version":"0.0.25","mods":[{"mod":"public","name":"0ad","version":"0.0.25","ignoreInCompatibilityChecks":false}]}
+turn 0 200
+cmd 1 {"type":"aichat","message":"The Developer Overlay was opened.","translateMessage":true,"translateParameters":[],"parameters":{}}
+cmd 1 {"type":"reveal-map","enable":true}
+end
+turn 1 200
+cmd 1 {"type":"walk","entities":[5306,5310,5317,5321,5348,5349,5352,5353,5378,5379,5380,5381,5383,5384,5385,5394,5395,5396,5397,5398,5399,5400,5401,5404,5405,5406,5407,5410,5411,5412,5413,5414,5415,5416,5417,5421,5422,5423],"x":632.9977416992188,"z":1108.5655517578125,"queued":false,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5306],"x":593.8123779296875,"z":1081.2236328125,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5310],"x":595.4185791015625,"z":1088.233154296875,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5317],"x":596.1973266601562,"z":1102.2513427734375,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5321],"x":593.414794921875,"z":1091.2703857421875,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5348],"x":590.6854248046875,"z":1082.880859375,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5349],"x":594.4197387695312,"z":1097.033935546875,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5352],"x":596.4861450195312,"z":1105.8988037109375,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5353],"x":596.4861450195312,"z":1105.8988037109375,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5378],"x":593.6234130859375,"z":1112.143310546875,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5379],"x":592.1287231445312,"z":1106.58349609375,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5380],"x":591.0262451171875,"z":1102.5205078125,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5381],"x":589.8440551757812,"z":1098.22998046875,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5383],"x":584.2346801757812,"z":1082.2822265625,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5384],"x":587.746337890625,"z":1102.4244384765625,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5385],"x":590.1293334960938,"z":1110.7159423828125,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5394],"x":591.19580078125,"z":1114.4613037109375,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5395],"x":587.847900390625,"z":1107.9786376953125,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5396],"x":584.6676025390625,"z":1105.003173828125,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5397],"x":582.860595703125,"z":1096.5826416015625,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5398],"x":586.410400390625,"z":1092.3619384765625,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5399],"x":593.0189208984375,"z":1106.5269775390625,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5400],"x":592.80859375,"z":1112.9058837890625,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5401],"x":593.6318969726562,"z":1116.4112548828125,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5404],"x":588.7196044921875,"z":1122.8411865234375,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5405],"x":588.53857421875,"z":1122.22509765625,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5406],"x":583.310546875,"z":1115.6358642578125,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5407],"x":579.8611450195312,"z":1112.288330078125,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5410],"x":578.6815185546875,"z":1108.6387939453125,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5411],"x":573.3097534179688,"z":1097.8153076171875,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5412],"x":571.6209106445312,"z":1094.3824462890625,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5413],"x":576.6885375976562,"z":1114.808837890625,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5414],"x":577.9154052734375,"z":1118.5390625,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5415],"x":579.241943359375,"z":1121.6966552734375,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5416],"x":574.4696044921875,"z":1111.301513671875,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5417],"x":574.4696044921875,"z":1111.301513671875,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5421],"x":571.972900390625,"z":1105.9384765625,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5422],"x":572.3889770507812,"z":1107.094482421875,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5423],"x":575.600830078125,"z":1114.20068359375,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5301,5302,5306,5307,5308,5309,5310,5311,5312,5313,5314,5315,5316,5317,5318,5319,5320,5321,5325,5326,5331,5332,5333,5335,5336,5337,5346,5347,5348,5350,5351,5352,5353,5356,5357,5358,5359,5364,5365,5368,5369,5378,5379,5382,5383,5384,5387,5388,5389,5390,5391,5392,5393,5402,5403,5404,5405,5407,5408,5409,5418,5419,5420,5421,5422,5423,5424,5425,5429,5433,5444,5445,5448,5449],"x":632.4229736328125,"z":1110.0672607421875,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5301],"x":634.124755859375,"z":1075.2607421875,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5302],"x":639.0027465820312,"z":1079.6324462890625,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5306],"x":629.4727783203125,"z":1072.593505859375,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5307],"x":622.7190551757812,"z":1079.6744384765625,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5308],"x":619.478271484375,"z":1084.9720458984375,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5309],"x":613.5579223632812,"z":1088.572021484375,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5310],"x":607.7158203125,"z":1079.113525390625,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5311],"x":616.3585815429688,"z":1080.8533935546875,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5312],"x":620.0586547851562,"z":1064.8221435546875,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5313],"x":630.4986572265625,"z":1074.899658203125,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5314],"x":647.5633544921875,"z":1077.926025390625,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5315],"x":654.9552001953125,"z":1080.0816650390625,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5316],"x":659.9625244140625,"z":1083.7225341796875,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5317],"x":651.9447021484375,"z":1084.9351806640625,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5318],"x":648.892578125,"z":1084.8291015625,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5319],"x":645.4170532226562,"z":1085.5924072265625,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5320],"x":642.221435546875,"z":1083.2652587890625,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5321],"x":634.4134521484375,"z":1084.0775146484375,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5325],"x":630.7982177734375,"z":1086.27197265625,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5326],"x":626.91064453125,"z":1088.009765625,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5331],"x":624.1063232421875,"z":1090.49365234375,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5332],"x":617.5521240234375,"z":1093.8240966796875,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5333],"x":633.01416015625,"z":1086.298095703125,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5335],"x":640.7186279296875,"z":1087.13671875,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5336],"x":649.964599609375,"z":1088.401611328125,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5337],"x":648.095703125,"z":1088.9224853515625,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5346],"x":628.39599609375,"z":1088.8302001953125,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5347],"x":618.6619262695312,"z":1088.5296630859375,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5348],"x":613.24853515625,"z":1093.0570068359375,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5350],"x":613.4915771484375,"z":1084.5211181640625,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5351],"x":618.2238159179688,"z":1080.543701171875,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5352],"x":623.0557250976562,"z":1080.626220703125,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5353],"x":625.44384765625,"z":1078.3052978515625,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5356],"x":634.3204345703125,"z":1081.117431640625,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5357],"x":647.3934326171875,"z":1088.6915283203125,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5358],"x":651.02587890625,"z":1088.1058349609375,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5359],"x":645.2301635742188,"z":1089.24560546875,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5364],"x":643.4488525390625,"z":1088.691650390625,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5365],"x":635.3602905273438,"z":1088.972412109375,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5368],"x":624.553466796875,"z":1089.1181640625,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5369],"x":609.7012329101562,"z":1081.715576171875,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5378],"x":606.545654296875,"z":1081.9073486328125,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5379],"x":600.5001220703125,"z":1085.8221435546875,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5382],"x":597.80908203125,"z":1092.4388427734375,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5383],"x":607.144287109375,"z":1081.935302734375,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5384],"x":612.8172607421875,"z":1081.5247802734375,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5387],"x":622.2691650390625,"z":1065.8052978515625,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5388],"x":639.5919799804688,"z":1079.1610107421875,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5389],"x":647.7662353515625,"z":1081.7972412109375,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5390],"x":655.1419067382812,"z":1086.248291015625,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5391],"x":646.5150146484375,"z":1078.7835693359375,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5392],"x":635.1104125976562,"z":1077.8656005859375,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5393],"x":625.5482788085938,"z":1070.1993408203125,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5402],"x":619.3692016601562,"z":1066.88623046875,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5403],"x":608.8323364257812,"z":1065.52880859375,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5404],"x":603.6292724609375,"z":1071.4599609375,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5405],"x":599.7567749023438,"z":1077.1737060546875,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5407],"x":566.5030517578125,"z":988.6590576171875,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5408],"x":570.79345703125,"z":975.6700439453125,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5409],"x":586.1338500976562,"z":977.0894775390625,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5418],"x":610.671142578125,"z":977.5806274414062,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5419],"x":642.6923217773438,"z":1093.550537109375,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5420],"x":632.142578125,"z":1085.2452392578125,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5421],"x":618.96875,"z":1076.2066650390625,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5422],"x":605.9712524414062,"z":1076.5965576171875,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5423],"x":591.4799194335938,"z":1074.0426025390625,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5424],"x":601.1845092773438,"z":1096.626220703125,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5425],"x":579.3977661132812,"z":1066.141845703125,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5429],"x":598.1334838867188,"z":1098.55908203125,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5433],"x":590.9690551757812,"z":1089.102294921875,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5444],"x":599.8546142578125,"z":1089.7611083984375,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5445],"x":604.0568237304688,"z":1078.9000244140625,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5448],"x":610.782470703125,"z":1066.5216064453125,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5449],"x":611.4880981445312,"z":1054.5899658203125,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5298,5299,5300,5302,5303,5304,5305,5322,5323,5324,5325,5326,5327,5328,5329,5330,5334,5335,5338,5339,5340,5341,5342,5343,5344,5345,5354,5355,5356,5360,5361,5362,5366,5367,5370,5371,5372,5373,5374,5375,5376,5377,5386,5387,5393,5426,5427,5430,5431,5432,5434,5435,5436,5437,5438,5439,5440,5441,5442,5443,5446,5447,5450,5451,5452,5453,5454,5455,5456,5457],"x":631.0162353515625,"z":1103.6722412109375,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5298],"x":680.449462890625,"z":1106.80029296875,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5299],"x":675.2994384765625,"z":1100.0001220703125,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5300],"x":669.583740234375,"z":1094.5584716796875,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5302],"x":662.222412109375,"z":1087.4730224609375,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5303],"x":649.6015014648438,"z":1074.98681640625,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5304],"x":657.5208740234375,"z":1076.53125,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5305],"x":664.80615234375,"z":1081.1409912109375,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5322],"x":670.5718994140625,"z":1089.1109619140625,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5323],"x":674.3250732421875,"z":1095.5159912109375,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5324],"x":681.7080078125,"z":1102.2401123046875,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5325],"x":672.4724731445312,"z":1089.482177734375,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5326],"x":665.2924194335938,"z":1081.4554443359375,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5327],"x":658.504638671875,"z":1083.3828125,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5328],"x":653.8856201171875,"z":1082.9654541015625,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5329],"x":665.1928100585938,"z":1095.1328125,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5330],"x":673.9251098632812,"z":1101.8822021484375,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5334],"x":677.258544921875,"z":1107.2476806640625,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5335],"x":667.53125,"z":1094.04150390625,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5338],"x":661.8787841796875,"z":1089.3656005859375,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5339],"x":656.676025390625,"z":1085.7376708984375,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5340],"x":649.6663818359375,"z":1080.715087890625,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5341],"x":653.1725463867188,"z":1079.814697265625,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5342],"x":656.5034790039062,"z":1080.667236328125,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5343],"x":663.4711303710938,"z":1087.46240234375,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5344],"x":673.7974853515625,"z":1099.8250732421875,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5345],"x":681.7926025390625,"z":1112.36083984375,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5354],"x":662.66552734375,"z":1072.6312255859375,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5355],"x":673.7666015625,"z":1097.50390625,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5356],"x":676.81103515625,"z":1101.26025390625,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5360],"x":680.767333984375,"z":1105.55224609375,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5361],"x":675.1591796875,"z":1097.6766357421875,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5362],"x":668.0264892578125,"z":1094.9793701171875,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5366],"x":661.5706176757812,"z":1087.660400390625,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5367],"x":661.4915161132812,"z":1082.134033203125,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5370],"x":645.3294067382812,"z":1089.447265625,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5371],"x":660.1618041992188,"z":1089.205322265625,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5372],"x":656.6954956054688,"z":1088.972412109375,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5373],"x":663.3916015625,"z":1087.129150390625,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5374],"x":665.0807495117188,"z":1089.002685546875,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5375],"x":679.9369506835938,"z":1103.8868408203125,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5376],"x":678.46142578125,"z":1101.5811767578125,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5377],"x":676.4380493164062,"z":1098.4947509765625,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5386],"x":670.70068359375,"z":1089.735595703125,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5387],"x":664.3646850585938,"z":1080.413330078125,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5393],"x":654.52978515625,"z":1077.6103515625,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5426],"x":649.2967529296875,"z":1078.34228515625,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5427],"x":645.8419799804688,"z":1081.6307373046875,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5430],"x":654.839599609375,"z":1091.926025390625,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5431],"x":660.40966796875,"z":1091.1324462890625,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5432],"x":666.8470458984375,"z":1091.287353515625,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5434],"x":670.34326171875,"z":1085.4188232421875,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5435],"x":668.4478149414062,"z":1076.816650390625,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5436],"x":660.2372436523438,"z":1070.86962890625,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5437],"x":660.2372436523438,"z":1070.86962890625,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5438],"x":650.4542236328125,"z":1069.1978759765625,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5439],"x":663.885009765625,"z":1083.2762451171875,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5440],"x":672.2793579101562,"z":1089.8116455078125,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5441],"x":677.9147338867188,"z":1096.186279296875,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5442],"x":682.442138671875,"z":1107.42333984375,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5443],"x":671.7919311523438,"z":1073.8167724609375,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5446],"x":678.2523193359375,"z":1092.09521484375,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5447],"x":672.3245239257812,"z":1079.7979736328125,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5450],"x":675.9630737304688,"z":1091.1717529296875,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5451],"x":671.4418334960938,"z":1086.254638671875,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5452],"x":677.4903564453125,"z":1103.13916015625,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5453],"x":665.9273681640625,"z":1089.1478271484375,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5454],"x":655.810302734375,"z":1086.82861328125,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5455],"x":658.4134521484375,"z":1085.25390625,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5456],"x":664.3888549804688,"z":1092.1494140625,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5457],"x":673.3079223632812,"z":1096.5645751953125,"queued":true,"pushFront":false}
+end
+turn 2 200
+cmd 1 {"type":"walk","entities":[5363,5428],"x":628.795166015625,"z":1098.97314453125,"queued":false,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5363],"x":657.9273071289062,"z":1074.74267578125,"queued":true,"pushFront":false}
+cmd 1 {"type":"walk","entities":[5428],"x":668.8582763671875,"z":1079.154296875,"queued":true,"pushFront":false}
+end
+turn 3 200
+end
+turn 4 200
+end
+turn 5 200
+end
+turn 6 200
+end
+turn 7 200
+end
+turn 8 200
+end
+turn 9 200
+end
+turn 10 200
+end
+turn 11 200
+end
+turn 12 200
+end
+turn 13 200
+end
+turn 14 200
+end
+turn 15 200
+end
+turn 16 200
+end
+turn 17 200
+end
+turn 18 200
+end
+turn 19 200
+end
+turn 20 200
+end
+turn 21 200
+end
+turn 22 200
+end
+turn 23 200
+end
+turn 24 200
+end
+turn 25 200
+end
+turn 26 200
+end
+turn 27 200
+end
+turn 28 200
+end
+turn 29 200
+end
+turn 30 200
+end
+turn 31 200
+end
+turn 32 200
+end
+turn 33 200
+end
+turn 34 200
+end
+turn 35 200
+end
+turn 36 200
+end
+turn 37 200
+end
+turn 38 200
+end
+turn 39 200
+end
+turn 40 200
+end
+turn 41 200
+end
+turn 42 200
+end
+turn 43 200
+end
+turn 44 200
+end
+turn 45 200
+end
+turn 46 200
+end
+turn 47 200
+end
+turn 48 200
+end
+turn 49 200
+end
+turn 50 200
+end
+turn 51 200
+end
+turn 52 200
+end
+turn 53 200
+end
+turn 54 200
+end
+turn 55 200
+end
+turn 56 200
+end
+turn 57 200
+end
+turn 58 200
+end
+turn 59 200
+end
+turn 60 200
+end
+turn 61 200
+end
+turn 62 200
+end
+turn 63 200
+end
+turn 64 200
+end
+turn 65 200
+end
+turn 66 200
+end
+turn 67 200
+end
+turn 68 200
+end
+turn 69 200
+end
+turn 70 200
+end
+turn 71 200
+end
+turn 72 200
+end
+turn 73 200
+end
+turn 74 200
+end
+turn 75 200
+end
+turn 76 200
+end
+turn 77 200
+end
+turn 78 200
+end
+turn 79 200
+end
+turn 80 200
+end
+turn 81 200
+end
+turn 82 200
+end
+turn 83 200
+end
+turn 84 200
+end
+turn 85 200
+end
+turn 86 200
+end
+turn 87 200
+end
+turn 88 200
+end
+turn 89 200
+end
+turn 90 200
+end
+turn 91 200
+end
+turn 92 200
+end
+turn 93 200
+end
+turn 94 200
+end
+turn 95 200
+end
+turn 96 200
+end
+turn 97 200
+end
+turn 98 200
+end
+turn 99 200
+end
+turn 100 200
+end
+turn 101 200
+end
+turn 102 200
+end
+turn 103 200
+end
+turn 104 200
+end
+turn 105 200
+end
+turn 106 200
+end
+turn 107 200
+end
+turn 108 200
+end
+turn 109 200
+end
+turn 110 200
+end
+turn 111 200
+end
+turn 112 200
+end
+turn 113 200
+end
+turn 114 200
+end
+turn 115 200
+end
+turn 116 200
+end
+turn 117 200
+end
+turn 118 200
+end
+turn 119 200
+end
+turn 120 200
+end
+turn 121 200
+end
+turn 122 200
+end
+turn 123 200
+end
+turn 124 200
+end
+turn 125 200
+end
+turn 126 200
+end
+turn 127 200
+end
+turn 128 200
+end
+turn 129 200
+end
+turn 130 200
+end
+turn 131 200
+end
+turn 132 200
+end
+turn 133 200
+end
+turn 134 200
+end
+turn 135 200
+end
+turn 136 200
+end
+turn 137 200
+end
+turn 138 200
+end
+turn 139 200
+end
+turn 140 200
+end
+turn 141 200
+end
+turn 142 200
+end
+turn 143 200
+end
+turn 144 200
+end
+turn 145 200
+end
+turn 146 200
+end
+turn 147 200
+end
+turn 148 200
+end
+turn 149 200
+end
+turn 150 200
+end
+turn 151 200
+end
+turn 152 200
+end
+turn 153 200
+end
+turn 154 200
+end
+turn 155 200
+end
+turn 156 200
+end
+turn 157 200
+end
+turn 158 200
+end
+turn 159 200
+end
+turn 160 200
+end
+turn 161 200
+end
+turn 162 200
+end
+turn 163 200
+end
+turn 164 200
+end

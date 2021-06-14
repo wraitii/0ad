@@ -34,7 +34,7 @@
     <HeightOffset>3.0</HeightOffset>
   </StatusBars>
   <UnitMotion>
-    <WalkSpeed op="mul">0.45</WalkSpeed>
+    <WalkSpeed op="mul">0.9</WalkSpeed>
   </UnitMotion>
   <VisualActor>
     <Actor>fauna/sheep3.xml</Actor>

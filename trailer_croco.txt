@@ -1,0 +1,890 @@
+start {"settings":{"CheatsEnabled":true,"CircularMap":true,"DisableSpies":false,"DisableTreasures":false,"LastManStanding":false,"LockTeams":false,"RevealMap":false,"ExploreMap":false,"Name":"Crocodilopolis (4)","PlayerData":[{"AI":false,"Civ":"pers","Color":{"r":231,"g":200,"b":5},"Name":"wraitii","Team":-1},{"AI":false,"Civ":"gaul","Color":{"r":150,"g":20,"b":20},"Name":"Player 2","Team":-1},{"AI":false,"Civ":"maur","Color":{"r":21,"g":55,"b":149},"Name":"Player 3","Team":-1},{"AI":false,"Civ":"mace","Color":{"r":86,"g":180,"b":31},"Name":"Player 4","Team":-1}],"PopulationCap":300,"RegicideGarrison":false,"Seed":1187326092,"AISeed":308733839,"StartingResources":300,"TriggerScripts":["scripts/TriggerHelper.js","scripts/ConquestCommon.js","scripts/Conquest.js"],"VictoryConditions":["conquest"]},"gameSpeed":1,"map":"maps/skirmishes/crocodilopolis_4p","mapType":"skirmish","mapPreview":"cropped:0.78125,0.5859375:session/icons/mappreview/crocodilopolis_4p.png","matchID":"1F7E923B4F955FFF","timestamp":1623750403,"engine_version":"0.0.25","mods":[{"mod":"public","name":"0ad","version":"0.0.25","ignoreInCompatibilityChecks":false}]}
+turn 0 200
+end
+turn 1 200
+end
+turn 2 200
+end
+turn 3 200
+end
+turn 4 200
+end
+turn 5 200
+end
+turn 6 200
+end
+turn 7 200
+end
+turn 8 200
+end
+turn 9 200
+end
+turn 10 200
+end
+turn 11 200
+end
+turn 12 200
+end
+turn 13 200
+end
+turn 14 200
+end
+turn 15 200
+end
+turn 16 200
+end
+turn 17 200
+end
+turn 18 200
+end
+turn 19 200
+end
+turn 20 200
+end
+turn 21 200
+end
+turn 22 200
+end
+turn 23 200
+end
+turn 24 200
+end
+turn 25 200
+end
+turn 26 200
+end
+turn 27 200
+cmd 1 {"type":"formation","entities":[6832,6833,6834,6835,6836,6837,6838,6839,6840,6841,6842,6843,6844,6845,6846,6847,6848,6849,6850,6851,6852,6853,6854,6855,6856,6857,6858,6859,6860,6861,6862,6863,6864,6865,6866,6867,6868,6869,6870,6871,6872,6873,6874,6875,6876,6877,6878,6879,6880,6966,6967,6968,6969],"formation":"special/formations/line_open"}
+end
+turn 28 200
+end
+turn 29 200
+end
+turn 30 200
+end
+turn 31 200
+end
+turn 32 200
+end
+turn 33 200
+end
+turn 34 200
+end
+turn 35 200
+cmd 1 {"type":"formation","entities":[6906,6907,6908,6909,6910,6911,6912,6913,6914,6915,6916,6917,6918,6919,6920,6921,6922,6923,6924,6925,6926,6927,6928,6929,6930,6931,6932,6933,6934,6935,6936,6937,6938,6939,6940,6941,6942,6943,6944,6945,6946,6947,6948,6949,6950,6951,6952,6953,6954,6955,6956,6957,6958,6959,6960,6961,6962,6963,6964,6965,6970],"formation":"special/formations/line_open"}
+end
+turn 36 200
+end
+turn 37 200
+end
+turn 38 200
+end
+turn 39 200
+end
+turn 40 200
+cmd 1 {"type":"walk","entities":[6906,6907,6908,6909,6910,6911,6912,6913,6914,6915,6916,6917,6918,6919,6920,6921,6922,6923,6924,6925,6926,6927,6928,6929,6930,6931,6932,6933,6934,6935,6936,6937,6938,6939,6940,6941,6942,6943,6944,6945,6946,6947,6948,6949,6950,6951,6952,6953,6954,6955,6956,6957,6958,6959,6960,6961,6962,6963,6964,6965,6970],"x":239.81610107421875,"z":921.8214721679688,"queued":false,"pushFront":false}
+end
+turn 41 200
+end
+turn 42 200
+end
+turn 43 200
+end
+turn 44 200
+end
+turn 45 200
+end
+turn 46 200
+end
+turn 47 200
+end
+turn 48 200
+end
+turn 49 200
+end
+turn 50 200
+end
+turn 51 200
+cmd 1 {"type":"walk","entities":[6832,6833,6834,6835,6836,6837,6838,6839,6840,6841,6842,6843,6844,6845,6846,6847,6848,6849,6850,6851,6852,6853,6854,6855,6856,6857,6858,6859,6860,6861,6862,6863,6864,6865,6866,6867,6868,6869,6870,6871,6872,6873,6874,6875,6876,6877,6878,6879,6880,6966,6967,6968,6969],"x":529.69775390625,"z":1017.346923828125,"queued":false,"pushFront":false}
+end
+turn 52 200
+end
+turn 53 200
+end
+turn 54 200
+cmd 1 {"type":"walk","entities":[6832,6833,6834,6835,6836,6837,6838,6839,6840,6841,6842,6843,6844,6845,6846,6847,6848,6849,6850,6851,6852,6853,6854,6855,6856,6857,6858,6859,6860,6861,6862,6863,6864,6865,6866,6867,6868,6869,6870,6871,6872,6873,6874,6875,6876,6877,6878,6879,6880,6966,6967,6968,6969],"x":519.748046875,"z":997.1511840820312,"queued":true,"pushFront":false}
+end
+turn 55 200
+end
+turn 56 200
+end
+turn 57 200
+end
+turn 58 200
+end
+turn 59 200
+end
+turn 60 200
+end
+turn 61 200
+end
+turn 62 200
+end
+turn 63 200
+end
+turn 64 200
+cmd 1 {"type":"walk","entities":[6906,6907,6908,6909,6910,6911,6912,6913,6914,6915,6916,6917,6918,6919,6920,6921,6922,6923,6924,6925,6926,6927,6928,6929,6930,6931,6932,6933,6934,6935,6936,6937,6938,6939,6940,6941,6942,6943,6944,6945,6946,6947,6948,6949,6950,6951,6952,6953,6954,6955,6956,6957,6958,6959,6960,6961,6962,6963,6964,6965,6970],"x":227.61105346679688,"z":919.0947265625,"queued":false,"pushFront":false}
+end
+turn 65 200
+end
+turn 66 200
+cmd 1 {"type":"walk","entities":[6906,6907,6908,6909,6910,6911,6912,6913,6914,6915,6916,6917,6918,6919,6920,6921,6922,6923,6924,6925,6926,6927,6928,6929,6930,6931,6932,6933,6934,6935,6936,6937,6938,6939,6940,6941,6942,6943,6944,6945,6946,6947,6948,6949,6950,6951,6952,6953,6954,6955,6956,6957,6958,6959,6960,6961,6962,6963,6964,6965,6970],"x":241.023193359375,"z":910.264404296875,"queued":true,"pushFront":false}
+end
+turn 67 200
+end
+turn 68 200
+end
+turn 69 200
+end
+turn 70 200
+end
+turn 71 200
+end
+turn 72 200
+end
+turn 73 200
+end
+turn 74 200
+end
+turn 75 200
+end
+turn 76 200
+end
+turn 77 200
+end
+turn 78 200
+end
+turn 79 200
+end
+turn 80 200
+end
+turn 81 200
+end
+turn 82 200
+end
+turn 83 200
+end
+turn 84 200
+end
+turn 85 200
+end
+turn 86 200
+end
+turn 87 200
+end
+turn 88 200
+end
+turn 89 200
+end
+turn 90 200
+end
+turn 91 200
+end
+turn 92 200
+end
+turn 93 200
+end
+turn 94 200
+end
+turn 95 200
+end
+turn 96 200
+end
+turn 97 200
+end
+turn 98 200
+end
+turn 99 200
+end
+turn 100 200
+end
+turn 101 200
+end
+turn 102 200
+end
+turn 103 200
+end
+turn 104 200
+end
+turn 105 200
+end
+turn 106 200
+end
+turn 107 200
+end
+turn 108 200
+end
+turn 109 200
+end
+turn 110 200
+end
+turn 111 200
+end
+turn 112 200
+end
+turn 113 200
+end
+turn 114 200
+end
+turn 115 200
+end
+turn 116 200
+end
+turn 117 200
+end
+turn 118 200
+end
+turn 119 200
+end
+turn 120 200
+end
+turn 121 200
+end
+turn 122 200
+end
+turn 123 200
+end
+turn 124 200
+end
+turn 125 200
+end
+turn 126 200
+end
+turn 127 200
+end
+turn 128 200
+end
+turn 129 200
+end
+turn 130 200
+end
+turn 131 200
+end
+turn 132 200
+end
+turn 133 200
+end
+turn 134 200
+end
+turn 135 200
+end
+turn 136 200
+cmd 1 {"type":"walk","entities":[6832,6833,6834,6835,6836,6837,6838,6839,6840,6841,6842,6843,6844,6845,6846,6847,6848,6849,6850,6851,6852,6853,6854,6855,6856,6857,6858,6859,6860,6861,6862,6863,6864,6865,6866,6867,6868,6869,6870,6871,6872,6873,6874,6875,6876,6877,6878,6879,6880,6966,6967,6968,6969],"x":418.28643798828125,"z":841.62353515625,"queued":false,"pushFront":false}
+end
+turn 137 200
+end
+turn 138 200
+end
+turn 139 200
+end
+turn 140 200
+end
+turn 141 200
+end
+turn 142 200
+end
+turn 143 200
+end
+turn 144 200
+end
+turn 145 200
+end
+turn 146 200
+end
+turn 147 200
+cmd 1 {"type":"walk","entities":[6906,6907,6908,6909,6910,6911,6912,6913,6914,6915,6916,6917,6918,6919,6920,6921,6922,6923,6924,6925,6926,6927,6928,6929,6930,6931,6932,6933,6934,6935,6936,6937,6938,6939,6940,6941,6942,6943,6944,6945,6946,6947,6948,6949,6950,6951,6952,6953,6954,6955,6956,6957,6958,6959,6960,6961,6962,6963,6964,6965,6970],"x":411.6141052246094,"z":826.0528564453125,"queued":false,"pushFront":false}
+end
+turn 148 200
+end
+turn 149 200
+end
+turn 150 200
+end
+turn 151 200
+end
+turn 152 200
+end
+turn 153 200
+end
+turn 154 200
+end
+turn 155 200
+end
+turn 156 200
+end
+turn 157 200
+end
+turn 158 200
+end
+turn 159 200
+end
+turn 160 200
+end
+turn 161 200
+end
+turn 162 200
+end
+turn 163 200
+end
+turn 164 200
+end
+turn 165 200
+end
+turn 166 200
+end
+turn 167 200
+end
+turn 168 200
+end
+turn 169 200
+end
+turn 170 200
+end
+turn 171 200
+end
+turn 172 200
+end
+turn 173 200
+end
+turn 174 200
+end
+turn 175 200
+end
+turn 176 200
+end
+turn 177 200
+end
+turn 178 200
+end
+turn 179 200
+end
+turn 180 200
+end
+turn 181 200
+end
+turn 182 200
+cmd 1 {"type":"walk","entities":[6906,6907,6908,6909,6910,6911,6912,6913,6914,6915,6916,6917,6918,6919,6920,6921,6922,6923,6924,6925,6926,6927,6928,6929,6930,6931,6932,6933,6934,6935,6936,6937,6938,6939,6940,6941,6942,6943,6944,6945,6946,6947,6948,6949,6950,6951,6952,6953,6954,6955,6956,6957,6958,6959,6960,6961,6962,6963,6964,6965,6970],"x":409.00384521484375,"z":828.6730346679688,"queued":false,"pushFront":false}
+end
+turn 183 200
+end
+turn 184 200
+end
+turn 185 200
+end
+turn 186 200
+end
+turn 187 200
+end
+turn 188 200
+end
+turn 189 200
+end
+turn 190 200
+end
+turn 191 200
+end
+turn 192 200
+end
+turn 193 200
+end
+turn 194 200
+end
+turn 195 200
+end
+turn 196 200
+end
+turn 197 200
+end
+turn 198 200
+end
+turn 199 200
+cmd 1 {"type":"walk","entities":[6832,6833,6834,6835,6836,6837,6838,6839,6840,6841,6842,6843,6844,6845,6846,6847,6848,6849,6850,6851,6852,6853,6854,6855,6856,6857,6858,6859,6860,6861,6862,6863,6864,6865,6866,6867,6868,6869,6870,6871,6872,6873,6874,6875,6876,6877,6878,6879,6880,6966,6967,6968,6969],"x":452.82098388671875,"z":842.4549560546875,"queued":false,"pushFront":false}
+end
+turn 200 200
+end
+turn 201 200
+end
+turn 202 200
+end
+turn 203 200
+end
+turn 204 200
+end
+turn 205 200
+end
+turn 206 200
+end
+turn 207 200
+end
+turn 208 200
+end
+turn 209 200
+end
+turn 210 200
+end
+turn 211 200
+end
+turn 212 200
+end
+turn 213 200
+end
+turn 214 200
+end
+turn 215 200
+end
+turn 216 200
+end
+turn 217 200
+end
+turn 218 200
+end
+turn 219 200
+end
+turn 220 200
+end
+turn 221 200
+end
+turn 222 200
+end
+turn 223 200
+end
+turn 224 200
+end
+turn 225 200
+end
+turn 226 200
+end
+turn 227 200
+end
+turn 228 200
+end
+turn 229 200
+end
+turn 230 200
+end
+turn 231 200
+end
+turn 232 200
+end
+turn 233 200
+end
+turn 234 200
+end
+turn 235 200
+cmd 1 {"type":"walk","entities":[6832,6833,6834,6835,6836,6837,6838,6839,6840,6841,6842,6843,6844,6845,6846,6847,6848,6849,6850,6851,6852,6853,6854,6855,6856,6857,6858,6859,6860,6861,6862,6863,6864,6865,6866,6867,6868,6869,6870,6871,6872,6873,6874,6875,6876,6877,6878,6879,6880,6906,6907,6908,6909,6910,6911,6912,6913,6914,6915,6916,6917,6918,6919,6920,6921,6922,6923,6924,6925,6926,6927,6928,6929,6930,6931,6932,6933,6934,6935,6936,6937,6938,6939,6940,6941,6942,6943,6944,6945,6946,6947,6948,6949,6950,6951,6952,6953,6954,6955,6956,6957,6958,6959,6960,6961,6962,6963,6964,6965,6966,6967,6968,6969,6970],"x":510.59942626953125,"z":741.3773803710938,"queued":false,"pushFront":false}
+end
+turn 236 200
+end
+turn 237 200
+end
+turn 238 200
+end
+turn 239 200
+end
+turn 240 200
+end
+turn 241 200
+end
+turn 242 200
+end
+turn 243 200
+end
+turn 244 200
+end
+turn 245 200
+end
+turn 246 200
+end
+turn 247 200
+end
+turn 248 200
+end
+turn 249 200
+end
+turn 250 200
+end
+turn 251 200
+end
+turn 252 200
+end
+turn 253 200
+end
+turn 254 200
+end
+turn 255 200
+cmd 1 {"type":"walk","entities":[6832,6833,6834,6835,6836,6837,6838,6839,6840,6841,6842,6843,6844,6845,6846,6847,6848,6849,6850,6851,6852,6853,6854,6855,6856,6857,6858,6859,6860,6861,6862,6863,6864,6865,6866,6867,6868,6869,6870,6871,6872,6873,6874,6875,6876,6877,6878,6879,6880,6906,6907,6908,6909,6910,6911,6912,6913,6914,6915,6916,6917,6918,6919,6920,6921,6922,6923,6924,6925,6926,6927,6928,6929,6930,6931,6932,6933,6934,6935,6936,6937,6938,6939,6940,6941,6942,6943,6944,6945,6946,6947,6948,6949,6950,6951,6952,6953,6954,6955,6956,6957,6958,6959,6960,6961,6962,6963,6964,6965,6966,6967,6968,6969,6970],"x":523.1881103515625,"z":740.572998046875,"queued":false,"pushFront":false}
+end
+turn 256 200
+end
+turn 257 200
+end
+turn 258 200
+end
+turn 259 200
+end
+turn 260 200
+end
+turn 261 200
+end
+turn 262 200
+end
+turn 263 200
+end
+turn 264 200
+end
+turn 265 200
+end
+turn 266 200
+end
+turn 267 200
+end
+turn 268 200
+end
+turn 269 200
+end
+turn 270 200
+end
+turn 271 200
+end
+turn 272 200
+end
+turn 273 200
+end
+turn 274 200
+end
+turn 275 200
+end
+turn 276 200
+cmd 1 {"type":"aichat","message":"The Developer Overlay was opened.","translateMessage":true,"translateParameters":[],"parameters":{}}
+end
+turn 277 200
+end
+turn 278 200
+end
+turn 279 200
+end
+turn 280 200
+cmd 1 {"type":"reveal-map","enable":true}
+end
+turn 281 200
+end
+turn 282 200
+end
+turn 283 200
+end
+turn 284 200
+end
+turn 285 200
+end
+turn 286 200
+end
+turn 287 200
+end
+turn 288 200
+end
+turn 289 200
+end
+turn 290 200
+end
+turn 291 200
+end
+turn 292 200
+end
+turn 293 200
+end
+turn 294 200
+end
+turn 295 200
+cmd 1 {"type":"walk","entities":[6832,6833,6834,6835,6836,6837,6838,6839,6840,6841,6842,6843,6844,6845,6846,6847,6848,6849,6850,6851,6852,6853,6854,6855,6856,6857,6858,6859,6860,6861,6862,6863,6864,6865,6866,6867,6868,6869,6870,6871,6872,6873,6874,6875,6876,6877,6878,6879,6880,6906,6907,6908,6909,6910,6911,6912,6913,6914,6915,6916,6917,6918,6919,6920,6921,6922,6923,6924,6925,6926,6927,6928,6929,6930,6931,6932,6933,6934,6935,6936,6937,6938,6939,6940,6941,6942,6943,6944,6945,6946,6947,6948,6949,6950,6951,6952,6953,6954,6955,6956,6957,6958,6959,6960,6961,6962,6963,6964,6965,6966,6967,6968,6969,6970],"x":609.0391235351562,"z":746.51171875,"queued":false,"pushFront":false}
+end
+turn 296 200
+end
+turn 297 200
+end
+turn 298 200
+end
+turn 299 200
+end
+turn 300 200
+end
+turn 301 200
+end
+turn 302 200
+end
+turn 303 200
+end
+turn 304 200
+end
+turn 305 200
+end
+turn 306 200
+end
+turn 307 200
+end
+turn 308 200
+end
+turn 309 200
+end
+turn 310 200
+end
+turn 311 200
+end
+turn 312 200
+end
+turn 313 200
+end
+turn 314 200
+end
+turn 315 200
+end
+turn 316 200
+end
+turn 317 200
+end
+turn 318 200
+end
+turn 319 200
+end
+turn 320 200
+end
+turn 321 200
+end
+turn 322 200
+end
+turn 323 200
+end
+turn 324 200
+end
+turn 325 200
+end
+turn 326 200
+end
+turn 327 200
+end
+turn 328 200
+end
+turn 329 200
+end
+turn 330 200
+end
+turn 331 200
+end
+turn 332 200
+end
+turn 333 200
+end
+turn 334 200
+end
+turn 335 200
+end
+turn 336 200
+end
+turn 337 200
+end
+turn 338 200
+cmd 1 {"type":"walk","entities":[6832,6833,6834,6835,6836,6837,6838,6839,6840,6841,6842,6843,6844,6845,6846,6847,6848,6849,6850,6851,6852,6853,6854,6855,6856,6857,6858,6859,6860,6861,6862,6863,6864,6865,6866,6867,6868,6869,6870,6871,6872,6873,6874,6875,6876,6877,6878,6879,6880,6906,6907,6908,6909,6910,6911,6912,6913,6914,6915,6916,6917,6918,6919,6920,6921,6922,6923,6924,6925,6926,6927,6928,6929,6930,6931,6932,6933,6934,6935,6936,6937,6938,6939,6940,6941,6942,6943,6944,6945,6946,6947,6948,6949,6950,6951,6952,6953,6954,6955,6956,6957,6958,6959,6960,6961,6962,6963,6964,6965,6966,6967,6968,6969,6970],"x":660.0772705078125,"z":736.0963745117188,"queued":false,"pushFront":false}
+end
+turn 339 200
+end
+turn 340 200
+end
+turn 341 200
+end
+turn 342 200
+end
+turn 343 200
+end
+turn 344 200
+end
+turn 345 200
+end
+turn 346 200
+end
+turn 347 200
+end
+turn 348 200
+end
+turn 349 200
+end
+turn 350 200
+end
+turn 351 200
+end
+turn 352 200
+end
+turn 353 200
+end
+turn 354 200
+end
+turn 355 200
+end
+turn 356 200
+end
+turn 357 200
+end
+turn 358 200
+end
+turn 359 200
+end
+turn 360 200
+end
+turn 361 200
+end
+turn 362 200
+end
+turn 363 200
+end
+turn 364 200
+end
+turn 365 200
+end
+turn 366 200
+end
+turn 367 200
+end
+turn 368 200
+end
+turn 369 200
+end
+turn 370 200
+end
+turn 371 200
+end
+turn 372 200
+end
+turn 373 200
+end
+turn 374 200
+end
+turn 375 200
+end
+turn 376 200
+end
+turn 377 200
+end
+turn 378 200
+end
+turn 379 200
+end
+turn 380 200
+end
+turn 381 200
+end
+turn 382 200
+end
+turn 383 200
+end
+turn 384 200
+end
+turn 385 200
+end
+turn 386 200
+end
+turn 387 200
+end
+turn 388 200
+end
+turn 389 200
+end
+turn 390 200
+end
+turn 391 200
+end
+turn 392 200
+end
+turn 393 200
+end
+turn 394 200
+end
+turn 395 200
+end
+turn 396 200
+end
+turn 397 200
+end
+turn 398 200
+end
+turn 399 200
+end
+turn 400 200
+end
+turn 401 200
+end
+turn 402 200
+end
+turn 403 200
+end
+turn 404 200
+end
+turn 405 200
+end
+turn 406 200
+end
+turn 407 200
+end
+turn 408 200
+end
+turn 409 200
+end
+turn 410 200
+end
+turn 411 200
+end
+turn 412 200
+end
+turn 413 200
+end
+turn 414 200
+end
+turn 415 200
+end
+turn 416 200
+end
+turn 417 200
+end
+turn 418 200
+end
+turn 419 200
+end
+turn 420 200
+end
+turn 421 200
+end
+turn 422 200
+end
+turn 423 200
+end
+turn 424 200
+end
+turn 425 200
+end
+turn 426 200
+end
+turn 427 200
+end
+turn 428 200
+end
+turn 429 200
+end
+turn 430 200
+end
+turn 431 200
+end
+turn 432 200
+end
+turn 433 200
+end
+turn 434 200
+end
+turn 435 200
+end

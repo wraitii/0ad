@@ -1,0 +1,1062 @@
+start {"settings":{"CheatsEnabled":true,"CircularMap":true,"DisableSpies":false,"DisableTreasures":false,"LastManStanding":false,"LockTeams":false,"RevealMap":false,"ExploreMap":false,"Name":"Miletus Peninsula (2)","PlayerData":[{"AI":false,"Civ":"athen","Color":{"r":231,"g":200,"b":5},"Name":"wraitii","Team":-1},{"AI":false,"Civ":"mace","Color":{"r":150,"g":20,"b":20},"Name":"Player 2","Team":-1}],"PopulationCap":300,"RegicideGarrison":false,"Seed":297855551,"AISeed":2376710042,"StartingResources":300,"TriggerScripts":["scripts/TriggerHelper.js","scripts/ConquestCommon.js","scripts/Conquest.js"],"VictoryConditions":["conquest"]},"gameSpeed":1,"map":"maps/skirmishes/miletus_peninsula_2p","mapType":"skirmish","mapPreview":"cropped:0.78125,0.5859375:session/icons/mappreview/miletus_peninsula_2p.png","matchID":"1F7E923B4F955FFF","timestamp":1623748441,"engine_version":"0.0.25","mods":[{"mod":"public","name":"0ad","version":"0.0.25","ignoreInCompatibilityChecks":false}]}
+turn 0 200
+end
+turn 1 200
+end
+turn 2 200
+end
+turn 3 200
+end
+turn 4 200
+end
+turn 5 200
+end
+turn 6 200
+end
+turn 7 200
+cmd 1 {"type":"aichat","message":"The Developer Overlay was opened.","translateMessage":true,"translateParameters":[],"parameters":{}}
+end
+turn 8 200
+end
+turn 9 200
+end
+turn 10 200
+end
+turn 11 200
+end
+turn 12 200
+end
+turn 13 200
+end
+turn 14 200
+end
+turn 15 200
+end
+turn 16 200
+cmd 1 {"type":"reveal-map","enable":true}
+end
+turn 17 200
+end
+turn 18 200
+end
+turn 19 200
+end
+turn 20 200
+end
+turn 21 200
+end
+turn 22 200
+end
+turn 23 200
+end
+turn 24 200
+end
+turn 25 200
+end
+turn 26 200
+end
+turn 27 200
+end
+turn 28 200
+end
+turn 29 200
+end
+turn 30 200
+end
+turn 31 200
+end
+turn 32 200
+end
+turn 33 200
+end
+turn 34 200
+end
+turn 35 200
+end
+turn 36 200
+end
+turn 37 200
+end
+turn 38 200
+end
+turn 39 200
+end
+turn 40 200
+end
+turn 41 200
+end
+turn 42 200
+end
+turn 43 200
+end
+turn 44 200
+end
+turn 45 200
+end
+turn 46 200
+end
+turn 47 200
+end
+turn 48 200
+end
+turn 49 200
+end
+turn 50 200
+end
+turn 51 200
+cmd 1 {"type":"construct","template":"structures/athen/field","x":582.4905583969505,"z":221.93121100277102,"angle":2.356201171875,"actorSeed":38369,"entities":[11076,11077,11078,11079],"autorepair":true,"autocontinue":true,"queued":false,"pushFront":false,"formation":"special/formations/null"}
+end
+turn 52 200
+end
+turn 53 200
+end
+turn 54 200
+end
+turn 55 200
+end
+turn 56 200
+end
+turn 57 200
+end
+turn 58 200
+end
+turn 59 200
+end
+turn 60 200
+end
+turn 61 200
+end
+turn 62 200
+cmd 1 {"type":"construct","template":"structures/athen/storehouse","x":529.35302734375,"z":276.39569091796875,"angle":2.356194490192345,"actorSeed":35427,"entities":[11068,11069,11070,11071],"autorepair":true,"autocontinue":true,"queued":false,"pushFront":false,"formation":"special/formations/null"}
+end
+turn 63 200
+end
+turn 64 200
+end
+turn 65 200
+end
+turn 66 200
+end
+turn 67 200
+end
+turn 68 200
+end
+turn 69 200
+end
+turn 70 200
+end
+turn 71 200
+end
+turn 72 200
+end
+turn 73 200
+cmd 1 {"type":"walk","entities":[11067],"x":760.6304321289062,"z":865.3043823242188,"queued":false,"pushFront":false}
+end
+turn 74 200
+end
+turn 75 200
+end
+turn 76 200
+end
+turn 77 200
+end
+turn 78 200
+end
+turn 79 200
+end
+turn 80 200
+end
+turn 81 200
+end
+turn 82 200
+end
+turn 83 200
+end
+turn 84 200
+end
+turn 85 200
+end
+turn 86 200
+end
+turn 87 200
+end
+turn 88 200
+end
+turn 89 200
+end
+turn 90 200
+end
+turn 91 200
+end
+turn 92 200
+end
+turn 93 200
+end
+turn 94 200
+end
+turn 95 200
+end
+turn 96 200
+end
+turn 97 200
+end
+turn 98 200
+end
+turn 99 200
+end
+turn 100 200
+end
+turn 101 200
+end
+turn 102 200
+end
+turn 103 200
+end
+turn 104 200
+end
+turn 105 200
+end
+turn 106 200
+end
+turn 107 200
+end
+turn 108 200
+end
+turn 109 200
+end
+turn 110 200
+end
+turn 111 200
+end
+turn 112 200
+end
+turn 113 200
+end
+turn 114 200
+end
+turn 115 200
+end
+turn 116 200
+end
+turn 117 200
+end
+turn 118 200
+end
+turn 119 200
+end
+turn 120 200
+end
+turn 121 200
+end
+turn 122 200
+end
+turn 123 200
+end
+turn 124 200
+end
+turn 125 200
+end
+turn 126 200
+end
+turn 127 200
+end
+turn 128 200
+end
+turn 129 200
+end
+turn 130 200
+end
+turn 131 200
+end
+turn 132 200
+end
+turn 133 200
+end
+turn 134 200
+end
+turn 135 200
+end
+turn 136 200
+end
+turn 137 200
+end
+turn 138 200
+end
+turn 139 200
+end
+turn 140 200
+end
+turn 141 200
+end
+turn 142 200
+end
+turn 143 200
+end
+turn 144 200
+end
+turn 145 200
+end
+turn 146 200
+end
+turn 147 200
+end
+turn 148 200
+end
+turn 149 200
+end
+turn 150 200
+end
+turn 151 200
+end
+turn 152 200
+end
+turn 153 200
+end
+turn 154 200
+end
+turn 155 200
+end
+turn 156 200
+end
+turn 157 200
+end
+turn 158 200
+end
+turn 159 200
+end
+turn 160 200
+end
+turn 161 200
+end
+turn 162 200
+end
+turn 163 200
+end
+turn 164 200
+end
+turn 165 200
+end
+turn 166 200
+end
+turn 167 200
+end
+turn 168 200
+end
+turn 169 200
+end
+turn 170 200
+end
+turn 171 200
+end
+turn 172 200
+end
+turn 173 200
+end
+turn 174 200
+end
+turn 175 200
+end
+turn 176 200
+end
+turn 177 200
+end
+turn 178 200
+end
+turn 179 200
+end
+turn 180 200
+end
+turn 181 200
+end
+turn 182 200
+end
+turn 183 200
+end
+turn 184 200
+end
+turn 185 200
+end
+turn 186 200
+end
+turn 187 200
+end
+turn 188 200
+end
+turn 189 200
+end
+turn 190 200
+end
+turn 191 200
+end
+turn 192 200
+end
+turn 193 200
+end
+turn 194 200
+end
+turn 195 200
+end
+turn 196 200
+end
+turn 197 200
+end
+turn 198 200
+end
+turn 199 200
+end
+turn 200 200
+end
+turn 201 200
+end
+turn 202 200
+end
+turn 203 200
+end
+turn 204 200
+end
+turn 205 200
+end
+turn 206 200
+end
+turn 207 200
+end
+turn 208 200
+end
+turn 209 200
+end
+turn 210 200
+end
+turn 211 200
+end
+turn 212 200
+end
+turn 213 200
+end
+turn 214 200
+end
+turn 215 200
+end
+turn 216 200
+end
+turn 217 200
+end
+turn 218 200
+end
+turn 219 200
+end
+turn 220 200
+end
+turn 221 200
+end
+turn 222 200
+end
+turn 223 200
+end
+turn 224 200
+end
+turn 225 200
+end
+turn 226 200
+end
+turn 227 200
+end
+turn 228 200
+end
+turn 229 200
+end
+turn 230 200
+end
+turn 231 200
+end
+turn 232 200
+end
+turn 233 200
+end
+turn 234 200
+end
+turn 235 200
+end
+turn 236 200
+end
+turn 237 200
+end
+turn 238 200
+end
+turn 239 200
+end
+turn 240 200
+end
+turn 241 200
+end
+turn 242 200
+end
+turn 243 200
+end
+turn 244 200
+end
+turn 245 200
+end
+turn 246 200
+end
+turn 247 200
+end
+turn 248 200
+end
+turn 249 200
+end
+turn 250 200
+end
+turn 251 200
+end
+turn 252 200
+end
+turn 253 200
+end
+turn 254 200
+end
+turn 255 200
+end
+turn 256 200
+end
+turn 257 200
+end
+turn 258 200
+end
+turn 259 200
+end
+turn 260 200
+end
+turn 261 200
+end
+turn 262 200
+end
+turn 263 200
+end
+turn 264 200
+end
+turn 265 200
+end
+turn 266 200
+end
+turn 267 200
+end
+turn 268 200
+end
+turn 269 200
+end
+turn 270 200
+end
+turn 271 200
+end
+turn 272 200
+end
+turn 273 200
+end
+turn 274 200
+end
+turn 275 200
+end
+turn 276 200
+end
+turn 277 200
+end
+turn 278 200
+end
+turn 279 200
+end
+turn 280 200
+end
+turn 281 200
+end
+turn 282 200
+end
+turn 283 200
+end
+turn 284 200
+end
+turn 285 200
+end
+turn 286 200
+end
+turn 287 200
+end
+turn 288 200
+end
+turn 289 200
+end
+turn 290 200
+end
+turn 291 200
+end
+turn 292 200
+end
+turn 293 200
+end
+turn 294 200
+end
+turn 295 200
+end
+turn 296 200
+end
+turn 297 200
+end
+turn 298 200
+end
+turn 299 200
+end
+turn 300 200
+end
+turn 301 200
+end
+turn 302 200
+end
+turn 303 200
+end
+turn 304 200
+end
+turn 305 200
+end
+turn 306 200
+end
+turn 307 200
+end
+turn 308 200
+end
+turn 309 200
+end
+turn 310 200
+end
+turn 311 200
+end
+turn 312 200
+end
+turn 313 200
+end
+turn 314 200
+end
+turn 315 200
+end
+turn 316 200
+end
+turn 317 200
+end
+turn 318 200
+end
+turn 319 200
+end
+turn 320 200
+end
+turn 321 200
+end
+turn 322 200
+end
+turn 323 200
+end
+turn 324 200
+end
+turn 325 200
+end
+turn 326 200
+end
+turn 327 200
+end
+turn 328 200
+end
+turn 329 200
+end
+turn 330 200
+end
+turn 331 200
+end
+turn 332 200
+end
+turn 333 200
+end
+turn 334 200
+end
+turn 335 200
+end
+turn 336 200
+end
+turn 337 200
+end
+turn 338 200
+end
+turn 339 200
+end
+turn 340 200
+end
+turn 341 200
+end
+turn 342 200
+end
+turn 343 200
+end
+turn 344 200
+end
+turn 345 200
+end
+turn 346 200
+end
+turn 347 200
+end
+turn 348 200
+end
+turn 349 200
+end
+turn 350 200
+end
+turn 351 200
+end
+turn 352 200
+end
+turn 353 200
+end
+turn 354 200
+end
+turn 355 200
+end
+turn 356 200
+end
+turn 357 200
+end
+turn 358 200
+end
+turn 359 200
+end
+turn 360 200
+end
+turn 361 200
+end
+turn 362 200
+end
+turn 363 200
+end
+turn 364 200
+end
+turn 365 200
+end
+turn 366 200
+end
+turn 367 200
+end
+turn 368 200
+end
+turn 369 200
+end
+turn 370 200
+end
+turn 371 200
+end
+turn 372 200
+end
+turn 373 200
+end
+turn 374 200
+end
+turn 375 200
+end
+turn 376 200
+end
+turn 377 200
+end
+turn 378 200
+end
+turn 379 200
+end
+turn 380 200
+end
+turn 381 200
+end
+turn 382 200
+end
+turn 383 200
+end
+turn 384 200
+end
+turn 385 200
+end
+turn 386 200
+end
+turn 387 200
+end
+turn 388 200
+end
+turn 389 200
+end
+turn 390 200
+end
+turn 391 200
+end
+turn 392 200
+end
+turn 393 200
+end
+turn 394 200
+end
+turn 395 200
+end
+turn 396 200
+end
+turn 397 200
+end
+turn 398 200
+end
+turn 399 200
+end
+turn 400 200
+end
+turn 401 200
+end
+turn 402 200
+end
+turn 403 200
+end
+turn 404 200
+end
+turn 405 200
+end
+turn 406 200
+end
+turn 407 200
+end
+turn 408 200
+end
+turn 409 200
+end
+turn 410 200
+end
+turn 411 200
+end
+turn 412 200
+end
+turn 413 200
+end
+turn 414 200
+end
+turn 415 200
+end
+turn 416 200
+end
+turn 417 200
+end
+turn 418 200
+end
+turn 419 200
+end
+turn 420 200
+end
+turn 421 200
+end
+turn 422 200
+end
+turn 423 200
+end
+turn 424 200
+end
+turn 425 200
+end
+turn 426 200
+end
+turn 427 200
+end
+turn 428 200
+end
+turn 429 200
+end
+turn 430 200
+end
+turn 431 200
+end
+turn 432 200
+end
+turn 433 200
+end
+turn 434 200
+end
+turn 435 200
+end
+turn 436 200
+end
+turn 437 200
+end
+turn 438 200
+end
+turn 439 200
+end
+turn 440 200
+end
+turn 441 200
+end
+turn 442 200
+end
+turn 443 200
+end
+turn 444 200
+end
+turn 445 200
+end
+turn 446 200
+end
+turn 447 200
+end
+turn 448 200
+end
+turn 449 200
+end
+turn 450 200
+end
+turn 451 200
+end
+turn 452 200
+end
+turn 453 200
+end
+turn 454 200
+end
+turn 455 200
+end
+turn 456 200
+end
+turn 457 200
+end
+turn 458 200
+end
+turn 459 200
+end
+turn 460 200
+end
+turn 461 200
+end
+turn 462 200
+end
+turn 463 200
+end
+turn 464 200
+end
+turn 465 200
+end
+turn 466 200
+end
+turn 467 200
+end
+turn 468 200
+end
+turn 469 200
+end
+turn 470 200
+end
+turn 471 200
+end
+turn 472 200
+end
+turn 473 200
+end
+turn 474 200
+end
+turn 475 200
+end
+turn 476 200
+end
+turn 477 200
+end
+turn 478 200
+end
+turn 479 200
+end
+turn 480 200
+end
+turn 481 200
+end
+turn 482 200
+end
+turn 483 200
+end
+turn 484 200
+end
+turn 485 200
+end
+turn 486 200
+end
+turn 487 200
+end
+turn 488 200
+end
+turn 489 200
+end
+turn 490 200
+end
+turn 491 200
+end
+turn 492 200
+end
+turn 493 200
+end
+turn 494 200
+end
+turn 495 200
+end
+turn 496 200
+end
+turn 497 200
+end
+turn 498 200
+end
+turn 499 200
+end
+turn 500 200
+end
+turn 501 200
+end
+turn 502 200
+end
+turn 503 200
+end
+turn 504 200
+end
+turn 505 200
+end
+turn 506 200
+end
+turn 507 200
+end
+turn 508 200
+end
+turn 509 200
+end
+turn 510 200
+end
+turn 511 200
+end
+turn 512 200
+end
+turn 513 200
+end
+turn 514 200
+end
+turn 515 200
+end
+turn 516 200
+end
+turn 517 200
+end
+turn 518 200
+end
+turn 519 200
+end
+turn 520 200
+end
+turn 521 200
+end
+turn 522 200
+end
+turn 523 200
+end
+turn 524 200
+end
+turn 525 200
+end
+turn 526 200
+end
+turn 527 200
+end
