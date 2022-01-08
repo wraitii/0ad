@@ -170,13 +170,13 @@ protected:
 
 	// The JS code will see undefined when querying a property descriptor.
 	virtual bool getOwnPropertyDescriptor(JSContext* UNUSED(cx), JS::HandleObject UNUSED(proxy), JS::HandleId UNUSED(id),
-										  JS::MutableHandle<JS::PropertyDescriptor> UNUSED(desc)) const override
+	                                      JS::MutableHandle<mozilla::Maybe<JS::PropertyDescriptor>> desc) const override
 	{
 		return true;
 	}
 	// Throw an exception is JS code attempts defining a property.
 	virtual bool defineProperty(JSContext* UNUSED(cx), JS::HandleObject UNUSED(proxy), JS::HandleId UNUSED(id),
-								JS::Handle<JS::PropertyDescriptor> UNUSED(desc), JS::ObjectOpResult& UNUSED(result)) const override
+	                            JS::Handle<JS::PropertyDescriptor> UNUSED(desc), JS::ObjectOpResult& UNUSED(result)) const override
 	{
 		return false;
 	}

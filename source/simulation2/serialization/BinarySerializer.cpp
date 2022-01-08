@@ -321,10 +321,11 @@ void CBinarySerializerScriptImpl::HandleScriptVal(JS::HandleValue val)
 			JS::RootedValue propval(rq.cx);
 
 			// Forbid getters, which might delete values and mess things up.
-			JS::Rooted<JS::PropertyDescriptor> desc(rq.cx);
-			if (!JS_GetPropertyDescriptorById(rq.cx, obj, id, &desc))
+			JS::Rooted<mozilla::Maybe<JS::PropertyDescriptor>> desc(rq.cx);
+			JS::RootedObject holder(rq.cx);
+			if (!JS_GetPropertyDescriptorById(rq.cx, obj, id, &desc, &holder))
 				throw PSERROR_Serialize_ScriptError("JS_GetPropertyDescriptorById failed");
-			if (desc.hasGetterObject())
+			if (desc.isSome() && desc->hasGetter())
 				throw PSERROR_Serialize_ScriptError("Cannot serialize property getters");
 
 			// Get the property name as a string
