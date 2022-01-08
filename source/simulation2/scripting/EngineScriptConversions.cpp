@@ -62,7 +62,7 @@ template<> void Script::ToJSVal<IComponent*>(const ScriptRequest& rq,  JS::Mutab
 		return;
 	}
 
-	JS_SetPrivate(obj, static_cast<void*>(val));
+	JS::SetPrivate(obj, static_cast<void*>(val));
 	ret.setObject(*obj);
 }
 

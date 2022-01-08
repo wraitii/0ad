@@ -88,7 +88,7 @@ IGUIObject* IGUIProxyObject::FromPrivateSlot<IGUIObject>(JSObject* obj)
 {
 	if (!obj)
 		return nullptr;
-	if (JS_GetClass(obj) != &JSInterface_GUIProxy::ClassDefinition())
+	if (JS::GetClass(obj) != &JSInterface_GUIProxy::ClassDefinition())
 		return nullptr;
 	return UnsafeFromPrivateSlot<IGUIObject>(obj);
 }

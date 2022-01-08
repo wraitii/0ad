@@ -105,7 +105,7 @@ template<> bool Script::FromJSVal<std::wstring>(const ScriptRequest& rq,  JS::Ha
 	if (!str)
 		FAIL("Argument must be convertible to a string");
 
-	if (JS_StringHasLatin1Chars(str))
+	if (JS::StringHasLatin1Chars(str))
 	{
 		size_t length;
 		JS::AutoCheckCannotGC nogc;

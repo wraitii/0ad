@@ -219,9 +219,9 @@ void CBinarySerializerScriptImpl::HandleScriptVal(JS::HandleValue val)
 		else
 		{
 			// Find type of object
-			const JSClass* jsclass = JS_GetClass(obj);
+			const JSClass* jsclass = JS::GetClass(obj);
 			if (!jsclass)
-				throw PSERROR_Serialize_ScriptError("JS_GetClass failed");
+				throw PSERROR_Serialize_ScriptError("JS::GetClass failed");
 
 			JSProtoKey protokey = JSCLASS_CACHED_PROTO_KEY(jsclass);
 
@@ -354,7 +354,7 @@ void CBinarySerializerScriptImpl::HandleScriptVal(JS::HandleValue val)
 			JS::RootedString string(rq.cx, JS_GetFunctionId(func));
 			if (string)
 			{
-				if (JS_StringHasLatin1Chars(string))
+				if (JS::StringHasLatin1Chars(string))
 				{
 					size_t length;
 					JS::AutoCheckCannotGC nogc;
@@ -440,7 +440,7 @@ void CBinarySerializerScriptImpl::ScriptString(const char* name, JS::HandleStrin
 	size_t length;
 	JS::AutoCheckCannotGC nogc;
 	// Serialize strings directly as UTF-16 or Latin1, to avoid expensive encoding conversions
-	bool isLatin1 = JS_StringHasLatin1Chars(string);
+	bool isLatin1 = JS::StringHasLatin1Chars(string);
 	m_Serializer.Bool("isLatin1", isLatin1);
 	if (isLatin1)
 	{
