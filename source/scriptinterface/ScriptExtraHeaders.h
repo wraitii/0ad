@@ -60,6 +60,10 @@
 #include "js/Proxy.h"
 #include "js/Warnings.h"
 
+#include "js/experimental/TypedData.h"
+
+#include "js/friend/ErrorMessages.h"
+
 #undef signbit
 
 #if MSC_VERSION
