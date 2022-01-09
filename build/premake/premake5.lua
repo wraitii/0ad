@@ -71,7 +71,11 @@ elseif os.istarget("windows") then
 	end
 else
 	arch = os.getenv("HOSTTYPE")
-	if arch == "x86_64" or arch == "amd64" then
+	-- Force x86_64 on Mac OS for now, as Spidermonkey 78 isn't Apple Silicon compatible.
+	if arch == "arm64" and os.istarget("macosx") then
+		arch = "amd64"
+		macos_arch = "x86_64"
+	elseif arch == "x86_64" or arch == "amd64" then
 		arch = "amd64"
 	else
 		os.execute(cc .. " -dumpmachine > .gccmachine.tmp")
@@ -549,8 +553,14 @@ function setup_static_lib_project (project_name, rel_source_dirs, extern_libs, e
 	-- The exception to this principle is Atlas UI, which is not a static library.
 	rtti "off"
 
-	if os.istarget("macosx") and _OPTIONS["macosx-version-min"] then
-		xcodebuildsettings { MACOSX_DEPLOYMENT_TARGET = _OPTIONS["macosx-version-min"] }
+	if os.istarget("macosx") then
+		architecture(macos_arch)
+		buildoptions { "-arch " .. macos_arch }
+		linkoptions { "-arch " .. macos_arch }
+		xcodebuildsettings { ARCHS = macos_arch }
+		if _OPTIONS["macosx-version-min"] then
+			xcodebuildsettings { MACOSX_DEPLOYMENT_TARGET = _OPTIONS["macosx-version-min"] }
+		end
 	end
 end
 
@@ -573,8 +583,14 @@ function setup_shared_lib_project (project_name, rel_source_dirs, extern_libs, e
 
 	if os.istarget("windows") then
 		links { "delayimp" }
-	elseif os.istarget("macosx") and _OPTIONS["macosx-version-min"] then
-		xcodebuildsettings { MACOSX_DEPLOYMENT_TARGET = _OPTIONS["macosx-version-min"] }
+	elseif os.istarget("macosx") then
+		architecture(macos_arch)
+		buildoptions { "-arch " .. macos_arch }
+		linkoptions { "-arch " .. macos_arch }
+		xcodebuildsettings { ARCHS = macos_arch }
+		if _OPTIONS["macosx-version-min"] then
+			xcodebuildsettings { MACOSX_DEPLOYMENT_TARGET = _OPTIONS["macosx-version-min"] }
+		end
 	end
 end
 
@@ -1094,6 +1110,11 @@ function setup_main_exe ()
 
 		links { "pthread" }
 		links { "ApplicationServices.framework", "Cocoa.framework", "CoreFoundation.framework" }
+
+		architecture(macos_arch)
+		buildoptions { "-arch " .. macos_arch }
+		linkoptions { "-arch " .. macos_arch }
+		xcodebuildsettings { ARCHS = macos_arch }
 		if _OPTIONS["macosx-version-min"] then
 			xcodebuildsettings { MACOSX_DEPLOYMENT_TARGET = _OPTIONS["macosx-version-min"] }
 		end
@@ -1125,6 +1146,14 @@ function setup_atlas_project(project_name, target_type, rel_source_dirs, rel_inc
 		-- Link to required libraries
 		links { "winmm", "delayimp" }
 
+	elseif os.istarget("macosx") then
+		architecture(macos_arch)
+		buildoptions { "-arch " .. macos_arch }
+		linkoptions { "-arch " .. macos_arch }
+		xcodebuildsettings { ARCHS = macos_arch }
+		if _OPTIONS["macosx-version-min"] then
+			xcodebuildsettings { MACOSX_DEPLOYMENT_TARGET = _OPTIONS["macosx-version-min"] }
+		end
 	elseif os.istarget("linux") or os.istarget("bsd") then
 		if os.getversion().description == "FreeBSD" then
 			buildoptions { "-fPIC" }
@@ -1244,6 +1273,12 @@ function setup_atlas_frontend_project (project_name)
 
 	else -- Non-Windows, = Unix
 		links { "AtlasObject" }
+		if os.istarget("macosx") then
+			architecture(macos_arch)
+			buildoptions { "-arch " .. macos_arch }
+			linkoptions { "-arch " .. macos_arch }
+			xcodebuildsettings { ARCHS = macos_arch }
+		end
 	end
 
 	links { "AtlasUI" }
@@ -1307,6 +1342,11 @@ function setup_collada_project(project_name, target_type, rel_source_dirs, rel_i
 		buildoptions { "-fno-strict-aliasing" }
 		-- On OSX, fcollada uses a few utility functions from coreservices
 		links { "CoreServices.framework" }
+
+		architecture(macos_arch)
+		buildoptions { "-arch " .. macos_arch }
+		linkoptions { "-arch " .. macos_arch }
+		xcodebuildsettings { ARCHS = macos_arch }
 	end
 
 end
@@ -1453,8 +1493,14 @@ function setup_tests()
 
 		includedirs { source_root .. "pch/test/" }
 
-	elseif os.istarget("macosx") and _OPTIONS["macosx-version-min"] then
-		xcodebuildsettings { MACOSX_DEPLOYMENT_TARGET = _OPTIONS["macosx-version-min"] }
+	elseif os.istarget("macosx") then
+		architecture(macos_arch)
+		buildoptions { "-arch " .. macos_arch }
+		linkoptions { "-arch " .. macos_arch }
+		xcodebuildsettings { ARCHS = macos_arch }
+		if _OPTIONS["macosx-version-min"] then
+			xcodebuildsettings { MACOSX_DEPLOYMENT_TARGET = _OPTIONS["macosx-version-min"] }
+		end
 	end
 end
 
