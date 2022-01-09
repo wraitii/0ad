@@ -3,10 +3,10 @@
 set -e
 
 # This should match the version in config/milestone.txt
-FOLDER="mozjs-78.6.0"
+FOLDER="mozjs-91.5.0"
 # If same-version changes are needed, increment this.
-LIB_VERSION="78.6.0+3"
-LIB_NAME="mozjs78-ps"
+LIB_VERSION="91.5.0+0"
+LIB_NAME="mozjs91-ps"
 
 # Since this script is called by update-workspaces.sh, we want to quickly
 # avoid doing any work if SpiderMonkey is already built and up-to-date.
@@ -33,12 +33,21 @@ MAKE_OPTS="${JOBS}"
 
 # Standalone SpiderMonkey can not use jemalloc (see https://bugzilla.mozilla.org/show_bug.cgi?id=1465038)
 # Jitspew doesn't compile on VS17 in the zydis disassembler - since we don't use it, deactivate it.
+# Trace-logging doesn't compile for now.
 CONF_OPTS="--disable-tests
            --disable-jemalloc
            --disable-js-shell
            --without-intl-api
            --enable-shared-js
            --disable-jitspew"
+
+if [ -n "$PROFILE" ]; then
+  CONF_OPTS="$CONF_OPTS --enable-profiling
+                        --enable-perf
+                        --enable-instruments
+                        --enable-jitspew
+                        --with-jitreport-granularity=3"
+fi
 
 if [ "${OS}" = "Windows_NT" ]
 then
@@ -105,13 +114,13 @@ if $REBUILD = true;
 then
   # Delete the existing directory to avoid conflicts and extract the tarball
   rm -rf "$FOLDER"
-  if [ ! -e "${FOLDER}.tar.bz2" ];
+  if [ ! -e "${FOLDER}.tar.xz" ];
   then
     # The tarball is committed to svn, but it's useful to let jenkins download it (when testing upgrade scripts).
-    download="$(command -v wget || echo "curl -L -o "${FOLDER}.tar.bz2"")"
-    $download "https://github.com/wraitii/spidermonkey-tarballs/releases/download/v78.6.0/${FOLDER}.tar.bz2"
+    download="$(command -v wget || echo "curl -L -o "${FOLDER}.tar.xz"")"
+    $download "https://github.com/wraitii/spidermonkey-tarballs/releases/download/${FOLDER}/${FOLDER}.tar.xz"
   fi
-  tar xjf "${FOLDER}.tar.bz2"
+  tar xfJ "${FOLDER}.tar.xz"
 
   # Clean up header files that may be left over by earlier versions of SpiderMonkey
   rm -rf include-unix-debug
@@ -120,8 +129,6 @@ then
   # Apply patches
   cd "$FOLDER"
   . ../patch.sh
-  # Copy a more recent autoconf config.guess to handle ARM macs properly.
-  cp -f ../config.guess build/autoconf/
   # Prevent complaining that configure is outdated.
   touch ./js/src/configure
 else
@@ -132,10 +139,8 @@ fi
 if [ "$(uname -s)" != "FreeBSD" ]; then
   mkdir -p build-debug
   cd build-debug
-  # SM configure checks for autoconf, but we don't actually need it.
-  # To avoid a dependency, pass something arbitrary (it does need to be an actual program).
   # llvm-objdump is searched for with the complete name, not simply 'objdump', account for that.
-  CXXFLAGS="${CXXFLAGS}" ../js/src/configure AUTOCONF="ls" \
+  CXXFLAGS="${CXXFLAGS}" ../js/src/configure \
     LLVM_OBJDUMP="${LLVM_OBJDUMP}" \
     ${CONF_OPTS} \
     --enable-debug \
@@ -147,7 +152,7 @@ fi
 
 mkdir -p build-release
 cd build-release
-CXXFLAGS="${CXXFLAGS}" ../js/src/configure AUTOCONF="ls" \
+CXXFLAGS="${CXXFLAGS}" ../js/src/configure \
   LLVM_OBJDUMP="${LLVM_OBJDUMP}" \
   ${CONF_OPTS} \
   --enable-optimize
