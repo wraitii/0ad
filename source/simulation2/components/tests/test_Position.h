@@ -36,11 +36,7 @@ public:
 		return 100.f;
 	}
 
-	void RecomputeWaterData() override
-	{
-	}
-
-	void SetWaterLevel(entity_pos_t UNUSED(h)) override
+	virtual void SetWaterLevel(entity_pos_t UNUSED(h))
 	{
 	}
 };

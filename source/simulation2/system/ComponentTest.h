@@ -242,7 +242,7 @@ public:
 	{
 	}
 
-	void ReloadTerrain(bool UNUSED(ReloadWater)) override
+	virtual void ReloadTerrain()
 	{
 	}
 };

@@ -29,6 +29,7 @@
 #include "graphics/TerrainTextureManager.h"
 #include "graphics/TerritoryTexture.h"
 #include "graphics/TextureManager.h"
+#include "graphics/Water.h"
 #include "lib/bits.h"
 #include "lib/hash.h"
 #include "lib/timer.h"
@@ -291,7 +292,7 @@ CMiniMapTexture::~CMiniMapTexture()
 
 void CMiniMapTexture::Update(const float UNUSED(deltaRealTime))
 {
-	if (m_WaterHeight != g_Renderer.GetSceneRenderer().GetWaterManager().m_WaterHeight)
+	if (m_WaterHeight != g_Game->GetWorld()->GetWater()->GetWaterHeight())
 	{
 		m_TerrainTextureDirty = true;
 		m_FinalTextureDirty = true;
@@ -376,7 +377,7 @@ void CMiniMapTexture::RebuildTerrainTexture(
 	const u32 width = m_MapSize - 1;
 	const u32 height = m_MapSize - 1;
 
-	m_WaterHeight = g_Renderer.GetSceneRenderer().GetWaterManager().m_WaterHeight;
+	m_WaterHeight = g_Game->GetWorld()->GetWater()->GetWaterHeight();
 	m_TerrainTextureDirty = false;
 
 	for (u32 j = 0; j < height; ++j)

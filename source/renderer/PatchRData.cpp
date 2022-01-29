@@ -28,6 +28,7 @@
 #include "graphics/TerrainTextureEntry.h"
 #include "graphics/TextRenderer.h"
 #include "graphics/TextureManager.h"
+#include "graphics/Water.h"
 #include "lib/allocators/DynamicArena.h"
 #include "lib/allocators/STLAllocators.h"
 #include "maths/MathUtil.h"
@@ -1321,7 +1322,7 @@ void CPatchRData::BuildWater()
 	u16 water_shore_index_map[PATCH_SIZE+1][PATCH_SIZE+1];
 	memset(water_shore_index_map, 0xFF, sizeof(water_shore_index_map));
 
-	const WaterManager& waterManager = g_Renderer.GetSceneRenderer().GetWaterManager();
+	WaterRData& waterRData = g_Game->GetWorld()->GetWater()->GetRData();
 
 	CPatch* patch = m_Patch;
 	CTerrain* terrain = patch->m_Parent;
@@ -1334,6 +1335,8 @@ void CPatchRData::BuildWater()
 
 	// To whoever implements different water heights, this is a TODO: water height)
 	float waterHeight = cmpWaterManager->GetExactWaterLevel(0.0f,0.0f);
+
+	const float* windStrength = waterRData.GetWindStrength();
 
 	// The 4 points making a water tile.
 	int moves[4][2] = {
@@ -1392,7 +1395,7 @@ void CPatchRData::BuildWater()
 
 				m_WaterBounds += vertex.m_Position;
 
-				vertex.m_WaterData = CVector2D(waterManager.m_WindStrength[xx + zz*mapSize], depth);
+				vertex.m_WaterData = CVector2D(windStrength[xx + zz*mapSize], depth);
 
 				water_index_map[z+moves[i][1]][x+moves[i][0]] = static_cast<u16>(water_vertex_data.size());
 				water_vertex_data.push_back(vertex);

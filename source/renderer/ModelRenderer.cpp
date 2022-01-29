@@ -715,9 +715,9 @@ void ShaderModelRenderer::Render(
 								{
 									const double period = 1.6;
 									const WaterManager& waterManager = g_Renderer.GetSceneRenderer().GetWaterManager();
-									if (waterManager.m_RenderWater && waterManager.WillRenderFancyWater())
+									if (waterManager.WillRenderFancyWater())
 									{
-										const CTexturePtr& waterTexture = waterManager.m_NormalMap[waterManager.GetCurrentTextureIndex(period)];
+										const CTexturePtr& waterTexture = waterManager.m_NormalMap[waterManager.GetCurrentTextureIndex(time, period)];
 										waterTexture->UploadBackendTextureIfNeeded(deviceCommandContext);
 										deviceCommandContext->SetTexture(
 											shader->GetBindingSlot(str_waterTex),

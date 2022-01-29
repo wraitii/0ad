@@ -592,7 +592,7 @@ bool Init(const CmdLineArgs& args, int flags)
 	// on anything else.)
 	if (args.Has("dumpSchema"))
 	{
-		CSimulation2 sim(NULL, g_ScriptContext, NULL);
+		CSimulation2 sim(g_ScriptContext, nullptr);
 		sim.LoadDefaultScripts();
 		std::ofstream f("entity.rng", std::ios_base::out | std::ios_base::trunc);
 		f << sim.GenerateSchema();

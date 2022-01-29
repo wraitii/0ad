@@ -35,6 +35,7 @@
 #include "graphics/Terrain.h"
 #include "graphics/Texture.h"
 #include "graphics/TextureManager.h"
+#include "graphics/Water.h"
 #include "maths/Matrix3D.h"
 #include "maths/MathUtil.h"
 #include "ps/CLogger.h"
@@ -478,17 +479,19 @@ void CSceneRenderer::ComputeReflectionCamera(CCamera& camera, const CBoundingBox
 
 	camera = m_ViewCamera;
 
+	float waterHeight = wm.GetWaterPlaneHeight();
+
 	// Temporarily change the camera to one that is reflected.
 	// Also, for texturing purposes, make it render to a view port the size of the
 	// water texture, stretch the image according to our aspect ratio so it covers
 	// the whole screen despite being rendered into a square, and cover slightly more
 	// of the view so we can see wavy reflections of slightly off-screen objects.
 	camera.m_Orientation.Scale(1, -1, 1);
-	camera.m_Orientation.Translate(0, 2 * wm.m_WaterHeight, 0);
+	camera.m_Orientation.Translate(0, 2 * waterHeight, 0);
 	camera.UpdateFrustum(scissor);
 	// Clip slightly above the water to improve reflections of objects on the water
 	// when the reflections are distorted.
-	camera.ClipFrustum(CVector4D(0, 1, 0, -wm.m_WaterHeight + 2.0f));
+	camera.ClipFrustum(CVector4D(0, 1, 0, -waterHeight + 2.0f));
 
 	SViewPort vp;
 	vp.m_Height = wm.m_RefTextureSize;
@@ -501,7 +504,7 @@ void CSceneRenderer::ComputeReflectionCamera(CCamera& camera, const CBoundingBox
 	scaleMat.SetScaling(g_Renderer.GetHeight() / static_cast<float>(std::max(1, g_Renderer.GetWidth())), 1.0f, 1.0f);
 	camera.SetProjection(scaleMat * camera.GetProjection());
 
-	CVector4D camPlane(0, 1, 0, -wm.m_WaterHeight + 0.5f);
+	CVector4D camPlane(0, 1, 0, -waterHeight + 0.5f);
 	SetObliqueFrustumClipping(camera, camPlane);
 }
 
@@ -528,7 +531,7 @@ void CSceneRenderer::ComputeRefractionCamera(CCamera& camera, const CBoundingBox
 	// the whole screen despite being rendered into a square, and cover slightly more
 	// of the view so we can see wavy refractions of slightly off-screen objects.
 	camera.UpdateFrustum(scissor);
-	camera.ClipFrustum(CVector4D(0, -1, 0, wm.m_WaterHeight + 0.5f));	// add some to avoid artifacts near steep shores.
+	camera.ClipFrustum(CVector4D(0, -1, 0, wm.GetWaterPlaneHeight() + 0.5f));	// add some to avoid artifacts near steep shores.
 
 	SViewPort vp;
 	vp.m_Height = wm.m_RefTextureSize;
@@ -635,7 +638,7 @@ void CSceneRenderer::RenderRefractions(
 		return;
 	}
 
-	CVector4D camPlane(0, -1, 0, wm.m_WaterHeight + 2.0f);
+	CVector4D camPlane(0, -1, 0, wm.GetWaterPlaneHeight() + 2.0f);
 	SetObliqueFrustumClipping(m_ViewCamera, camPlane);
 
 	g_Renderer.SetViewport(m_ViewCamera.GetViewPort());
@@ -799,7 +802,7 @@ void CSceneRenderer::RenderSubmissions(
 		RenderShadowMap(deviceCommandContext, context);
 	}
 
-	if (m->waterManager.m_RenderWater)
+	if (true)//m->waterManager.m_RenderWater)
 	{
 		if (waterScissor.GetVolume() > 0 && m->waterManager.WillRenderFancyWater())
 		{
@@ -858,7 +861,7 @@ void CSceneRenderer::RenderSubmissions(
 	RenderModels(deviceCommandContext, context, cullGroup);
 
 	// render water
-	if (m->waterManager.m_RenderWater && g_Game && waterScissor.GetVolume() > 0)
+	if (g_Game && waterScissor.GetVolume() > 0)
 	{
 		if (m->waterManager.WillRenderFancyWater())
 		{
@@ -1116,7 +1119,7 @@ void CSceneRenderer::RenderScene(
 	}
 
 	CBoundingBoxAligned waterScissor;
-	if (m->waterManager.m_RenderWater)
+	if (true)//m->waterManager.m_RenderWater)
 	{
 		waterScissor = m->terrainRenderer.ScissorWater(CULL_DEFAULT, m_ViewCamera);
 
@@ -1143,7 +1146,7 @@ void CSceneRenderer::RenderScene(
 			}
 
 			// Render the waves to the Fancy effects texture
-			m->waterManager.RenderWaves(deviceCommandContext, frustum);
+			m->waterManager.RenderWaves(deviceCommandContext, g_Game->GetWorld()->GetWater()->GetRData(), frustum);
 		}
 	}
 

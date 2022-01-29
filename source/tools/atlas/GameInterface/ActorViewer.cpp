@@ -37,6 +37,7 @@
 #include "graphics/TerritoryTexture.h"
 #include "graphics/Unit.h"
 #include "graphics/UnitManager.h"
+#include "graphics/Water.h"
 #include "graphics/Overlay.h"
 #include "maths/MathUtil.h"
 #include "ps/Filesystem.h"
@@ -44,6 +45,7 @@
 #include "ps/GameSetup/Config.h"
 #include "ps/ProfileViewer.h"
 #include "ps/VideoMode.h"
+#include "ps/World.h"
 #include "renderer/Renderer.h"
 #include "renderer/RenderingOptions.h"
 #include "renderer/Scene.h"
@@ -70,18 +72,17 @@ struct ActorViewerImpl : public Scene
 public:
 	ActorViewerImpl() :
 		Entity(INVALID_ENTITY),
-		Terrain(),
+		World(nullptr),
 		ColladaManager(g_VFS),
 		MeshManager(ColladaManager),
 		SkeletonAnimManager(ColladaManager),
-		UnitManager(),
-		Simulation2(&UnitManager, g_ScriptContext, &Terrain),
+		Simulation2(g_ScriptContext, &World),
 		ObjectManager(MeshManager, SkeletonAnimManager, Simulation2),
 		LOSTexture(Simulation2),
 		TerritoryTexture(Simulation2),
 		MiniMapTexture(Simulation2)
 	{
-		UnitManager.SetObjectManager(ObjectManager);
+		World.GetUnitManager().SetObjectManager(ObjectManager);
 	}
 
 	entity_id_t Entity;
@@ -102,12 +103,11 @@ public:
 	bool AxesMarkerEnabled;
 	int PropPointsMode; // 0 disabled, 1 for point markers, 2 for point markers + axes
 
-	CTerrain Terrain;
+	CWorld World;
 
 	CColladaManager ColladaManager;
 	CMeshManager MeshManager;
 	CSkeletonAnimManager SkeletonAnimManager;
-	CUnitManager UnitManager;
 	CSimulation2 Simulation2;
 	CObjectManager ObjectManager; // Keep this after Simulation2 - it needs it for initialisation.
 	CLOSTexture LOSTexture;
@@ -122,6 +122,7 @@ public:
 	// Simplistic implementation of the Scene interface
 	virtual void EnumerateObjects(const CFrustum& frustum, SceneCollector* c)
 	{
+		CTerrain& Terrain = *World.GetTerrain();
 		if (GroundEnabled)
 		{
 			for (ssize_t pj = 0; pj < Terrain.GetPatchesPerSide(); ++pj)
@@ -271,17 +272,19 @@ ActorViewer::ActorViewer()
 	m.AxesMarkerEnabled = false;
 	m.PropPointsMode = 0;
 
+	CTerrain& Terrain = *m.World.GetTerrain();
+
 	// Create a tiny empty piece of terrain, just so we can put shadows
 	// on it without having to think too hard
-	m.Terrain.Initialize(2, NULL);
+	Terrain.Initialize(2, NULL);
 	CTerrainTextureEntry* tex = g_TexMan.FindTexture("whiteness");
 	if (tex)
 	{
-		for (ssize_t pi = 0; pi < m.Terrain.GetPatchesPerSide(); ++pi)
+		for (ssize_t pi = 0; pi < Terrain.GetPatchesPerSide(); ++pi)
 		{
-			for (ssize_t pj = 0; pj < m.Terrain.GetPatchesPerSide(); ++pj)
+			for (ssize_t pj = 0; pj < Terrain.GetPatchesPerSide(); ++pj)
 			{
-				CPatch* patch = m.Terrain.GetPatch(pi, pj);
+				CPatch* patch = Terrain.GetPatch(pi, pj);
 				for (ssize_t i = 0; i < PATCH_SIZE; ++i)
 				{
 					for (ssize_t j = 0; j < PATCH_SIZE; ++j)
@@ -310,7 +313,7 @@ ActorViewer::ActorViewer()
 	// Tell the simulation we've already loaded the terrain
 	CmpPtr<ICmpTerrain> cmpTerrain(m.Simulation2, SYSTEM_ENTITY);
 	if (cmpTerrain)
-		cmpTerrain->ReloadTerrain(false);
+		cmpTerrain->ReloadTerrain();
 
 	// Remove FOW since we're in Atlas
 	CmpPtr<ICmpRangeManager> cmpRangeManager(m.Simulation2, SYSTEM_ENTITY);
@@ -371,7 +374,7 @@ void ActorViewer::SetActor(const CStrW& name, const CStr& animation, player_id_t
 		CmpPtr<ICmpPosition> cmpPosition(m.Simulation2, m.Entity);
 		if (cmpPosition)
 		{
-			ssize_t c = TERRAIN_TILE_SIZE * m.Terrain.GetPatchesPerSide()*PATCH_SIZE/2;
+			ssize_t c = TERRAIN_TILE_SIZE * m.World.GetTerrain()->GetPatchesPerSide()*PATCH_SIZE/2;
 			cmpPosition->JumpTo(entity_pos_t::FromInt(c), entity_pos_t::FromInt(c));
 			cmpPosition->SetYRotation(entity_angle_t::Pi());
 		}
@@ -453,15 +456,15 @@ void ActorViewer::SetEnabled(bool enabled)
 		m.OldSky = g_Renderer.GetSceneRenderer().GetSkyManager().IsSkyVisible();
 		g_Renderer.GetSceneRenderer().GetSkyManager().SetSkyVisible(false);
 
-		m.OldWater = g_Renderer.GetSceneRenderer().GetWaterManager().m_RenderWater;
-		g_Renderer.GetSceneRenderer().GetWaterManager().m_RenderWater = m.WaterEnabled;
+		//m.OldWater = g_Renderer.GetSceneRenderer().GetWaterManager().m_RenderWater;
+		//g_Renderer.GetSceneRenderer().GetWaterManager().m_RenderWater = m.WaterEnabled;
 	}
 	else
 	{
 		// Restore the old renderer state
 		SetShadowsEnabled(m.OldShadows);
 		g_Renderer.GetSceneRenderer().GetSkyManager().SetSkyVisible(m.OldSky);
-		g_Renderer.GetSceneRenderer().GetWaterManager().m_RenderWater = m.OldWater;
+		// g_Renderer.GetSceneRenderer().GetWaterManager().m_RenderWater = m.OldWater;
 	}
 }
 
@@ -472,6 +475,7 @@ void ActorViewer::SetWaterEnabled(bool enabled)
 	m.WaterEnabled = enabled;
 	// Adjust water level
 	entity_pos_t waterLevel = entity_pos_t::FromFloat(enabled ? 10.f : 0.f);
+	m.World.GetWater()->SetWaterHeight(waterLevel.ToFloat());
 	CmpPtr<ICmpWaterManager> cmpWaterManager(m.Simulation2, SYSTEM_ENTITY);
 	if (cmpWaterManager)
 		cmpWaterManager->SetWaterLevel(waterLevel);
@@ -520,7 +524,7 @@ void ActorViewer::Render()
 		cmpVisual->GetBounds().GetCenter(centre);
 	else
 		centre.Y = 0.f;
-	centre.X = centre.Z = TERRAIN_TILE_SIZE * m.Terrain.GetPatchesPerSide()*PATCH_SIZE/2;
+	centre.X = centre.Z = TERRAIN_TILE_SIZE * m.World.GetTerrain()->GetPatchesPerSide()*PATCH_SIZE/2;
 
 	CCamera camera = AtlasView::GetView_Actor()->GetCamera();
 	camera.m_Orientation.Translate(centre.X, centre.Y, centre.Z);
@@ -555,7 +559,7 @@ void ActorViewer::Update(float simFrameLength, float realFrameLength)
 			float z = cmpPosition->GetPosition().Z.ToFloat();
 			z -= m.CurrentSpeed*simFrameLength;
 			// Wrap at the edges, so it doesn't run off into the horizon
-			ssize_t c = TERRAIN_TILE_SIZE * m.Terrain.GetPatchesPerSide()*PATCH_SIZE/2;
+			ssize_t c = TERRAIN_TILE_SIZE * m.World.GetTerrain()->GetPatchesPerSide()*PATCH_SIZE/2;
 			if (z < c - TERRAIN_TILE_SIZE*PATCH_SIZE * 0.1f)
 				z = c + TERRAIN_TILE_SIZE*PATCH_SIZE * 0.1f;
 			cmpPosition->JumpTo(cmpPosition->GetPosition().X, entity_pos_t::FromFloat(z));

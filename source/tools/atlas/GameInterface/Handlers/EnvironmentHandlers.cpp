@@ -23,6 +23,7 @@
 
 #include "graphics/LightEnv.h"
 #include "graphics/Terrain.h"
+#include "graphics/Water.h"
 #include "maths/MathUtil.h"
 #include "ps/CStr.h"
 #include "ps/Game.h"
@@ -41,21 +42,19 @@ sEnvironmentSettings GetSettings()
 {
 	sEnvironmentSettings s;
 
-	CmpPtr<ICmpWaterManager> cmpWaterManager(*g_Game->GetSimulation2(), SYSTEM_ENTITY);
-	ENSURE(cmpWaterManager);
+	const CWater& water = *g_Game->GetWorld()->GetWater();
 
-	s.waterheight = cmpWaterManager->GetExactWaterLevel(0, 0) / (65536.f * HEIGHT_SCALE);
+	s.waterheight = water.GetWaterHeight() / (65536.f * HEIGHT_SCALE);
 
-	const WaterManager& waterManager = g_Renderer.GetSceneRenderer().GetWaterManager();
-	s.watertype = waterManager.m_WaterType;
-	s.waterwaviness = waterManager.m_Waviness;
-	s.watermurkiness = waterManager.m_Murkiness;
-	s.windangle = waterManager.m_WindAngle;
+	s.watertype = water.m_WaterType;
+	s.waterwaviness = water.m_Waviness;
+	s.watermurkiness = water.m_Murkiness;
+	s.windangle = water.m_WindAngle;
 
 	// CColor colors
 #define COLOR(A, B) A = Color((int)(B.r*255), (int)(B.g*255), (int)(B.b*255))
-	COLOR(s.watercolor, waterManager.m_WaterColor);
-	COLOR(s.watertint, waterManager.m_WaterTint);
+	COLOR(s.watercolor, water.m_WaterColor);
+	COLOR(s.watertint, water.m_WaterTint);
 #undef COLOR
 
 	float sunrotation = g_LightEnv.GetRotation();
@@ -100,19 +99,18 @@ void SetSettings(const sEnvironmentSettings& s)
 
 	cmpWaterManager->SetWaterLevel(entity_pos_t::FromFloat(s.waterheight * (65536.f * HEIGHT_SCALE)));
 
-	WaterManager& waterManager = g_Renderer.GetSceneRenderer().GetWaterManager();
-	waterManager.m_Waviness = s.waterwaviness;
-	waterManager.m_Murkiness = s.watermurkiness;
-	waterManager.m_WindAngle = s.windangle;
-	if (waterManager.m_WaterType != *s.watertype)
-	{
-		waterManager.m_WaterType = *s.watertype;
-		waterManager.ReloadWaterNormalTextures();
-	}
+	CWater& water = *g_Game->GetWorld()->GetWater();
+
+	water.SetWaterHeight(s.waterheight * (65536.f * HEIGHT_SCALE));
+
+	water.m_Waviness = s.waterwaviness;
+	water.m_Murkiness = s.watermurkiness;
+	water.m_WindAngle = s.windangle;
+	water.m_WaterType = *s.watertype;
 
 #define COLOR(A, B) B = CColor(A->r/255.f, A->g/255.f, A->b/255.f, 1.f)
-	COLOR(s.watercolor, waterManager.m_WaterColor);
-	COLOR(s.watertint, waterManager.m_WaterTint);
+	COLOR(s.watercolor, water.m_WaterColor);
+	COLOR(s.watertint, water.m_WaterTint);
 #undef COLOR
 
 	g_LightEnv.SetRotation(s.sunrotation);
@@ -142,8 +140,6 @@ void SetSettings(const sEnvironmentSettings& s)
 	COLOR(s.ambientcolor, g_LightEnv.m_AmbientColor);
 	COLOR(s.fogcolor, g_LightEnv.m_FogColor);
 #undef COLOR
-
-	cmpWaterManager->RecomputeWaterData();
 }
 
 BEGIN_COMMAND(SetEnvironmentSettings)
@@ -183,10 +179,7 @@ BEGIN_COMMAND(RecalculateWaterData)
 
 	void Redo()
 	{
-		CmpPtr<ICmpWaterManager> cmpWaterManager(*g_Game->GetSimulation2(), SYSTEM_ENTITY);
-		ENSURE(cmpWaterManager);
-
-		cmpWaterManager->RecomputeWaterData();
+		g_Game->GetWorld()->GetWater()->RecomputeWaterData();
 	}
 
 	void Undo()
@@ -229,7 +222,7 @@ BEGIN_COMMAND(PickWaterHeight)
 		ENSURE(cmpWaterManager);
 
 		cmpWaterManager->SetWaterLevel(height);
-		cmpWaterManager->RecomputeWaterData();
+		g_Game->GetWorld()->GetWater()->SetWaterHeight(height.ToFloat());
 	}
 };
 END_COMMAND(PickWaterHeight)

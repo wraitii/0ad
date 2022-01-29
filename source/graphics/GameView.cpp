@@ -36,6 +36,7 @@
 #include "graphics/TerritoryTexture.h"
 #include "graphics/Unit.h"
 #include "graphics/UnitManager.h"
+#include "graphics/Water.h"
 #include "lib/input.h"
 #include "lib/timer.h"
 #include "lobby/IXmppClient.h"
@@ -219,6 +220,7 @@ void CGameView::RegisterInit()
 	RegMemFun(this, &CGameView::Initialize, L"CGameView init", 1);
 
 	RegMemFun(g_TexMan.GetSingletonPtr(), &CTerrainTextureManager::LoadTerrainTextures, L"LoadTerrainTextures", 60);
+	g_Renderer.GetSceneRenderer().GetWaterManager().LoadWaterTextures();
 }
 
 void CGameView::BeginFrame()
@@ -247,7 +249,7 @@ void CGameView::EnumerateObjects(const CFrustum& frustum, SceneCollector* c)
 	PROFILE3("submit terrain");
 
 	CTerrain* pTerrain = m->Game->GetWorld()->GetTerrain();
-	float waterHeight = g_Renderer.GetSceneRenderer().GetWaterManager().m_WaterHeight + 0.001f;
+	float waterHeight = m->Game->GetWorld()->GetWater()->GetWaterHeight() + 0.001f;
 	const ssize_t patchesPerSide = pTerrain->GetPatchesPerSide();
 
 	// find out which patches will be drawn

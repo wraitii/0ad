@@ -27,6 +27,7 @@
 #include "graphics/TerrainTextureEntry.h"
 #include "graphics/TerrainTextureManager.h"
 #include "graphics/TextureManager.h"
+#include "graphics/Water.h"
 #include "gui/CGUI.h"
 #include "gui/GUIManager.h"
 #include "lib/bits.h"
@@ -269,7 +270,7 @@ void CMiniMap::DrawViewRect(CCanvas2D& canvas) const
 {
 	// Compute the camera frustum intersected with a fixed-height plane.
 	// Use the water height as a fixed base height, which should be the lowest we can go
-	const float sampleHeight = g_Renderer.GetSceneRenderer().GetWaterManager().m_WaterHeight;
+	const float sampleHeight = g_Game->GetWorld()->GetWater()->GetWaterHeight();
 
 	const CCamera* camera = g_Game->GetView()->GetCamera();
 	const std::array<CVector3D, 4> hitPoints = {

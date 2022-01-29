@@ -32,8 +32,7 @@ class CFrustum;
 class CMessage;
 class CSimContext;
 class CSimulation2Impl;
-class CTerrain;
-class CUnitManager;
+class CWorld;
 class IComponent;
 class SceneCollector;
 class ScriptInterface;
@@ -48,9 +47,7 @@ class CSimulation2
 	NONCOPYABLE(CSimulation2);
 
 public:
-	// TODO: CUnitManager should probably be handled automatically by this
-	// module, but for now we'll have it passed in externally instead
-	CSimulation2(CUnitManager* unitManager, std::shared_ptr<ScriptContext> cx, CTerrain* terrain);
+	CSimulation2(std::shared_ptr<ScriptContext> cx, CWorld* world);
 	~CSimulation2();
 
 	void EnableSerializationTest();

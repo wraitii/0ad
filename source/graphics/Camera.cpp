@@ -21,6 +21,7 @@
 
 #include "graphics/HFTracer.h"
 #include "graphics/Terrain.h"
+#include "graphics/Water.h"
 #include "maths/MathUtil.h"
 #include "maths/Vector2D.h"
 #include "maths/Vector4D.h"
@@ -271,7 +272,7 @@ CVector3D CCamera::GetWorldCoordinates(int px, int py, bool aboveWater) const
 
 	CPlane plane;
 	plane.Set(CVector3D(0.f, 1.f, 0.f),										// upwards normal
-		CVector3D(0.f, g_Renderer.GetSceneRenderer().GetWaterManager().m_WaterHeight, 0.f));	// passes through water plane
+		CVector3D(0.f, g_Game->GetWorld()->GetWater()->GetWaterHeight(), 0.f));	// passes through water plane
 
 	bool gotWater = plane.FindRayIntersection( origin, dir, &waterPoint );
 
@@ -349,7 +350,7 @@ CVector3D CCamera::GetFocus() const
 
 	CPlane plane;
 	plane.Set(CVector3D(0.f, 1.f, 0.f),										// upwards normal
-		CVector3D(0.f, g_Renderer.GetSceneRenderer().GetWaterManager().m_WaterHeight, 0.f));	// passes through water plane
+		CVector3D(0.f, g_Game->GetWorld()->GetWater()->GetWaterHeight(), 0.f));	// passes through water plane
 
 	bool gotWater = plane.FindRayIntersection( origin, dir, &waterPoint );
 

@@ -22,9 +22,10 @@
 
 #include "graphics/RenderableObject.h"
 #include "graphics/Terrain.h"
+#include "graphics/Water.h"
 #include "renderer/Renderer.h"
 #include "renderer/SceneRenderer.h"
-#include "renderer/WaterManager.h"
+#include "ps/World.h"
 #include "simulation2/MessageTypes.h"
 #include "tools/atlas/GameInterface/GameLoop.h"
 
@@ -34,13 +35,15 @@ public:
 	static void ClassInit(CComponentManager& componentManager)
 	{
 		// No need to subscribe to WaterChanged since we're actually the one sending those.
-		componentManager.SubscribeToMessageType(MT_Interpolate);
 		componentManager.SubscribeToMessageType(MT_TerrainChanged);
 	}
 
 	DEFAULT_COMPONENT_ALLOCATOR(WaterManager)
 
 	// Dynamic state:
+
+	// May be absent.
+	CWater* m_Water = nullptr;
 
 	entity_pos_t m_WaterHeight;
 
@@ -51,13 +54,13 @@ public:
 
 	void Init(const CParamNode& UNUSED(paramNode)) override
 	{
+		CWorld* world = GetSimContext().GetWorld();
+		if (world)
+			m_Water = world->GetWater();
 	}
 
 	void Deinit() override
 	{
-		// Clear the map size & data.
-		if (CRenderer::IsInitialised())
-			g_Renderer.GetSceneRenderer().GetWaterManager().SetMapSize(0);
 	}
 
 	void Serialize(ISerializer& serialize) override
@@ -70,24 +73,12 @@ public:
 		Init(paramNode);
 
 		deserialize.NumberFixed_Unbounded("height", m_WaterHeight);
-
-		if (CRenderer::IsInitialised())
-			g_Renderer.GetSceneRenderer().GetWaterManager().SetMapSize(GetSimContext().GetTerrain().GetVerticesPerSide());
-
-		RecomputeWaterData();
 	}
 
 	void HandleMessage(const CMessage& msg, bool UNUSED(global)) override
 	{
 		switch (msg.GetType())
 		{
-			case MT_Interpolate:
-			{
-				const CMessageInterpolate& msgData = static_cast<const CMessageInterpolate&> (msg);
-				if (CRenderer::IsInitialised())
-					g_Renderer.GetSceneRenderer().GetWaterManager().m_WaterTexTimer += msgData.deltaSimTime;
-				break;
-			}
 			case MT_TerrainChanged:
 			{
 				// Tell the renderer to redraw part of the map.
@@ -101,26 +92,15 @@ public:
 		}
 	}
 
-	void RecomputeWaterData() override
-	{
-		if (CRenderer::IsInitialised())
-		{
-			g_Renderer.GetSceneRenderer().GetWaterManager().RecomputeWaterData();
-			g_Renderer.GetSceneRenderer().GetWaterManager().m_WaterHeight = m_WaterHeight.ToFloat();
-		}
-
-		// Tell the terrain it'll need to recompute its cached render data
-		GetSimContext().GetTerrain().MakeDirty(RENDERDATA_UPDATE_VERTICES);
-	}
-
-	void SetWaterLevel(entity_pos_t h) override
+	virtual void SetWaterLevel(entity_pos_t h)
 	{
 		if (m_WaterHeight == h)
 			return;
 
 		m_WaterHeight = h;
 
-		RecomputeWaterData();
+		if (m_Water)
+			m_Water->SetWaterHeight(h.ToFloat());
 
 		CMessageWaterChanged msg;
 		GetSimContext().GetComponentManager().BroadcastMessage(msg);

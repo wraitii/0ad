@@ -69,7 +69,7 @@ const CStr CGame::EventNameSimulationUpdate = "SimulationUpdate";
  **/
 CGame::CGame(bool replayLog):
 	m_World(new CWorld(this)),
-	m_Simulation2(new CSimulation2(&m_World->GetUnitManager(), g_ScriptContext, m_World->GetTerrain())),
+	m_Simulation2(new CSimulation2(g_ScriptContext, m_World)),
 	m_GameView(CRenderer::IsInitialised() ? new CGameView(this) : nullptr),
 	m_GameStarted(false),
 	m_Paused(false),
@@ -261,8 +261,6 @@ void CGame::RegisterInit(const JS::HandleValue attribs, const std::string& saved
 
 		m_World->RegisterInit(mapFile, *scriptInterface.GetContext(), settings, m_PlayerID);
 	}
-	if (m_GameView)
-		RegMemFun(&g_Renderer.GetSceneRenderer().GetWaterManager(), &WaterManager::LoadWaterTextures, L"LoadWaterTextures", 80);
 
 	if (m_IsSavedGame)
 		RegMemFun(this, &CGame::LoadInitialState, L"Loading game", 1000);

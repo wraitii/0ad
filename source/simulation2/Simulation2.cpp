@@ -45,6 +45,7 @@
 #include "ps/Profile.h"
 #include "ps/Pyrogenesis.h"
 #include "ps/Util.h"
+#include "ps/World.h"
 #include "ps/XML/Xeromyces.h"
 
 #include <fstream>
@@ -54,13 +55,14 @@
 class CSimulation2Impl
 {
 public:
-	CSimulation2Impl(CUnitManager* unitManager, std::shared_ptr<ScriptContext> cx, CTerrain* terrain) :
+	CSimulation2Impl(std::shared_ptr<ScriptContext> cx, CWorld* world) :
 		m_SimContext(), m_ComponentManager(m_SimContext, cx),
 		m_EnableOOSLog(false), m_EnableSerializationTest(false), m_RejoinTestTurn(-1), m_TestingRejoin(false),
 		m_MapSettings(cx->GetGeneralJSContext()), m_InitAttributes(cx->GetGeneralJSContext())
 	{
-		m_SimContext.m_UnitManager = unitManager;
-		m_SimContext.m_Terrain = terrain;
+		m_SimContext.m_UnitManager = &world->GetUnitManager();
+		m_SimContext.m_Terrain = world->GetTerrain();
+		m_SimContext.m_World = world;
 		m_ComponentManager.LoadComponentTypes();
 
 		RegisterFileReloadFunc(ReloadChangedFileCB, this);
@@ -635,8 +637,8 @@ void CSimulation2Impl::DumpState()
 
 ////////////////////////////////////////////////////////////////
 
-CSimulation2::CSimulation2(CUnitManager* unitManager, std::shared_ptr<ScriptContext> cx, CTerrain* terrain) :
-	m(new CSimulation2Impl(unitManager, cx, terrain))
+CSimulation2::CSimulation2(std::shared_ptr<ScriptContext> cx, CWorld* world) :
+	m(new CSimulation2Impl(cx, world))
 {
 }
 

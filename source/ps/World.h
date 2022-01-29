@@ -1,4 +1,4 @@
-/* Copyright (C) 2021 Wildfire Games.
+/* Copyright (C) 2022 Wildfire Games.
  * This file is part of 0 A.D.
  *
  * 0 A.D. is free software: you can redistribute it and/or modify
@@ -37,6 +37,7 @@ ERROR_TYPE(Game_World, MapLoadFailed);
 class CGame;
 class CUnitManager;
 class CTerrain;
+class CWater;
 class CMapReader;
 class ScriptContext;
 
@@ -56,6 +57,8 @@ class CWorld
 	 * pointer to the CTerrain object representing the height map.
 	 **/
 	CTerrain *m_Terrain;
+
+	CWater* m_Water;
 
 	/**
 	 * pointer to the CUnitManager that holds all the units in the world.
@@ -90,6 +93,9 @@ public:
 	 **/
 	inline CTerrain *GetTerrain()
 	{	return m_Terrain; }
+
+	inline CWater *GetWater()
+	{	return m_Water; }
 
 	/**
 	 * Get a reference to the unit manager object.

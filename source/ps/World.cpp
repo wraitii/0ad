@@ -22,8 +22,8 @@
 #include "graphics/MapReader.h"
 #include "graphics/MapWriter.h"
 #include "graphics/Terrain.h"
-#include "graphics/Terrain.h"
 #include "graphics/UnitManager.h"
+#include "graphics/Water.h"
 #include "lib/timer.h"
 #include "ps/CLogger.h"
 #include "ps/CStr.h"
@@ -52,6 +52,7 @@ CLightEnv g_LightEnv;
 CWorld::CWorld(CGame *pGame):
 	m_pGame(pGame),
 	m_Terrain(new CTerrain()),
+	m_Water(new CWater(*m_Terrain)),
 	m_UnitManager(new CUnitManager()),
 	m_MapReader(new CMapReader)
 {
@@ -62,6 +63,8 @@ CWorld::CWorld(CGame *pGame):
  **/
 void CWorld::RegisterInit(const CStrW& mapFile, const ScriptContext& cx, JS::HandleValue settings, int playerID)
 {
+	ENSURE(m_pGame);
+
 	// Load the map, if one was specified
 	if (mapFile.length())
 	{
@@ -70,8 +73,7 @@ void CWorld::RegisterInit(const CStrW& mapFile, const ScriptContext& cx, JS::Han
 		try
 		{
 			CTriggerManager* pTriggerManager = NULL;
-			m_MapReader->LoadMap(mapfilename, cx, settings, m_Terrain,
-				CRenderer::IsInitialised() ? &g_Renderer.GetSceneRenderer().GetWaterManager() : NULL,
+			m_MapReader->LoadMap(mapfilename, cx, settings, m_Terrain, m_Water,
 				CRenderer::IsInitialised() ? &g_Renderer.GetSceneRenderer().GetSkyManager() : NULL,
 				&g_LightEnv, m_pGame->GetView(),
 				m_pGame->GetView() ? m_pGame->GetView()->GetCinema() : NULL,
@@ -91,10 +93,11 @@ void CWorld::RegisterInit(const CStrW& mapFile, const ScriptContext& cx, JS::Han
 
 void CWorld::RegisterInitRMS(const CStrW& scriptFile, const ScriptContext& cx, JS::HandleValue settings, int playerID)
 {
+	ENSURE(m_pGame);
+
 	// If scriptFile is empty, a blank map will be generated using settings (no RMS run)
 	CTriggerManager* pTriggerManager = NULL;
-	m_MapReader->LoadRandomMap(scriptFile, cx, settings, m_Terrain,
-		CRenderer::IsInitialised() ? &g_Renderer.GetSceneRenderer().GetWaterManager() : NULL,
+	m_MapReader->LoadRandomMap(scriptFile, cx, settings, m_Terrain, m_Water,
 		CRenderer::IsInitialised() ? &g_Renderer.GetSceneRenderer().GetSkyManager() : NULL,
 		&g_LightEnv, m_pGame->GetView(),
 		m_pGame->GetView() ? m_pGame->GetView()->GetCinema() : NULL,
@@ -117,6 +120,7 @@ int CWorld::DeleteMapReader()
 CWorld::~CWorld()
 {
 	delete m_Terrain;
+	delete m_Water;
 	delete m_UnitManager;
 	delete m_MapReader;
 }

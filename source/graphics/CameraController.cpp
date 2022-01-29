@@ -21,6 +21,7 @@
 
 #include "graphics/HFTracer.h"
 #include "graphics/Terrain.h"
+#include "graphics/Water.h"
 #include "i18n/L10n.h"
 #include "lib/input.h"
 #include "lib/timer.h"
@@ -581,7 +582,7 @@ void CCameraController::FocusHeight(bool smooth)
 
 	const float ground = std::max(
 		g_Game->GetWorld()->GetTerrain()->GetExactGroundLevel(nearPoint.X, nearPoint.Z),
-		g_Renderer.GetSceneRenderer().GetWaterManager().m_WaterHeight);
+		g_Game->GetWorld()->GetWater()->GetWaterHeight());
 
 	// filter ground levels for smooth camera movement
 	const float filtered_near_ground = g_Game->GetWorld()->GetTerrain()->GetFilteredGroundLevel(nearPoint.X, nearPoint.Z, near_radius);
@@ -590,7 +591,7 @@ void CCameraController::FocusHeight(bool smooth)
 	// filtered maximum visible ground level in view
 	const float filtered_ground = std::max(
 		std::max(filtered_near_ground, filtered_pivot_ground),
-		g_Renderer.GetSceneRenderer().GetWaterManager().m_WaterHeight);
+		g_Game->GetWorld()->GetWater()->GetWaterHeight());
 
 	// target camera height above pivot point
 	const float pivot_height = -forwards.Y * (m_Zoom.GetSmoothedValue() - m_ViewNear);

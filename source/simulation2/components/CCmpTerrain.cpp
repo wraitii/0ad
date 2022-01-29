@@ -119,12 +119,11 @@ public:
 		return m_Terrain;
 	}
 
-	void ReloadTerrain(bool ReloadWater) override
+	virtual void ReloadTerrain()
 	{
 		// TODO: should refactor this code to be nicer
 
 		u16 tiles = GetTilesPerSide();
-		u16 vertices = GetVerticesPerSide();
 
 		CmpPtr<ICmpObstructionManager> cmpObstructionManager(GetSystemEntity());
 		if (cmpObstructionManager)
@@ -142,11 +141,6 @@ public:
 					entity_pos_t::FromInt(tiles*(int)TERRAIN_TILE_SIZE));
 		}
 
-		if (ReloadWater && CRenderer::IsInitialised())
-		{
-			g_Renderer.GetSceneRenderer().GetWaterManager().SetMapSize(vertices);
-			g_Renderer.GetSceneRenderer().GetWaterManager().RecomputeWaterData();
-		}
 		MakeDirty(0, 0, tiles+1, tiles+1);
 	}
 

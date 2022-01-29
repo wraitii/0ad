@@ -1,4 +1,4 @@
-/* Copyright (C) 2021 Wildfire Games.
+/* Copyright (C) 2022 Wildfire Games.
  * This file is part of 0 A.D.
  *
  * 0 A.D. is free software: you can redistribute it and/or modify
@@ -27,6 +27,7 @@
 
 class CLightEnv;
 class CTerrain;
+class CWorld;
 class CCamera;
 class CCinemaManager;
 class CPostprocManager;
@@ -41,8 +42,7 @@ public:
 	// constructor
 	CMapWriter();
 	// SaveMap: try to save the current map to the given file
-	void SaveMap(const VfsPath& pathname, CTerrain* pTerr,
-									WaterManager* pWaterMan, SkyManager* pSkyMan,
+	void SaveMap(const VfsPath& pathname, CWorld* pWorld, SkyManager* pSkyMan,
 									CLightEnv* pLightEnv, CCamera* pCamera,
 									CCinemaManager* pCinema, CPostprocManager* pPostproc,
 									CSimulation2* pSimulation2);
@@ -59,7 +59,7 @@ private:
 		std::vector<STileDesc>& tileIndices);
 
 	// WriteXML: output some other data (entities, etc) in XML format
-	void WriteXML(const VfsPath& pathname, WaterManager* pWaterMan,
+	void WriteXML(const VfsPath& pathname, CWorld* pWorld,
 								SkyManager* pSkyMan, CLightEnv* pLightEnv, CCamera* pCamera,
 								CPostprocManager* pPostproc,
 								CSimulation2* pSimulation2);

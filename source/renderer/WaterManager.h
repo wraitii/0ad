@@ -35,8 +35,10 @@
 #include <vector>
 
 class CFrustum;
-
-struct WaveObject;
+class CSceneRenderer;
+class ShaderModelRenderer;
+class TerrainRenderer;
+class WaterRData;
 
 /**
  * Class WaterManager: Maintain rendering-related water settings and textures
@@ -45,39 +47,71 @@ struct WaveObject;
 
 class WaterManager
 {
+	friend class ShaderModelRenderer;
+	friend class CSceneRenderer;
+	friend class TerrainRenderer;
 public:
-	CTexturePtr m_WaterTexture[60];
-	CTexturePtr m_NormalMap[60];
+	WaterManager();
+	~WaterManager();
 
-	// How strong the waves are at point X. % of waviness.
-	std::unique_ptr<float[]> m_WindStrength;
-	// How far from the shore a point is. Manhattan.
-	std::unique_ptr<float[]> m_DistanceHeightmap;
+	void LoadWaterTextures();
 
-	// Waves vertex buffers
-	// TODO: measure storing value instead of pointer.
-	std::vector<std::unique_ptr<WaveObject>> m_ShoreWaves;
-	// Waves indices buffer. Only one since All Wave Objects have the same.
-	CVertexBufferManager::Handle m_ShoreWavesVBIndices;
+	/**
+	 * Recreates/loads needed water textures.
+	 */
+	void RecreateOrLoadTexturesIfNeeded();
 
-	size_t m_MapSize;
-	ssize_t m_TexSize;
+	/**
+	 * ReloadWaterNormalTextures: Reload the normal textures so that changing
+	 * water type in Atlas will actually do the right thing.
+	 */
+	void ReloadWaterNormalTextures(const CStrW& waterType);
 
-	CTexturePtr m_WaveTex;
-	CTexturePtr m_FoamTex;
+	/**
+	 * UnloadWaterTextures: Free any loaded water textures and reset the internal state
+	 * so that another call to LoadWaterTextures will begin progressive loading.
+	 */
+	void UnloadWaterTextures();
+
+	/**
+	 * Updates the settings to the one from the renderer, and sets m_NeedsReloading.
+	 */
+	void UpdateQuality();
+
+	/**
+	 * @return the height of the rendered water plane. Used for placing refraction/reflection cameras.
+	 */
+	float GetWaterPlaneHeight() const;
+
+	/**
+	 * Returns true if fancy water shaders will be used (i.e. the hardware is capable
+	 * and it hasn't been configured off)
+	 */
+	bool WillRenderFancyWater() const;
+
+	void RenderWaves(
+		Renderer::Backend::IDeviceCommandContext* deviceCommandContext,
+		WaterRData& renderData,
+		const CFrustum& frustrum);
+
+	/**
+	 * Returns an index of the current texture that should be used for rendering
+	 * water.
+	 */
+	size_t GetCurrentTextureIndex(const double time, const double period) const;
+	size_t GetNextTextureIndex(const double time, const double period) const;
+
+protected:
+	CStrW m_CachedWaterType;
+
 
 	std::unique_ptr<Renderer::Backend::ITexture> m_FancyTexture;
 	std::unique_ptr<Renderer::Backend::ITexture> m_FancyTextureDepth;
 	std::unique_ptr<Renderer::Backend::ITexture> m_ReflFboDepthTexture;
 	std::unique_ptr<Renderer::Backend::ITexture> m_RefrFboDepthTexture;
 
-	// used to know what to update when updating parts of the terrain only.
-	u32 m_updatei0;
-	u32 m_updatej0;
-	u32 m_updatei1;
-	u32 m_updatej1;
-
-	bool m_RenderWater;
+	// True if the shaders are dirty.
+	bool m_NeedsReloading;
 
 	// If disabled, force the use of the simple water shader for rendering.
 	bool m_WaterEffects;
@@ -91,13 +125,12 @@ public:
 	// Use complete reflections instead of showing merely the sky.
 	bool m_WaterReflection;
 
-	bool m_NeedsReloading;
-	// requires also recreating the super fancy information.
-	bool m_NeedInfoUpdate;
+	CTexturePtr m_WaterTexture[60];
+	CTexturePtr m_NormalMap[60];
 
-	float m_WaterHeight;
+	CTexturePtr m_WaveTex;
+	CTexturePtr m_FoamTex;
 
-	double m_WaterTexTimer;
 	float m_RepeatPeriod;
 
 	// Reflection and refraction textures for fancy water
@@ -116,91 +149,6 @@ public:
 	CMatrix3D m_RefractionMatrix;
 	CMatrix3D m_RefractionProjInvMatrix;
 	CMatrix3D m_RefractionViewInvMatrix;
-
-	// Water parameters
-	std::wstring m_WaterType;		// Which texture to use.
-	CColor m_WaterColor;	// Color of the water without refractions. This is what you're seeing when the water's deep or murkiness high.
-	CColor m_WaterTint;		// Tint of refraction in the water.
-	float m_Waviness;		// How big the waves are.
-	float m_Murkiness;		// How murky the water is.
-	float m_WindAngle;	// In which direction the water waves go.
-
-public:
-	WaterManager();
-	~WaterManager();
-
-	/**
-	 * LoadWaterTextures: Load water textures from within the
-	 * progressive load framework.
-	 *
-	 * @return 0 if loading has completed, a value from 1 to 100 (in percent of completion)
-	 * if more textures need to be loaded and a negative error value on failure.
-	 */
-	int LoadWaterTextures();
-
-	/**
-	 * Recreates/loads needed water textures.
-	 */
-	void RecreateOrLoadTexturesIfNeeded();
-
-	/**
-	 * ReloadWaterNormalTextures: Reload the normal textures so that changing
-	 * water type in Atlas will actually do the right thing.
-	 */
-	void ReloadWaterNormalTextures();
-
-	/**
-	 * UnloadWaterTextures: Free any loaded water textures and reset the internal state
-	 * so that another call to LoadWaterTextures will begin progressive loading.
-	 */
-	void UnloadWaterTextures();
-
-	/**
-	 * RecomputeWaterData: calculates all derived data from the waterheight
-	 */
-	void RecomputeWaterData();
-
-	/**
-	 * RecomputeWindStrength: calculates the intensity of waves
-	 */
-	void RecomputeWindStrength();
-
-	/**
-	 * RecomputeDistanceHeightmap: recalculates (or calculates) the distance heightmap.
-	 */
-	void RecomputeDistanceHeightmap();
-
-	/**
-	 * CreateWaveMeshes: Creates the waves objects (and meshes).
-	 */
-	void CreateWaveMeshes();
-
-	/**
-	 * Updates the map size. Will trigger a complete recalculation of fancy water information the next turn.
-	 */
-	void SetMapSize(size_t size);
-
-	/**
-	 * Updates the settings to the one from the renderer, and sets m_NeedsReloading.
-	 */
-	void UpdateQuality();
-
-	/**
-	 * Returns true if fancy water shaders will be used (i.e. the hardware is capable
-	 * and it hasn't been configured off)
-	 */
-	bool WillRenderFancyWater() const;
-
-	void RenderWaves(
-		Renderer::Backend::IDeviceCommandContext* deviceCommandContext,
-		const CFrustum& frustrum);
-
-	/**
-	 * Returns an index of the current texture that should be used for rendering
-	 * water.
-	 */
-	size_t GetCurrentTextureIndex(const double& period) const;
-	size_t GetNextTextureIndex(const double& period) const;
 };
 
 

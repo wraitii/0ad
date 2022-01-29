@@ -28,6 +28,7 @@
 #include "graphics/Terrain.h"
 #include "graphics/TerrainTextureEntry.h"
 #include "graphics/TerrainTextureManager.h"
+#include "graphics/Water.h"
 #include "lib/timer.h"
 #include "lib/external_libraries/libsdl.h"
 #include "maths/MathUtil.h"
@@ -38,7 +39,6 @@
 #include "ps/XML/Xeromyces.h"
 #include "renderer/PostprocManager.h"
 #include "renderer/SkyManager.h"
-#include "renderer/WaterManager.h"
 #include "scriptinterface/Object.h"
 #include "scriptinterface/ScriptContext.h"
 #include "scriptinterface/ScriptRequest.h"
@@ -71,14 +71,14 @@ CMapReader::CMapReader()
 
 // LoadMap: try to load the map from given file; reinitialise the scene to new data if successful
 void CMapReader::LoadMap(const VfsPath& pathname, const ScriptContext& cx,  JS::HandleValue settings, CTerrain *pTerrain_,
-						 WaterManager* pWaterMan_, SkyManager* pSkyMan_,
+						 CWater* pWater_, SkyManager* pSkyMan_,
 						 CLightEnv *pLightEnv_, CGameView *pGameView_, CCinemaManager* pCinema_, CTriggerManager* pTrigMan_, CPostprocManager* pPostproc_,
 						 CSimulation2 *pSimulation2_, const CSimContext* pSimContext_, int playerID_, bool skipEntities)
 {
 	pTerrain = pTerrain_;
+	pWater = pWater_;
 	pLightEnv = pLightEnv_;
 	pGameView = pGameView_;
-	pWaterMan = pWaterMan_;
 	pSkyMan = pSkyMan_;
 	pCinema = pCinema_;
 	pTrigMan = pTrigMan_;
@@ -153,7 +153,7 @@ void CMapReader::LoadMap(const VfsPath& pathname, const ScriptContext& cx,  JS::
 
 // LoadRandomMap: try to load the map data; reinitialise the scene to new data if successful
 void CMapReader::LoadRandomMap(const CStrW& scriptFile, const ScriptContext& cx, JS::HandleValue settings, CTerrain *pTerrain_,
-						 WaterManager* pWaterMan_, SkyManager* pSkyMan_,
+						CWater* pWater_, SkyManager* pSkyMan_,
 						 CLightEnv *pLightEnv_, CGameView *pGameView_, CCinemaManager* pCinema_, CTriggerManager* pTrigMan_, CPostprocManager* pPostproc_,
 						 CSimulation2 *pSimulation2_, int playerID_)
 {
@@ -162,9 +162,10 @@ void CMapReader::LoadRandomMap(const CStrW& scriptFile, const ScriptContext& cx,
 	pSimContext = pSimulation2 ? &pSimulation2->GetSimContext() : NULL;
 	m_ScriptSettings.init(cx.GetGeneralJSContext(), settings);
 	pTerrain = pTerrain_;
+	pWater = pWater_;
 	pLightEnv = pLightEnv_;
 	pGameView = pGameView_;
-	pWaterMan = pWaterMan_;
+
 	pSkyMan = pSkyMan_;
 	pCinema = pCinema_;
 	pTrigMan = pTrigMan_;
@@ -280,6 +281,7 @@ int CMapReader::ApplyTerrainData()
 	{
 		// initialise the terrain
 		pTerrain->Initialize(m_PatchesPerSide, &m_Heightmap[0]);
+		pWater->SetMapSize(m_PatchesPerSide * PATCH_SIZE);
 
 		if (CTerrainTextureManager::IsInitialised())
 		{
@@ -568,6 +570,7 @@ void CXMLReader::ReadTerrain(XMBElement parent)
 		texentry = g_TexMan.FindTexture(texture);
 
 	m_MapReader.pTerrain->Initialize(patches, NULL);
+	m_MapReader.pWater->SetMapSize(patches * PATCH_SIZE);
 
 	// Fill the heightmap
 	u16* heightmap = m_MapReader.pTerrain->GetHeightMap();
@@ -720,6 +723,9 @@ void CXMLReader::ReadEnvironment(XMBElement parent)
 					int water_element_name = waterelement.GetNodeName();
 					if (water_element_name == el_height)
 					{
+						if (m_MapReader.pWater)
+							m_MapReader.pWater->SetWaterHeight(waterelement.GetText().ToFloat());
+
 						CmpPtr<ICmpWaterManager> cmpWaterManager(*m_MapReader.pSimContext, SYSTEM_ENTITY);
 						ENSURE(cmpWaterManager);
 						cmpWaterManager->SetWaterLevel(entity_pos_t::FromString(waterelement.GetText()));
@@ -728,15 +734,15 @@ void CXMLReader::ReadEnvironment(XMBElement parent)
 
 					// The rest are purely graphical effects, and should be ignored if
 					// graphics are disabled
-					if (!m_MapReader.pWaterMan)
+					if (!m_MapReader.pWater)
 						continue;
 
 					if (water_element_name == el_type)
 					{
 						if (waterelement.GetText() == "default")
-							m_MapReader.pWaterMan->m_WaterType = L"ocean";
+							m_MapReader.pWater->m_WaterType = L"ocean";
 						else
-							m_MapReader.pWaterMan->m_WaterType =  waterelement.GetText().FromUTF8();
+							m_MapReader.pWater->m_WaterType =  waterelement.GetText().FromUTF8();
 					}
 #define READ_COLOR(el, out) \
 					else if (water_element_name == el) \
@@ -755,11 +761,11 @@ void CXMLReader::ReadEnvironment(XMBElement parent)
 						out = waterelement.GetText().ToFloat(); \
 					} \
 
-					READ_COLOR(el_color, m_MapReader.pWaterMan->m_WaterColor)
-					READ_COLOR(el_tint, m_MapReader.pWaterMan->m_WaterTint)
-					READ_FLOAT(el_waviness, m_MapReader.pWaterMan->m_Waviness)
-					READ_FLOAT(el_murkiness, m_MapReader.pWaterMan->m_Murkiness)
-					READ_FLOAT(el_windangle, m_MapReader.pWaterMan->m_WindAngle)
+					READ_COLOR(el_color, m_MapReader.pWater->m_WaterColor)
+					READ_COLOR(el_tint, m_MapReader.pWater->m_WaterTint)
+					READ_FLOAT(el_waviness, m_MapReader.pWater->m_Waviness)
+					READ_FLOAT(el_murkiness, m_MapReader.pWater->m_Murkiness)
+					READ_FLOAT(el_windangle, m_MapReader.pWater->m_WindAngle)
 
 #undef READ_FLOAT
 #undef READ_COLOR
@@ -1527,16 +1533,18 @@ int CMapReader::ParseEnvironment()
 	cmpWaterManager->SetWaterLevel(entity_pos_t::FromFloat(waterHeight));
 
 	// If we have graphics, get rest of settings
-	if (pWaterMan)
+	if (pWater)
 	{
-		GET_ENVIRONMENT_PROPERTY(waterBodyObj, Type, pWaterMan->m_WaterType)
-		if (pWaterMan->m_WaterType == L"default")
-			pWaterMan->m_WaterType = L"ocean";
-		GET_ENVIRONMENT_PROPERTY(waterBodyObj, Color, pWaterMan->m_WaterColor)
-		GET_ENVIRONMENT_PROPERTY(waterBodyObj, Tint, pWaterMan->m_WaterTint)
-		GET_ENVIRONMENT_PROPERTY(waterBodyObj, Waviness, pWaterMan->m_Waviness)
-		GET_ENVIRONMENT_PROPERTY(waterBodyObj, Murkiness, pWaterMan->m_Murkiness)
-		GET_ENVIRONMENT_PROPERTY(waterBodyObj, WindAngle, pWaterMan->m_WindAngle)
+		pWater->SetWaterHeight(waterHeight);
+
+		GET_ENVIRONMENT_PROPERTY(waterBodyObj, Type, pWater->m_WaterType)
+		if (pWater->m_WaterType == L"default")
+			pWater->m_WaterType = L"ocean";
+		GET_ENVIRONMENT_PROPERTY(waterBodyObj, Color, pWater->m_WaterColor)
+		GET_ENVIRONMENT_PROPERTY(waterBodyObj, Tint, pWater->m_WaterTint)
+		GET_ENVIRONMENT_PROPERTY(waterBodyObj, Waviness, pWater->m_Waviness)
+		GET_ENVIRONMENT_PROPERTY(waterBodyObj, Murkiness, pWater->m_Murkiness)
+		GET_ENVIRONMENT_PROPERTY(waterBodyObj, WindAngle, pWater->m_WindAngle)
 	}
 
 	JS::RootedValue fogObject(rq.cx);

@@ -31,6 +31,7 @@
 #include "graphics/Terrain.h"
 #include "graphics/TerrainTextureEntry.h"
 #include "graphics/TerrainTextureManager.h"
+#include "graphics/Water.h"
 #include "lib/bits.h"
 #include "lib/file/vfs/vfs_path.h"
 #include "lib/status.h"
@@ -207,6 +208,8 @@ MESSAGEHANDLER(ImportHeightmap)
 	const ssize_t offset = (newSize - terrain->GetPatchesPerSide()) / 2;
 	terrain->ResizeAndOffset(newSize, offset, offset);
 
+	g_Game->GetWorld()->GetWater()->SetMapSize(terrain->GetTilesPerSide());
+
 	// copy heightmap data into map
 	u16* heightmap = g_Game->GetWorld()->GetTerrain()->GetHeightMap();
 	ENSURE(heightmap_source.size() == (std::size_t) SQR(g_Game->GetWorld()->GetTerrain()->GetVerticesPerSide()));
@@ -225,8 +228,8 @@ MESSAGEHANDLER(SaveMap)
 	CMapWriter writer;
 	VfsPath pathname = VfsPath(*msg->filename).ChangeExtension(L".pmp");
 	writer.SaveMap(pathname,
-		g_Game->GetWorld()->GetTerrain(),
-		&g_Renderer.GetSceneRenderer().GetWaterManager(), &g_Renderer.GetSceneRenderer().GetSkyManager(),
+		g_Game->GetWorld(),
+		&g_Renderer.GetSceneRenderer().GetSkyManager(),
 		&g_LightEnv, g_Game->GetView()->GetCamera(), g_Game->GetView()->GetCinema(),
 		&g_Renderer.GetPostprocManager(),
 		g_Game->GetSimulation2());
@@ -298,7 +301,7 @@ QUERYHANDLER(RasterizeMinimap)
 
 	ssize_t w = dimension;
 	ssize_t h = dimension;
-	const float waterHeight = g_Renderer.GetSceneRenderer().GetWaterManager().m_WaterHeight;
+	const float waterHeight = g_Game->GetWorld()->GetWater()->GetWaterHeight();
 
 	for (ssize_t j = 0; j < h; ++j)
 	{
@@ -422,6 +425,7 @@ BEGIN_COMMAND(ResizeMap)
 	{
 		CTerrain* terrain = g_Game->GetWorld()->GetTerrain();
 		terrain->ResizeAndOffset(patches, -offsetX, -offsetY);
+		g_Game->GetWorld()->GetWater()->SetMapSize(terrain->GetTilesPerSide());
 	}
 
 	void DeleteObjects(const std::vector<DeletedObject>& deletedObjects)

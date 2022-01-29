@@ -31,6 +31,7 @@
 #include "graphics/TerritoryTexture.h"
 #include "graphics/TextRenderer.h"
 #include "graphics/TextureManager.h"
+#include "graphics/Water.h"
 #include "maths/MathUtil.h"
 #include "ps/CLogger.h"
 #include "ps/CStrInternStatic.h"
@@ -46,6 +47,7 @@
 #include "renderer/SceneRenderer.h"
 #include "renderer/ShadowMap.h"
 #include "renderer/SkyManager.h"
+#include "renderer/TimeManager.h"
 #include "renderer/VertexArray.h"
 #include "renderer/WaterManager.h"
 
@@ -194,7 +196,7 @@ void TerrainRenderer::RenderTerrainOverlayTexture(
 	if (!waterBounds.IsEmpty())
 	{
 		// Add a delta to avoid z-fighting.
-		const float height = g_Renderer.GetSceneRenderer().GetWaterManager().m_WaterHeight + 0.05f;
+		const float height = g_Game->GetWorld()->GetWater()->GetWaterHeight() + 0.05f;
 		const float waterPos[] =
 		{
 			waterBounds[0].X, height, waterBounds[0].Z,
@@ -416,7 +418,6 @@ bool TerrainRenderer::RenderFancyWater(
 		if (!m->fancyWaterTech)
 		{
 			LOGERROR("Failed to load water shader. Falling back to a simple water.\n");
-			waterManager.m_RenderWater = false;
 			return false;
 		}
 		waterManager.m_NeedsReloading = false;
@@ -431,7 +432,7 @@ bool TerrainRenderer::RenderFancyWater(
 		WaterMgr->CreateSuperfancyInfo();
 	}*/
 
-	const double time = waterManager.m_WaterTexTimer;
+	const double time = g_Renderer.GetTimeManager().GetGlobalTime();
 	const float repeatPeriod = waterManager.m_RepeatPeriod;
 
 	deviceCommandContext->SetGraphicsPipelineState(
@@ -441,10 +442,14 @@ bool TerrainRenderer::RenderFancyWater(
 
 	const CCamera& camera = g_Renderer.GetSceneRenderer().GetViewCamera();
 
+	const CWater& water = *g_Game->GetWorld()->GetWater();
+
+	waterManager.ReloadWaterNormalTextures(water.m_WaterType);
+
 	const double period = 8.0;
 	// TODO: move uploading to a prepare function during loading.
-	const CTexturePtr& currentNormalTexture = waterManager.m_NormalMap[waterManager.GetCurrentTextureIndex(period)];
-	const CTexturePtr& nextNormalTexture = waterManager.m_NormalMap[waterManager.GetNextTextureIndex(period)];
+	const CTexturePtr& currentNormalTexture = waterManager.m_NormalMap[waterManager.GetCurrentTextureIndex(time, period)];
+	const CTexturePtr& nextNormalTexture = waterManager.m_NormalMap[waterManager.GetNextTextureIndex(time, period)];
 
 	currentNormalTexture->UploadBackendTextureIfNeeded(deviceCommandContext);
 	nextNormalTexture->UploadBackendTextureIfNeeded(deviceCommandContext);
@@ -528,15 +533,15 @@ bool TerrainRenderer::RenderFancyWater(
 	deviceCommandContext->SetUniform(
 		fancyWaterShader->GetBindingSlot(str_sunColor), lightEnv.m_SunColor.AsFloatArray());
 	deviceCommandContext->SetUniform(
-		fancyWaterShader->GetBindingSlot(str_color), waterManager.m_WaterColor.AsFloatArray());
+		fancyWaterShader->GetBindingSlot(str_color), water.m_WaterColor.AsFloatArray());
 	deviceCommandContext->SetUniform(
-		fancyWaterShader->GetBindingSlot(str_tint), waterManager.m_WaterTint.AsFloatArray());
+		fancyWaterShader->GetBindingSlot(str_tint), water.m_WaterTint.AsFloatArray());
 	deviceCommandContext->SetUniform(
-		fancyWaterShader->GetBindingSlot(str_waviness), waterManager.m_Waviness);
+		fancyWaterShader->GetBindingSlot(str_waviness), water.m_Waviness);
 	deviceCommandContext->SetUniform(
-		fancyWaterShader->GetBindingSlot(str_murkiness), waterManager.m_Murkiness);
+		fancyWaterShader->GetBindingSlot(str_murkiness), water.m_Murkiness);
 	deviceCommandContext->SetUniform(
-		fancyWaterShader->GetBindingSlot(str_windAngle), waterManager.m_WindAngle);
+		fancyWaterShader->GetBindingSlot(str_windAngle), water.m_WindAngle);
 	deviceCommandContext->SetUniform(
 		fancyWaterShader->GetBindingSlot(str_repeatScale), 1.0f / repeatPeriod);
 
@@ -560,7 +565,7 @@ bool TerrainRenderer::RenderFancyWater(
 		static_cast<float>(g_Renderer.GetWidth()),
 		static_cast<float>(g_Renderer.GetHeight()));
 
-	if (waterManager.m_WaterType == L"clap")
+	if (water.m_WaterType == L"clap")
 	{
 		deviceCommandContext->SetUniform(
 			fancyWaterShader->GetBindingSlot(str_waveParams1),
@@ -569,7 +574,7 @@ bool TerrainRenderer::RenderFancyWater(
 			fancyWaterShader->GetBindingSlot(str_waveParams2),
 			0.5f, 0.0f, 0.0f, 0.0f);
 	}
-	else if (waterManager.m_WaterType == L"lake")
+	else if (water.m_WaterType == L"lake")
 	{
 		deviceCommandContext->SetUniform(
 			fancyWaterShader->GetBindingSlot(str_waveParams1),
@@ -610,9 +615,10 @@ void TerrainRenderer::RenderSimpleWater(
 	GPU_SCOPED_LABEL(deviceCommandContext, "Render Simple Water");
 
 	const WaterManager& waterManager = g_Renderer.GetSceneRenderer().GetWaterManager();
+	const CWater& water = *g_Game->GetWorld()->GetWater();
 	CLOSTexture& losTexture = g_Renderer.GetSceneRenderer().GetScene().GetLOSTexture();
 
-	const double time = waterManager.m_WaterTexTimer;
+	const double time = g_Renderer.GetTimeManager().GetGlobalTime();
 
 	CShaderDefines context;
 	if (g_Renderer.GetSceneRenderer().GetWaterRenderMode() == WIREFRAME)
@@ -625,7 +631,7 @@ void TerrainRenderer::RenderSimpleWater(
 	deviceCommandContext->BeginPass();
 	Renderer::Backend::IShaderProgram* waterSimpleShader = waterSimpleTech->GetShader();
 
-	const CTexturePtr& waterTexture = waterManager.m_WaterTexture[waterManager.GetCurrentTextureIndex(1.6)];
+	const CTexturePtr& waterTexture = waterManager.m_WaterTexture[waterManager.GetCurrentTextureIndex(time, 1.6)];
 	waterTexture->UploadBackendTextureIfNeeded(deviceCommandContext);
 
 	deviceCommandContext->SetTexture(
@@ -644,7 +650,7 @@ void TerrainRenderer::RenderSimpleWater(
 	deviceCommandContext->SetUniform(
 		waterSimpleShader->GetBindingSlot(str_time), static_cast<float>(time));
 	deviceCommandContext->SetUniform(
-		waterSimpleShader->GetBindingSlot(str_color), waterManager.m_WaterColor.AsFloatArray());
+		waterSimpleShader->GetBindingSlot(str_color), water.m_WaterColor.AsFloatArray());
 
 	std::vector<CPatchRData*>& visiblePatches = m->visiblePatches[cullGroup];
 	for (size_t i = 0; i < visiblePatches.size(); ++i)

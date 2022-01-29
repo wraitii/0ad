@@ -1,4 +1,4 @@
-/* Copyright (C) 2021 Wildfire Games.
+/* Copyright (C) 2022 Wildfire Games.
  * This file is part of 0 A.D.
  *
  * 0 A.D. is free software: you can redistribute it and/or modify
@@ -27,12 +27,14 @@
 #include "Terrain.h"
 #include "TerrainTextureEntry.h"
 #include "TerrainTextureManager.h"
+#include "Water.h"
 
 #include "maths/MathUtil.h"
 #include "maths/NUSpline.h"
 #include "ps/CLogger.h"
 #include "ps/Loader.h"
 #include "ps/Filesystem.h"
+#include "ps/World.h"
 #include "ps/XML/XMLWriter.h"
 #include "renderer/PostprocManager.h"
 #include "renderer/SkyManager.h"
@@ -56,8 +58,7 @@ CMapWriter::CMapWriter()
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // SaveMap: try to save the current map to the given file
-void CMapWriter::SaveMap(const VfsPath& pathname, CTerrain* pTerrain,
-						 WaterManager* pWaterMan, SkyManager* pSkyMan,
+void CMapWriter::SaveMap(const VfsPath& pathname, CWorld* pWorld, SkyManager* pSkyMan,
 						 CLightEnv* pLightEnv, CCamera* pCamera, CCinemaManager* UNUSED(pCinema),
 						 CPostprocManager* pPostproc,
 						 CSimulation2* pSimulation2)
@@ -65,7 +66,7 @@ void CMapWriter::SaveMap(const VfsPath& pathname, CTerrain* pTerrain,
 	CFilePacker packer(FILE_VERSION, "PSMP");
 
 	// build necessary data
-	PackMap(packer, pTerrain);
+	PackMap(packer, pWorld->GetTerrain());
 
 	try
 	{
@@ -79,7 +80,7 @@ void CMapWriter::SaveMap(const VfsPath& pathname, CTerrain* pTerrain,
 	}
 
 	VfsPath pathnameXML = pathname.ChangeExtension(L".xml");
-	WriteXML(pathnameXML, pWaterMan, pSkyMan, pLightEnv, pCamera, pPostproc, pSimulation2);
+	WriteXML(pathnameXML, pWorld, pSkyMan, pLightEnv, pCamera, pPostproc, pSimulation2);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -185,8 +186,7 @@ void CMapWriter::PackTerrain(CFilePacker& packer, CTerrain* pTerrain)
 	packer.PackRaw(&tiles[0],sizeof(STileDesc)*tiles.size());
 }
 
-void CMapWriter::WriteXML(const VfsPath& filename,
-						  WaterManager* pWaterMan, SkyManager* pSkyMan,
+void CMapWriter::WriteXML(const VfsPath& filename, CWorld* pWorld, SkyManager* pSkyMan,
 						  CLightEnv* pLightEnv, CCamera* pCamera,
 						  CPostprocManager* pPostproc,
 						  CSimulation2* pSimulation2)
@@ -246,23 +246,25 @@ void CMapWriter::WriteXML(const VfsPath& filename,
 					XMLWriter_Element waterBodyTag(xmlMapFile, "WaterBody");
 					CmpPtr<ICmpWaterManager> cmpWaterManager(sim, SYSTEM_ENTITY);
 					ENSURE(cmpWaterManager);
-					waterBodyTag.Setting("Type", pWaterMan->m_WaterType);
+
+					CWater* pWater = pWorld->GetWater();
+					waterBodyTag.Setting("Type", pWater->m_WaterType);
 					{
 						XMLWriter_Element colorTag(xmlMapFile, "Color");
-						colorTag.Attribute("r", pWaterMan->m_WaterColor.r);
-						colorTag.Attribute("g", pWaterMan->m_WaterColor.g);
-						colorTag.Attribute("b", pWaterMan->m_WaterColor.b);
+						colorTag.Attribute("r", pWater->m_WaterColor.r);
+						colorTag.Attribute("g", pWater->m_WaterColor.g);
+						colorTag.Attribute("b", pWater->m_WaterColor.b);
 					}
 					{
 						XMLWriter_Element tintTag(xmlMapFile, "Tint");
-						tintTag.Attribute("r", pWaterMan->m_WaterTint.r);
-						tintTag.Attribute("g", pWaterMan->m_WaterTint.g);
-						tintTag.Attribute("b", pWaterMan->m_WaterTint.b);
+						tintTag.Attribute("r", pWater->m_WaterTint.r);
+						tintTag.Attribute("g", pWater->m_WaterTint.g);
+						tintTag.Attribute("b", pWater->m_WaterTint.b);
 					}
 					waterBodyTag.Setting("Height", cmpWaterManager->GetExactWaterLevel(0, 0));
-					waterBodyTag.Setting("Waviness", pWaterMan->m_Waviness);
-					waterBodyTag.Setting("Murkiness", pWaterMan->m_Murkiness);
-					waterBodyTag.Setting("WindAngle", pWaterMan->m_WindAngle);
+					waterBodyTag.Setting("Waviness", pWater->m_Waviness);
+					waterBodyTag.Setting("Murkiness", pWater->m_Murkiness);
+					waterBodyTag.Setting("WindAngle", pWater->m_WindAngle);
 				}
 			}
 

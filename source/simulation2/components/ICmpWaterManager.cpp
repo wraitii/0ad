@@ -1,4 +1,4 @@
-/* Copyright (C) 2021 Wildfire Games.
+/* Copyright (C) 2022 Wildfire Games.
  * This file is part of 0 A.D.
  *
  * 0 A.D. is free software: you can redistribute it and/or modify
@@ -22,7 +22,6 @@
 #include "simulation2/system/InterfaceScripted.h"
 
 BEGIN_INTERFACE_WRAPPER(WaterManager)
-DEFINE_INTERFACE_METHOD("RecomputeWaterData", ICmpWaterManager, RecomputeWaterData)
 DEFINE_INTERFACE_METHOD("SetWaterLevel", ICmpWaterManager, SetWaterLevel)
 DEFINE_INTERFACE_METHOD("GetWaterLevel", ICmpWaterManager, GetWaterLevel)
 END_INTERFACE_WRAPPER(WaterManager)
