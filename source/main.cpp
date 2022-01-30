@@ -44,6 +44,7 @@ that of Atlas depending on commandline parameters.
 #include "ps/CConsole.h"
 #include "ps/CLogger.h"
 #include "ps/ConfigDB.h"
+#include "ps/DedicatedServer.h"
 #include "ps/Filesystem.h"
 #include "ps/Game.h"
 #include "ps/Globals.h"
@@ -526,6 +527,7 @@ static void RunGameOrAtlas(int argc, const char* argv[])
 	const bool isNonVisualReplay = args.Has("replay");
 	const bool isNonVisual = args.Has("autostart-nonvisual");
 	const bool isUsingRLInterface = args.Has("rl-interface");
+	const bool isDedicated = args.Has("dedicated");
 
 	const OsPath replayFile(
 		isVisualReplay ? args.Get("replay-visual") :
@@ -667,11 +669,18 @@ static void RunGameOrAtlas(int argc, const char* argv[])
 			g_Mods.UpdateAvailableMods(modInterface);
 		}
 
-		if (isNonVisual)
+		if (isNonVisual || isDedicated)
 		{
 			InitNonVisual(args);
 			if (isUsingRLInterface)
 				StartRLInterface(args);
+
+			// This runs its own inner-loop.
+			if (isDedicated)
+			{
+				RunDedicatedServer(args);
+				g_Shutdown = ShutdownType::Quit;
+			}
 
 			while (g_Shutdown == ShutdownType::None)
 			{

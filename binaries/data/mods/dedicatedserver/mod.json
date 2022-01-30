@@ -1,0 +1,8 @@
+{
+	"name": "dedicatedserver",
+	"version": "0.0.26",
+	"label": "Dedicated Server",
+	"url": "https://play0ad.com",
+	"description": "Enable 0 A.D.'s dedicated server mode",
+	"dependencies": []
+}

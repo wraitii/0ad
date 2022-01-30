@@ -1,4 +1,4 @@
-/* Copyright (C) 2021 Wildfire Games.
+/* Copyright (C) 2022 Wildfire Games.
  * This file is part of 0 A.D.
  *
  * 0 A.D. is free software: you can redistribute it and/or modify
@@ -68,6 +68,7 @@ public:
 	 * The game must exist for the lifetime of this object.
 	 */
 	CNetClient(CGame* game);
+	CNetClient(CGame* game, const ScriptInterface& scriptInterface);
 
 	virtual ~CNetClient();
 
@@ -300,6 +301,9 @@ private:
 	void PostPlayerAssignmentsToScript();
 
 	CGame *m_Game;
+
+	const ScriptInterface& m_ScriptInterface;
+
 	CStrW m_UserName;
 
 	CStr m_HostJID;

@@ -1,4 +1,4 @@
-/* Copyright (C) 2021 Wildfire Games.
+/* Copyright (C) 2022 Wildfire Games.
  * This file is part of 0 A.D.
  *
  * 0 A.D. is free software: you can redistribute it and/or modify
@@ -165,7 +165,7 @@ void StartNetworkJoin(const ScriptRequest& rq, const CStrW& playerName, const CS
  * This is needed to not force server to share it's public ip with all potential clients in the lobby.
  * XmppClient will also handle logic after receiving the answer.
  */
-void StartNetworkJoinLobby(const CStrW& playerName, const CStr& hostJID, const CStr& password)
+void StartNetworkJoinLobby(const CStrW& playerName, const CStr& hostJID, const CStr& password, const std::string& secret)
 {
 	ENSURE(!!g_XmppClient);
 	ENSURE(!g_NetClient);
@@ -178,6 +178,7 @@ void StartNetworkJoinLobby(const CStrW& playerName, const CStr& hostJID, const C
 	g_NetClient->SetUserName(playerName);
 	g_NetClient->SetHostJID(hostJID);
 	g_NetClient->SetGamePassword(hashedPass);
+	g_NetClient->SetControllerSecret(secret);
 	g_NetClient->SetupConnectionViaLobby();
 }
 

@@ -1,4 +1,4 @@
-/* Copyright (C) 2021 Wildfire Games.
+/* Copyright (C) 2022 Wildfire Games.
  * This file is part of 0 A.D.
  *
  * 0 A.D. is free software: you can redistribute it and/or modify
@@ -22,6 +22,7 @@
 #include "NetClientTurnManager.h"
 #include "NetMessage.h"
 #include "NetSession.h"
+#include "NetServer.h"
 
 #include "lib/byte_order.h"
 #include "lib/external_libraries/enet.h"
@@ -83,8 +84,11 @@ private:
 	CStr m_InitAttributes;
 };
 
-CNetClient::CNetClient(CGame* game) :
+CNetClient::CNetClient(CGame* game) : CNetClient(game, game->GetSimulation2()->GetScriptInterface()) {}
+
+CNetClient::CNetClient(CGame* game, const ScriptInterface& scriptInterface) :
 	m_Session(NULL),
+	m_ScriptInterface(scriptInterface),
 	m_UserName(L"anonymous"),
 	m_HostID((u32)-1), m_ClientTurnManager(NULL), m_Game(game),
 	m_LastConnectionCheck(0),
@@ -92,7 +96,8 @@ CNetClient::CNetClient(CGame* game) :
 	m_ServerPort(0),
 	m_Rejoin(false)
 {
-	m_Game->SetTurnManager(NULL); // delete the old local turn manager so we don't accidentally use it
+	if (m_Game)
+		m_Game->SetTurnManager(NULL); // delete the old local turn manager so we don't accidentally use it
 
 	void* context = this;
 
@@ -422,7 +427,7 @@ std::string CNetClient::TestReadGuiMessages()
 
 const ScriptInterface& CNetClient::GetScriptInterface()
 {
-	return m_Game->GetSimulation2()->GetScriptInterface();
+	return m_ScriptInterface;
 }
 
 void CNetClient::PostPlayerAssignmentsToScript()
@@ -620,7 +625,7 @@ void CNetClient::LoadFinished()
 	}
 
 	CLoadedGameMessage loaded;
-	loaded.m_CurrentTurn = m_ClientTurnManager->GetCurrentTurn();
+	loaded.m_CurrentTurn = m_ClientTurnManager ? m_ClientTurnManager->GetCurrentTurn() : 0;
 	SendMessage(&loaded);
 }
 
@@ -672,7 +677,14 @@ bool CNetClient::OnHandshakeResponse(void* context, CFsmEvent* event)
 
 	if (message->m_Flags & PS_NETWORK_FLAG_REQUIRE_LOBBYAUTH)
 	{
-		if (g_XmppClient && !client->m_HostJID.empty())
+		if (!client->m_Game)
+		{
+			// This is a fake, headless client for the netserver.
+			ENSURE(g_NetServer);
+			LOGMESSAGE("sending fake Auth");
+			g_NetServer->OnLobbyAuth("Fake Observer", client->m_GUID);
+		}
+		else if (g_XmppClient && !client->m_HostJID.empty())
 			g_XmppClient->SendIqLobbyAuth(client->m_HostJID, client->m_GUID);
 		else
 		{
@@ -804,17 +816,21 @@ bool CNetClient::OnGameStart(void* context, CFsmEvent* event)
 	if (client->m_PlayerAssignments.find(client->m_GUID) != client->m_PlayerAssignments.end())
 		player = client->m_PlayerAssignments[client->m_GUID].m_PlayerID;
 
-	client->m_ClientTurnManager = new CNetClientTurnManager(
+	if (client->m_Game)
+		client->m_ClientTurnManager = new CNetClientTurnManager(
 			*client->m_Game->GetSimulation2(), *client, client->m_HostID, client->m_Game->GetReplayLogger());
 
 	// Parse init attributes.
-	const ScriptInterface& scriptInterface = client->m_Game->GetSimulation2()->GetScriptInterface();
+	const ScriptInterface& scriptInterface = client->GetScriptInterface();
 	ScriptRequest rq(scriptInterface);
 	JS::RootedValue initAttribs(rq.cx);
 	Script::ParseJSON(rq, message->m_InitAttributes, &initAttribs);
 
-	client->m_Game->SetPlayerID(player);
-	client->m_Game->StartGame(&initAttribs, "");
+	if (client->m_Game)
+	{
+		client->m_Game->SetPlayerID(player);
+		client->m_Game->StartGame(&initAttribs, "");
+	}
 
 	client->PushGuiMessage("type", "start",
 						   "initAttributes", initAttribs);
@@ -967,7 +983,8 @@ bool CNetClient::OnLoadedGame(void* context, CFsmEvent* event)
 
 	// All players have loaded the game - start running the turn manager
 	// so that the game begins
-	client->m_Game->SetTurnManager(client->m_ClientTurnManager);
+	if (client->m_Game)
+		client->m_Game->SetTurnManager(client->m_ClientTurnManager);
 
 	client->PushGuiMessage(
 		"type", "netstatus",
@@ -986,6 +1003,9 @@ bool CNetClient::OnInGame(void *context, CFsmEvent* event)
 
 	CNetClient* client = static_cast<CNetClient*>(context);
 	CNetMessage* message = static_cast<CNetMessage*>(event->GetParamRef());
+
+	if (!client->m_ClientTurnManager)
+		return true;
 
 	if (message)
 	{

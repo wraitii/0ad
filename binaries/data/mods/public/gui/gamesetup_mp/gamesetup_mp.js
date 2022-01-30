@@ -30,6 +30,17 @@ function init(attribs)
 
 	switch (attribs.multiplayerGameType)
 	{
+	case "dedicated":
+	{
+		if (!Engine.HasXmppClient())
+		{
+			switchSetupPage("pageJoin");
+			break;
+		}
+		if (startJoinFromLobby(attribs.name, attribs.hostJID, attribs.pass, attribs.secret))
+			switchSetupPage("pageConnecting");
+		break;
+	}
 	case "join":
 	{
 		if (!Engine.HasXmppClient())
@@ -424,7 +435,7 @@ function startJoin(playername, ip, port)
 /**
  * Connect via the lobby.
  */
-function startJoinFromLobby(playername, hostJID, password)
+function startJoinFromLobby(playername, hostJID, password, secret)
 {
 	if (!Engine.HasXmppClient())
 	{
@@ -439,7 +450,7 @@ function startJoinFromLobby(playername, hostJID, password)
 
 	try
 	{
-		Engine.StartNetworkJoinLobby(playername + (g_UserRating ? " (" + g_UserRating + ")" : ""), hostJID, password);
+		Engine.StartNetworkJoinLobby(playername + (g_UserRating ? " (" + g_UserRating + ")" : ""), hostJID, password, secret);
 	}
 	catch (e)
 	{
