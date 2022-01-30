@@ -46,7 +46,6 @@
 #include "renderer/SceneRenderer.h"
 #include "renderer/TerrainRenderer.h"
 #include "renderer/WaterRenderer.h"
-#include "simulation2/components/ICmpWaterManager.h"
 #include "simulation2/Simulation2.h"
 
 #include <algorithm>
@@ -555,7 +554,7 @@ void CPatchRData::BuildSide(std::vector<SSideVertex>& vertices, CPatchSideFlags 
 {
 	ssize_t vsize = PATCH_SIZE + 1;
 	CTerrain* terrain = m_Patch->m_Parent;
-	CmpPtr<ICmpWaterManager> cmpWaterManager(*m_Simulation, SYSTEM_ENTITY);
+	CWater* water = g_Game->GetWorld()->GetWater();
 
 	for (ssize_t k = 0; k < vsize; k++)
 	{
@@ -572,11 +571,13 @@ void CPatchRData::BuildSide(std::vector<SSideVertex>& vertices, CPatchSideFlags 
 		CVector3D pos;
 		terrain->CalcPosition(gx, gz, pos);
 
-		// Clamp the height to the water level
-		float waterHeight = 0.f;
-		if (cmpWaterManager)
-			waterHeight = cmpWaterManager->GetExactWaterLevel(pos.X, pos.Z);
-		pos.Y = std::max(pos.Y, waterHeight);
+		// Clamp the height to the water level if water is enabled.
+		if (water)
+		{
+			float waterHeight = 0.f;
+			waterHeight = water->GetExactWaterHeight(pos.X, pos.Z);
+			pos.Y = std::max(pos.Y, waterHeight);
+		}
 
 		SSideVertex v0, v1;
 		v0.m_Position = pos;
@@ -1304,12 +1305,6 @@ void CPatchRData::BuildWater()
 
 	m_WaterBounds.SetEmpty();
 
-	// We need to use this to access the water manager or we may not have the
-	// actual values but some compiled-in defaults
-	CmpPtr<ICmpWaterManager> cmpWaterManager(*m_Simulation, SYSTEM_ENTITY);
-	if (!cmpWaterManager)
-		return;
-
 	// Build data for water
 	std::vector<SWaterVertex> water_vertex_data;
 	std::vector<u16> water_indices;
@@ -1322,10 +1317,10 @@ void CPatchRData::BuildWater()
 	u16 water_shore_index_map[PATCH_SIZE+1][PATCH_SIZE+1];
 	memset(water_shore_index_map, 0xFF, sizeof(water_shore_index_map));
 
-	WaterRData& waterRData = g_Game->GetWorld()->GetWater()->GetRData();
-
 	CPatch* patch = m_Patch;
 	CTerrain* terrain = patch->m_Parent;
+	CWater* water = g_Game->GetWorld()->GetWater();
+	WaterRData& waterRData = water->GetRData();
 
 	ssize_t mapSize = terrain->GetVerticesPerSide();
 
@@ -1334,7 +1329,7 @@ void CPatchRData::BuildWater()
 	ssize_t pz = m_Patch->m_Z * PATCH_SIZE;
 
 	// To whoever implements different water heights, this is a TODO: water height)
-	float waterHeight = cmpWaterManager->GetExactWaterLevel(0.0f,0.0f);
+	float waterHeight = water->GetExactWaterHeight(0.0f,0.0f);
 
 	const float* windStrength = waterRData.GetWindStrength();
 

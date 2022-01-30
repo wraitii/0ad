@@ -25,6 +25,8 @@
 #include "graphics/ObjectEntry.h"
 #include "graphics/SkeletonAnim.h"
 #include "graphics/SkeletonAnimDef.h"
+#include "graphics/Terrain.h"
+#include "graphics/Water.h"
 #include "maths/BoundingBoxAligned.h"
 #include "maths/Quaternion.h"
 #include "lib/sysdep/rtl.h"
@@ -32,15 +34,13 @@
 #include "ps/CStrInternStatic.h"
 #include "ps/Profile.h"
 #include "renderer/RenderingOptions.h"
-#include "simulation2/components/ICmpTerrain.h"
-#include "simulation2/components/ICmpWaterManager.h"
 #include "simulation2/Simulation2.h"
 
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Constructor
-CModel::CModel(CSimulation2& simulation)
-	: m_Flags(0), m_Anim(NULL), m_AnimTime(0), m_Simulation(simulation),
+CModel::CModel(CTerrain& terrain, CWater& water)
+	: m_Flags(0), m_Anim(NULL), m_AnimTime(0), m_Terrain(terrain), m_Water(water),
 	m_BoneMatrices(NULL), m_AmmoPropPoint(NULL), m_AmmoLoadedProp(0)
 {
 }
@@ -292,18 +292,12 @@ void CModel::ValidatePosition()
 	CVector3D objTranslation = m_Transform.GetTranslation();
 	float objectHeight = 0.0f;
 
-	CmpPtr<ICmpTerrain> cmpTerrain(m_Simulation, SYSTEM_ENTITY);
-	if (cmpTerrain)
-		objectHeight = cmpTerrain->GetExactGroundLevel(objTranslation.X, objTranslation.Z);
+	objectHeight = m_Terrain.GetExactGroundLevel(objTranslation.X, objTranslation.Z);
 
 	// Object height is incorrect for floating objects. We use water height instead.
-	CmpPtr<ICmpWaterManager> cmpWaterManager(m_Simulation, SYSTEM_ENTITY);
-	if (cmpWaterManager)
-	{
-		float waterHeight = cmpWaterManager->GetExactWaterLevel(objTranslation.X, objTranslation.Z);
-		if (waterHeight >= objectHeight && m_Flags & MODELFLAG_FLOATONWATER)
-			objectHeight = waterHeight;
-	}
+	float waterHeight = m_Water.GetExactWaterHeight(objTranslation.X, objTranslation.Z);
+	if (waterHeight >= objectHeight && m_Flags & MODELFLAG_FLOATONWATER)
+		objectHeight = waterHeight;
 
 	// re-position and validate all props
 	for (const Prop& prop : m_Props)
@@ -323,10 +317,10 @@ void CModel::ValidatePosition()
 		}
 
 		// Adjust prop height to terrain level when needed
-		if (cmpTerrain && (prop.m_MaxHeight != 0.f || prop.m_MinHeight != 0.f))
+		if (prop.m_MaxHeight != 0.f || prop.m_MinHeight != 0.f)
 		{
 			const CVector3D& propTranslation = proptransform.GetTranslation();
-			const float propTerrain = cmpTerrain->GetExactGroundLevel(propTranslation.X, propTranslation.Z);
+			const float propTerrain = m_Terrain.GetExactGroundLevel(propTranslation.X, propTranslation.Z);
 			const float translateHeight = std::min(prop.m_MaxHeight, std::max(prop.m_MinHeight, propTerrain - objectHeight));
 			translate.SetTranslation(0.f, translateHeight, 0.f);
 			proptransform.Concatenate(translate);
@@ -494,7 +488,7 @@ CModelAbstract* CModel::FindFirstAmmoProp()
 // Clone: return a clone of this model
 CModelAbstract* CModel::Clone() const
 {
-	CModel* clone = new CModel(m_Simulation);
+	CModel* clone = new CModel(m_Terrain, m_Water);
 	clone->m_ObjectBounds = m_ObjectBounds;
 	clone->InitModel(m_pModelDef);
 	clone->SetMaterial(m_Material);

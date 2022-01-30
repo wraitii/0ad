@@ -130,10 +130,10 @@ void TerrainRenderer::Submit(int cullGroup, CModelDecal* decal)
 	if (data == 0)
 	{
 		// no renderdata for decal, create it now
-		data = new CDecalRData(decal, m->simulation);
+		data = new CDecalRData(decal);
 		decal->SetRenderData(data);
 	}
-	data->Update(m->simulation);
+	data->Update();
 
 	m->visibleDecals[cullGroup].push_back(data);
 }

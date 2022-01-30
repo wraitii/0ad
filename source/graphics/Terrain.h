@@ -32,6 +32,7 @@ class CPatch;
 class CMiniPatch;
 class CFixedVector3D;
 class CBoundingBoxAligned;
+class CWater;
 
 ///////////////////////////////////////////////////////////////////////////////
 // Terrain Constants:
@@ -148,7 +149,7 @@ public:
 	/**
 	 * Returns a 3D bounding box encompassing the given vertex range (inclusive)
 	 */
-	CBoundingBoxAligned GetVertexesBound(ssize_t i0, ssize_t j0, ssize_t i1, ssize_t j1);
+	CBoundingBoxAligned GetVertexesBound(CWater* water, ssize_t i0, ssize_t j0, ssize_t i1, ssize_t j1);
 
 	// get the base color for the terrain (typically pure white - other colors
 	// will interact badly with LOS - but used by the Actor Viewer tool)

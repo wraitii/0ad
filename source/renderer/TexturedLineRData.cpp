@@ -21,15 +21,15 @@
 
 #include "graphics/ShaderProgram.h"
 #include "graphics/Terrain.h"
+#include "graphics/Water.h"
 #include "maths/Frustum.h"
 #include "maths/MathUtil.h"
 #include "maths/Quaternion.h"
 #include "ps/CStrInternStatic.h"
+#include "ps/World.h"
 #include "renderer/OverlayRenderer.h"
 #include "renderer/Renderer.h"
-#include "simulation2/Simulation2.h"
 #include "simulation2/system/SimContext.h"
-#include "simulation2/components/ICmpWaterManager.h"
 
 /* Note: this implementation uses g_VBMan directly rather than access it through the nicer VertexArray interface,
  * because it allows you to work with variable amounts of vertices and indices more easily. New code should prefer
@@ -89,7 +89,7 @@ void CTexturedLineRData::Update(const SOverlayTexturedLine& line)
 	m_VBIndices.Reset();
 	m_VB.Reset();
 
-	if (!line.m_SimContext)
+	if (!line.m_SimContext || !line.m_SimContext->GetWorld())
 	{
 		debug_warn(L"[TexturedLineRData] No SimContext set for textured overlay line, cannot render (no terrain data)");
 		return;
@@ -127,8 +127,7 @@ void CTexturedLineRData::Update(const SOverlayTexturedLine& line)
 	// each point was floating on water, for normal computation later)
 
 	// TODO: if we ever support more than one water level per map, recompute this per point
-	CmpPtr<ICmpWaterManager> cmpWaterManager(*line.m_SimContext, SYSTEM_ENTITY);
-	float w = cmpWaterManager ? cmpWaterManager->GetExactWaterLevel(p0.X, p0.Z) : 0.f;
+	float w = line.m_SimContext->GetWorld()->GetWater()->GetExactWaterHeight(p0.X, p0.Z);
 
 	const CTerrain& terrain = line.m_SimContext->GetTerrain();
 

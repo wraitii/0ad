@@ -38,12 +38,11 @@
 #include "ps/World.h"
 #include "renderer/Renderer.h"
 #include "renderer/SceneRenderer.h"
-#include "simulation2/Simulation2.h"
 
 #include <sstream>
 
-CObjectEntry::CObjectEntry(const std::shared_ptr<CObjectBase>& base, CSimulation2& simulation) :
-	m_Base(base), m_Color(1.0f, 1.0f, 1.0f, 1.0f), m_Model(NULL), m_Simulation(simulation)
+CObjectEntry::CObjectEntry(const std::shared_ptr<CObjectBase>& base) :
+	m_Base(base), m_Color(1.0f, 1.0f, 1.0f, 1.0f), m_Model(NULL)
 {
 }
 
@@ -95,7 +94,7 @@ bool CObjectEntry::BuildVariation(const std::vector<const std::set<CStr>*>& comp
 			variation.decal.m_SizeX, variation.decal.m_SizeZ,
 			variation.decal.m_Angle, variation.decal.m_OffsetX, variation.decal.m_OffsetZ,
 			m_Base->m_Properties.m_FloatOnWater);
-		m_Model = new CModelDecal(objectManager.GetTerrain(), decal);
+		m_Model = new CModelDecal(objectManager.GetTerrain(), objectManager.GetWater(), decal);
 
 		return true;
 	}
@@ -128,7 +127,7 @@ bool CObjectEntry::BuildVariation(const std::vector<const std::set<CStr>*>& comp
 	}
 
 	// delete old model, create new
-	CModel* model = new CModel(m_Simulation);
+	CModel* model = new CModel(*objectManager.GetTerrain(), *objectManager.GetWater());
 	delete m_Model;
 	m_Model = model;
 	model->SetMaterial(g_Renderer.GetSceneRenderer().GetMaterialManager().LoadMaterial(m_Base->m_Material));

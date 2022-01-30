@@ -1,4 +1,4 @@
-/* Copyright (C) 2021 Wildfire Games.
+/* Copyright (C) 2022 Wildfire Games.
  * This file is part of 0 A.D.
  *
  * 0 A.D. is free software: you can redistribute it and/or modify
@@ -26,9 +26,9 @@
 #include "ps/Game.h"
 #include "ps/Profile.h"
 #include "ps/Filesystem.h"
+#include "ps/World.h"
 #include "ps/XML/Xeromyces.h"
 #include "simulation2/Simulation2.h"
-#include "simulation2/components/ICmpTerrain.h"
 #include "simulation2/components/ICmpVisual.h"
 
 bool CObjectManager::ObjectKey::operator< (const CObjectManager::ObjectKey& a) const
@@ -46,8 +46,8 @@ static Status ReloadChangedFileCB(void* param, const VfsPath& path)
 	return static_cast<CObjectManager*>(param)->ReloadChangedFile(path);
 }
 
-CObjectManager::CObjectManager(CMeshManager& meshManager, CSkeletonAnimManager& skeletonAnimManager, CSimulation2& simulation)
-: m_MeshManager(meshManager), m_SkeletonAnimManager(skeletonAnimManager), m_Simulation(simulation)
+CObjectManager::CObjectManager(CMeshManager& meshManager, CSkeletonAnimManager& skeletonAnimManager, CWorld& world, CSimulation2& simulation)
+: m_MeshManager(meshManager), m_SkeletonAnimManager(skeletonAnimManager), m_World(world), m_Simulation(simulation)
 {
 	RegisterFileReloadFunc(ReloadChangedFileCB, this);
 
@@ -124,7 +124,7 @@ CObjectEntry* CObjectManager::FindObjectVariation(const std::shared_ptr<CObjectB
 
 	// If it hasn't been loaded, load it now.
 
-	std::unique_ptr<CObjectEntry> obj = std::make_unique<CObjectEntry>(base, m_Simulation);
+	std::unique_ptr<CObjectEntry> obj = std::make_unique<CObjectEntry>(base);
 
 	// TODO (for some efficiency): use the pre-calculated choices for this object,
 	// which has already worked out what to do for props, instead of passing the
@@ -138,10 +138,12 @@ CObjectEntry* CObjectManager::FindObjectVariation(const std::shared_ptr<CObjectB
 
 CTerrain* CObjectManager::GetTerrain()
 {
-	CmpPtr<ICmpTerrain> cmpTerrain(m_Simulation, SYSTEM_ENTITY);
-	if (!cmpTerrain)
-		return NULL;
-	return cmpTerrain->GetCTerrain();
+	return m_World.GetTerrain();
+}
+
+CWater* CObjectManager::GetWater()
+{
+	return m_World.GetWater();
 }
 
 CObjectManager::VariantDiversity CObjectManager::GetVariantDiversity() const

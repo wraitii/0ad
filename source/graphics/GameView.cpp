@@ -71,7 +71,7 @@ public:
 	CGameViewImpl(CGame* game)
 		: Game(game),
 		ColladaManager(g_VFS), MeshManager(ColladaManager), SkeletonAnimManager(ColladaManager),
-		ObjectManager(MeshManager, SkeletonAnimManager, *game->GetSimulation2()),
+		ObjectManager(MeshManager, SkeletonAnimManager, *game->GetWorld(), *game->GetSimulation2()),
 		LOSTexture(*game->GetSimulation2()),
 		TerritoryTexture(*game->GetSimulation2()),
 		MiniMapTexture(*game->GetSimulation2()),

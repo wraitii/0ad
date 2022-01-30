@@ -1,4 +1,4 @@
-/* Copyright (C) 2021 Wildfire Games.
+/* Copyright (C) 2022 Wildfire Games.
  * This file is part of 0 A.D.
  *
  * 0 A.D. is free software: you can redistribute it and/or modify
@@ -35,6 +35,8 @@ class CObjectEntry;
 class CSkeletonAnimManager;
 class CSimulation2;
 class CTerrain;
+class CWater;
+class CWorld;
 
 ///////////////////////////////////////////////////////////////////////////////////////////
 // CObjectManager: manager class for all possible actor types
@@ -68,7 +70,7 @@ public:
 public:
 
 	// constructor, destructor
-	CObjectManager(CMeshManager& meshManager, CSkeletonAnimManager& skeletonAnimManager, CSimulation2& simulation);
+	CObjectManager(CMeshManager& meshManager, CSkeletonAnimManager& skeletonAnimManager, CWorld& world, CSimulation2& simulation);
 	~CObjectManager();
 
 	// Provide access to the manager classes for meshes and animations - they're
@@ -107,6 +109,12 @@ public:
 	 */
 	CTerrain* GetTerrain();
 
+	/**
+	 * Get the water object that actors managed by this manager should be linked
+	 * with (primarily for the purpose of decals & floating units)
+	 */
+	CWater* GetWater();
+
 	VariantDiversity GetVariantDiversity() const;
 
 	/**
@@ -128,6 +136,7 @@ public:
 	CMeshManager& m_MeshManager;
 	CSkeletonAnimManager& m_SkeletonAnimManager;
 	CSimulation2& m_Simulation;
+	CWorld& m_World;
 
 	u8 m_QualityLevel = 100;
 	std::unique_ptr<CConfigDBHook> m_QualityHook;

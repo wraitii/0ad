@@ -32,7 +32,8 @@ struct SPropPoint;
 class CObjectEntry;
 class CSkeletonAnim;
 class CSkeletonAnimDef;
-class CSimulation2;
+class CTerrain;
+class CWater;
 
 #define MODELFLAG_CASTSHADOWS		(1<<0)
 #define MODELFLAG_NOLOOPANIMATION	(1<<1)
@@ -76,7 +77,7 @@ public:
 
 public:
 	// constructor
-	CModel(CSimulation2& simulation);
+	CModel(CTerrain& terrain, CWater& water);
 	// destructor
 	~CModel();
 
@@ -236,7 +237,8 @@ private:
 	void ReleaseData();
 
 	// Needed for terrain aligned props
-	CSimulation2& m_Simulation;
+	CTerrain& m_Terrain;
+	CWater& m_Water;
 
 	// object flags
 	int m_Flags;

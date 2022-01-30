@@ -24,6 +24,7 @@
 #include "graphics/ShaderManager.h"
 #include "graphics/Terrain.h"
 #include "graphics/TextureManager.h"
+#include "graphics/Water.h"
 #include "lib/allocators/DynamicArena.h"
 #include "lib/allocators/STLAllocators.h"
 #include "ps/CLogger.h"
@@ -32,8 +33,6 @@
 #include "ps/Profile.h"
 #include "renderer/Renderer.h"
 #include "renderer/TerrainRenderer.h"
-#include "simulation2/components/ICmpWaterManager.h"
-#include "simulation2/Simulation2.h"
 
 #include <algorithm>
 
@@ -76,17 +75,16 @@ struct SDecalBatchComparator
 
 } // anonymous namespace
 
-CDecalRData::CDecalRData(CModelDecal* decal, CSimulation2* simulation)
-	: m_Decal(decal), m_Simulation(simulation)
+CDecalRData::CDecalRData(CModelDecal* decal)
+	: m_Decal(decal)
 {
 	BuildVertexData();
 }
 
 CDecalRData::~CDecalRData() = default;
 
-void CDecalRData::Update(CSimulation2* simulation)
+void CDecalRData::Update()
 {
-	m_Simulation = simulation;
 	if (m_UpdateFlags != 0)
 	{
 		BuildVertexData();
@@ -296,8 +294,6 @@ void CDecalRData::BuildVertexData()
 		return;
 	}
 
-	CmpPtr<ICmpWaterManager> cmpWaterManager(*m_Simulation, SYSTEM_ENTITY);
-
 	std::vector<SDecalVertex> vertices((i1 - i0 + 1) * (j1 - j0 + 1));
 
 	for (ssize_t j = j0, idx = 0; j <= j1; ++j)
@@ -307,11 +303,11 @@ void CDecalRData::BuildVertexData()
 			SDecalVertex& vertex = vertices[idx];
 			m_Decal->m_Terrain->CalcPosition(i, j, vertex.m_Position);
 
-			if (decal.m_Floating && cmpWaterManager)
+			if (decal.m_Floating && m_Decal->m_Water)
 			{
 				vertex.m_Position.Y = std::max(
 					vertex.m_Position.Y,
-					cmpWaterManager->GetExactWaterLevel(vertex.m_Position.X, vertex.m_Position.Z));
+					m_Decal->m_Water->GetExactWaterHeight(vertex.m_Position.X, vertex.m_Position.Z));
 			}
 
 			m_Decal->m_Terrain->CalcNormal(i, j, vertex.m_Normal);

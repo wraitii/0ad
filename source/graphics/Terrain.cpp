@@ -23,6 +23,7 @@
 #include "graphics/TerrainProperties.h"
 #include "graphics/TerrainTextureEntry.h"
 #include "graphics/TerrainTextureManager.h"
+#include "graphics/Water.h"
 #include "lib/sysdep/cpu.h"
 #include "maths/FixedVector3D.h"
 #include "maths/MathUtil.h"
@@ -801,7 +802,7 @@ void CTerrain::MakeDirty(int dirtyFlags)
 		m_HeightMipmap.Update(m_Heightmap);
 }
 
-CBoundingBoxAligned CTerrain::GetVertexesBound(ssize_t i0, ssize_t j0, ssize_t i1, ssize_t j1)
+CBoundingBoxAligned CTerrain::GetVertexesBound(CWater* water, ssize_t i0, ssize_t j0, ssize_t i1, ssize_t j1)
 {
 	i0 = Clamp<ssize_t>(i0, 0, m_MapSize - 1);
 	j0 = Clamp<ssize_t>(j0, 0, m_MapSize - 1);
@@ -819,6 +820,10 @@ CBoundingBoxAligned CTerrain::GetVertexesBound(ssize_t i0, ssize_t j0, ssize_t i
 			maxH = std::max(maxH, m_Heightmap[j*m_MapSize + i]);
 		}
 	}
+
+	u16 waterHeight = water->GetWaterHeight() * HEIGHT_SCALE;
+	minH = std::min(waterHeight, minH);
+	maxH = std::max(waterHeight, maxH);
 
 	CBoundingBoxAligned bound;
 	bound[0].X = (float)(i0*TERRAIN_TILE_SIZE);

@@ -28,16 +28,15 @@
 
 class CModelDecal;
 class CShaderDefines;
-class CSimulation2;
 class ShadowMap;
 
 class CDecalRData : public CRenderData
 {
 public:
-	CDecalRData(CModelDecal* decal, CSimulation2* simulation);
+	CDecalRData(CModelDecal* decal);
 	~CDecalRData();
 
-	void Update(CSimulation2* simulation);
+	void Update();
 
 	static void RenderDecals(
 		Renderer::Backend::IDeviceCommandContext* deviceCommandContext,
@@ -60,8 +59,6 @@ private:
 	CVertexBufferManager::Handle m_VBDecalsIndices;
 
 	CModelDecal* m_Decal;
-
-	CSimulation2* m_Simulation;
 };
 
 #endif // INCLUDED_DECALRDATA

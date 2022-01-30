@@ -22,6 +22,7 @@
 #include "graphics/ModelAbstract.h"
 
 class CTerrain;
+class CWater;
 
 /**
  * Terrain decal definition.
@@ -49,8 +50,8 @@ struct SDecal
 class CModelDecal : public CModelAbstract
 {
 public:
-	CModelDecal(CTerrain* terrain, const SDecal& decal)
-		: m_Terrain(terrain), m_Decal(decal)
+	CModelDecal(CTerrain* terrain, CWater* water, const SDecal& decal)
+		: m_Terrain(terrain), m_Water(water), m_Decal(decal)
 	{
 		ENSURE(terrain != NULL);
 	}
@@ -81,6 +82,7 @@ public:
 	void CalcVertexExtents(ssize_t& i0, ssize_t& j0, ssize_t& i1, ssize_t& j1);
 
 	CTerrain* m_Terrain;
+	CWater* m_Water;
 	SDecal m_Decal;
 };
 

@@ -25,7 +25,7 @@
 
 CModelAbstract* CModelDecal::Clone() const
 {
-	CModelDecal* clone = new CModelDecal(m_Terrain, m_Decal);
+	CModelDecal* clone = new CModelDecal(m_Terrain, m_Water, m_Decal);
 	return clone;
 }
 
@@ -56,7 +56,7 @@ void CModelDecal::CalcBounds()
 {
 	ssize_t i0, j0, i1, j1;
 	CalcVertexExtents(i0, j0, i1, j1);
-	m_WorldBounds = m_Terrain->GetVertexesBound(i0, j0, i1, j1);
+	m_WorldBounds = m_Terrain->GetVertexesBound(m_Water, i0, j0, i1, j1);
 }
 
 void CModelDecal::SetTerrainDirty(ssize_t i0, ssize_t j0, ssize_t i1, ssize_t j1)
