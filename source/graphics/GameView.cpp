@@ -57,7 +57,7 @@
 #include "ps/World.h"
 #include "renderer/Renderer.h"
 #include "renderer/SceneRenderer.h"
-#include "renderer/WaterManager.h"
+#include "renderer/WaterRenderer.h"
 #include "simulation2/Simulation2.h"
 #include "simulation2/components/ICmpPosition.h"
 #include "simulation2/components/ICmpRangeManager.h"
@@ -220,7 +220,7 @@ void CGameView::RegisterInit()
 	RegMemFun(this, &CGameView::Initialize, L"CGameView init", 1);
 
 	RegMemFun(g_TexMan.GetSingletonPtr(), &CTerrainTextureManager::LoadTerrainTextures, L"LoadTerrainTextures", 60);
-	g_Renderer.GetSceneRenderer().GetWaterManager().LoadWaterTextures();
+	g_Renderer.GetSceneRenderer().GetWaterRenderer().LoadWaterTextures();
 }
 
 void CGameView::BeginFrame()
@@ -249,7 +249,7 @@ void CGameView::EnumerateObjects(const CFrustum& frustum, SceneCollector* c)
 	PROFILE3("submit terrain");
 
 	CTerrain* pTerrain = m->Game->GetWorld()->GetTerrain();
-	float waterHeight = m->Game->GetWorld()->GetWater()->GetWaterHeight() + 0.001f;
+	const float waterHeight = m->Game->GetWorld()->GetWater()->GetWaterHeight() + 0.001f;
 	const ssize_t patchesPerSide = pTerrain->GetPatchesPerSide();
 
 	// find out which patches will be drawn
@@ -276,7 +276,7 @@ void CGameView::EnumerateObjects(const CFrustum& frustum, SceneCollector* c)
 void CGameView::UnloadResources()
 {
 	g_TexMan.UnloadTerrainTextures();
-	g_Renderer.GetSceneRenderer().GetWaterManager().UnloadWaterTextures();
+	g_Renderer.GetSceneRenderer().GetWaterRenderer().UnloadWaterTextures();
 }
 
 void CGameView::Update(const float deltaRealTime)

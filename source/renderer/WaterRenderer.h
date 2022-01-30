@@ -22,8 +22,7 @@
 #ifndef INCLUDED_WATERMANAGER
 #define INCLUDED_WATERMANAGER
 
-#include "graphics/Color.h"
-#include "graphics/Texture.h"
+#include "graphics/TextureManager.h"
 #include "maths/Matrix3D.h"
 #include "maths/Vector2D.h"
 #include "renderer/backend/IDeviceCommandContext.h"
@@ -32,7 +31,6 @@
 #include "renderer/VertexBufferManager.h"
 
 #include <memory>
-#include <vector>
 
 class CFrustum;
 class CSceneRenderer;
@@ -41,18 +39,18 @@ class TerrainRenderer;
 class WaterRData;
 
 /**
- * Class WaterManager: Maintain rendering-related water settings and textures
+ * Class WaterRenderer: Maintain rendering-related water settings and textures
  * Anything that affects gameplay should go in CcmpWaterManager.cpp and passed to this (possibly as copy).
  */
 
-class WaterManager
+class WaterRenderer
 {
 	friend class ShaderModelRenderer;
 	friend class CSceneRenderer;
 	friend class TerrainRenderer;
 public:
-	WaterManager();
-	~WaterManager();
+	WaterRenderer();
+	~WaterRenderer();
 
 	void LoadWaterTextures();
 
@@ -65,7 +63,7 @@ public:
 	 * ReloadWaterNormalTextures: Reload the normal textures so that changing
 	 * water type in Atlas will actually do the right thing.
 	 */
-	void ReloadWaterNormalTextures(const CStrW& waterType);
+	void ReloadWaterNormalTexturesIfNeeded();
 
 	/**
 	 * UnloadWaterTextures: Free any loaded water textures and reset the internal state

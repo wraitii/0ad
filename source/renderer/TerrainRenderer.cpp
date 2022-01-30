@@ -49,7 +49,7 @@
 #include "renderer/SkyManager.h"
 #include "renderer/TimeManager.h"
 #include "renderer/VertexArray.h"
-#include "renderer/WaterManager.h"
+#include "renderer/WaterRenderer.h"
 
 /**
  * TerrainRenderer keeps track of which phase it is in, to detect
@@ -398,7 +398,7 @@ bool TerrainRenderer::RenderFancyWater(
 
 	CSceneRenderer& sceneRenderer = g_Renderer.GetSceneRenderer();
 
-	WaterManager& waterManager = sceneRenderer.GetWaterManager();
+	WaterRenderer& waterManager = sceneRenderer.GetWaterRenderer();
 	CShaderDefines defines = context;
 
 	// If we're using fancy water, make sure its shader is loaded
@@ -443,8 +443,6 @@ bool TerrainRenderer::RenderFancyWater(
 	const CCamera& camera = g_Renderer.GetSceneRenderer().GetViewCamera();
 
 	const CWater& water = *g_Game->GetWorld()->GetWater();
-
-	waterManager.ReloadWaterNormalTextures(water.m_WaterType);
 
 	const double period = 8.0;
 	// TODO: move uploading to a prepare function during loading.
@@ -614,7 +612,7 @@ void TerrainRenderer::RenderSimpleWater(
 	PROFILE3_GPU("simple water");
 	GPU_SCOPED_LABEL(deviceCommandContext, "Render Simple Water");
 
-	const WaterManager& waterManager = g_Renderer.GetSceneRenderer().GetWaterManager();
+	const WaterRenderer& waterRenderer = g_Renderer.GetSceneRenderer().GetWaterRenderer();
 	const CWater& water = *g_Game->GetWorld()->GetWater();
 	CLOSTexture& losTexture = g_Renderer.GetSceneRenderer().GetScene().GetLOSTexture();
 
@@ -631,7 +629,7 @@ void TerrainRenderer::RenderSimpleWater(
 	deviceCommandContext->BeginPass();
 	Renderer::Backend::IShaderProgram* waterSimpleShader = waterSimpleTech->GetShader();
 
-	const CTexturePtr& waterTexture = waterManager.m_WaterTexture[waterManager.GetCurrentTextureIndex(time, 1.6)];
+	const CTexturePtr& waterTexture = waterRenderer.m_WaterTexture[waterRenderer.GetCurrentTextureIndex(time, 1.6)];
 	waterTexture->UploadBackendTextureIfNeeded(deviceCommandContext);
 
 	deviceCommandContext->SetTexture(
@@ -668,7 +666,7 @@ void TerrainRenderer::RenderWater(
 	Renderer::Backend::IDeviceCommandContext* deviceCommandContext,
 	const CShaderDefines& context, int cullGroup, ShadowMap* shadow)
 {
-	const WaterManager& waterManager = g_Renderer.GetSceneRenderer().GetWaterManager();
+	const WaterRenderer& waterManager = g_Renderer.GetSceneRenderer().GetWaterRenderer();
 
 	if (!waterManager.WillRenderFancyWater())
 		RenderSimpleWater(deviceCommandContext, cullGroup);
@@ -681,7 +679,7 @@ void TerrainRenderer::RenderWaterFoamOccluders(
 	int cullGroup)
 {
 	CSceneRenderer& sceneRenderer = g_Renderer.GetSceneRenderer();
-	const WaterManager& waterManager = sceneRenderer.GetWaterManager();
+	const WaterRenderer& waterManager = sceneRenderer.GetWaterRenderer();
 	if (!waterManager.WillRenderFancyWater())
 		return;
 

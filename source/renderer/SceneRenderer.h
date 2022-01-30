@@ -39,7 +39,7 @@ class CSimulation2;
 class ShadowMap;
 class SkyManager;
 class TerrainRenderer;
-class WaterManager;
+class WaterRenderer;
 
 // rendering modes
 enum ERenderMode { WIREFRAME, SOLID, EDGED_FACES };
@@ -154,11 +154,11 @@ public:
 	const CCamera& GetCullCamera() const { return m_CullCamera; }
 
 	/**
-	 * GetWaterManager: Return the renderer's water manager.
+	 * GetWaterRenderer: Return the renderer's water manager.
 	 *
-	 * @return the WaterManager object used by the renderer
+	 * @return the WaterRenderer object used by the renderer
 	 */
-	WaterManager& GetWaterManager();
+	WaterRenderer& GetWaterRenderer();
 
 	/**
 	 * GetSkyManager: Return the renderer's sky manager.

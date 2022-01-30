@@ -43,7 +43,7 @@
 #include "ps/World.h"
 #include "renderer/Renderer.h"
 #include "renderer/SceneRenderer.h"
-#include "renderer/WaterManager.h"
+#include "renderer/WaterRenderer.h"
 #include "scriptinterface/Object.h"
 #include "simulation2/Simulation2.h"
 #include "simulation2/components/ICmpMinimap.h"

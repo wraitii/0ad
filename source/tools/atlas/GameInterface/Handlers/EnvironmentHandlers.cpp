@@ -32,7 +32,7 @@
 #include "renderer/Renderer.h"
 #include "renderer/SceneRenderer.h"
 #include "renderer/SkyManager.h"
-#include "renderer/WaterManager.h"
+#include "renderer/WaterRenderer.h"
 #include "simulation2/Simulation2.h"
 #include "simulation2/components/ICmpWaterManager.h"
 

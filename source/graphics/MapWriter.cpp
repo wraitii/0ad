@@ -38,7 +38,7 @@
 #include "ps/XML/XMLWriter.h"
 #include "renderer/PostprocManager.h"
 #include "renderer/SkyManager.h"
-#include "renderer/WaterManager.h"
+#include "renderer/WaterRenderer.h"
 #include "simulation2/Simulation2.h"
 #include "simulation2/components/ICmpCinemaManager.h"
 #include "simulation2/components/ICmpGarrisonHolder.h"
@@ -247,6 +247,8 @@ void CMapWriter::WriteXML(const VfsPath& filename, CWorld* pWorld, SkyManager* p
 					CmpPtr<ICmpWaterManager> cmpWaterManager(sim, SYSTEM_ENTITY);
 					ENSURE(cmpWaterManager);
 
+					waterBodyTag.Setting("Height", cmpWaterManager->GetExactWaterLevel(0, 0));
+
 					CWater* pWater = pWorld->GetWater();
 					waterBodyTag.Setting("Type", pWater->m_WaterType);
 					{
@@ -261,7 +263,6 @@ void CMapWriter::WriteXML(const VfsPath& filename, CWorld* pWorld, SkyManager* p
 						tintTag.Attribute("g", pWater->m_WaterTint.g);
 						tintTag.Attribute("b", pWater->m_WaterTint.b);
 					}
-					waterBodyTag.Setting("Height", cmpWaterManager->GetExactWaterLevel(0, 0));
 					waterBodyTag.Setting("Waviness", pWater->m_Waviness);
 					waterBodyTag.Setting("Murkiness", pWater->m_Murkiness);
 					waterBodyTag.Setting("WindAngle", pWater->m_WindAngle);

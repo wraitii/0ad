@@ -45,7 +45,7 @@
 #include "renderer/Renderer.h"
 #include "renderer/SceneRenderer.h"
 #include "renderer/TerrainRenderer.h"
-#include "renderer/WaterManager.h"
+#include "renderer/WaterRenderer.h"
 #include "simulation2/components/ICmpWaterManager.h"
 #include "simulation2/Simulation2.h"
 

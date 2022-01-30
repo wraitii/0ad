@@ -29,7 +29,7 @@
 #include "renderer/PostprocManager.h"
 #include "renderer/SceneRenderer.h"
 #include "renderer/ShadowMap.h"
-#include "renderer/WaterManager.h"
+#include "renderer/WaterRenderer.h"
 
 CRenderingOptions g_RenderingOptions;
 
@@ -203,14 +203,14 @@ void CRenderingOptions::ReadConfigAndSetupHooks()
 		CFG_GET_VAL("watereffects", enabled);
 		SetWaterEffects(enabled);
 		if (CRenderer::IsInitialised())
-			g_Renderer.GetSceneRenderer().GetWaterManager().RecreateOrLoadTexturesIfNeeded();
+			g_Renderer.GetSceneRenderer().GetWaterRenderer().RecreateOrLoadTexturesIfNeeded();
 	});
 	m_ConfigHooks->Setup("waterfancyeffects", [this]() {
 		bool enabled;
 		CFG_GET_VAL("waterfancyeffects", enabled);
 		SetWaterFancyEffects(enabled);
 		if (CRenderer::IsInitialised())
-			g_Renderer.GetSceneRenderer().GetWaterManager().RecreateOrLoadTexturesIfNeeded();
+			g_Renderer.GetSceneRenderer().GetWaterRenderer().RecreateOrLoadTexturesIfNeeded();
 	});
 	m_ConfigHooks->Setup("waterrealdepth", m_WaterRealDepth);
 	m_ConfigHooks->Setup("waterrefraction", [this]() {
@@ -218,14 +218,14 @@ void CRenderingOptions::ReadConfigAndSetupHooks()
 		CFG_GET_VAL("waterrefraction", enabled);
 		SetWaterRefraction(enabled);
 		if (CRenderer::IsInitialised())
-			g_Renderer.GetSceneRenderer().GetWaterManager().RecreateOrLoadTexturesIfNeeded();
+			g_Renderer.GetSceneRenderer().GetWaterRenderer().RecreateOrLoadTexturesIfNeeded();
 	});
 	m_ConfigHooks->Setup("waterreflection", [this]() {
 		bool enabled;
 		CFG_GET_VAL("waterreflection", enabled);
 		SetWaterReflection(enabled);
 		if (CRenderer::IsInitialised())
-			g_Renderer.GetSceneRenderer().GetWaterManager().RecreateOrLoadTexturesIfNeeded();
+			g_Renderer.GetSceneRenderer().GetWaterRenderer().RecreateOrLoadTexturesIfNeeded();
 	});
 
 	m_ConfigHooks->Setup("particles", m_Particles);

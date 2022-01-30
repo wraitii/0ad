@@ -23,7 +23,7 @@
 #include "graphics/Terrain.h"
 #include "renderer/Renderer.h"
 #include "renderer/SceneRenderer.h"
-#include "renderer/WaterManager.h"
+#include "renderer/WaterRenderer.h"
 #include "maths/Vector3D.h"
 #include "simulation2/components/ICmpObstructionManager.h"
 #include "simulation2/components/ICmpRangeManager.h"

@@ -41,7 +41,7 @@
 #include "renderer/Renderer.h"
 #include "renderer/SceneRenderer.h"
 #include "renderer/TimeManager.h"
-#include "renderer/WaterManager.h"
+#include "renderer/WaterRenderer.h"
 #include "scriptinterface/FunctionWrapper.h"
 #include "scriptinterface/ScriptInterface.h"
 #include "scriptinterface/JSON.h"

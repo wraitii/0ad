@@ -17,18 +17,16 @@
 
 #include "precompiled.h"
 
-#include "renderer/WaterManager.h"
+#include "renderer/WaterRenderer.h"
 
-#include "graphics/Terrain.h"
-#include "graphics/TextureManager.h"
 #include "graphics/ShaderManager.h"
-#include "graphics/ShaderProgram.h"
+#include "graphics/ShaderTechniquePtr.h"
 #include "graphics/Water.h"
 #include "lib/bits.h"
-#include "lib/timer.h"
-#include "maths/MathUtil.h"
+/* "lib/timer.h"*/
+/* "maths/MathUtil.h"*/
+#include "maths/BoundingBoxAligned.h"
 #include "maths/Vector2D.h"
-#include "ps/CLogger.h"
 #include "ps/CStrInternStatic.h"
 #include "ps/Game.h"
 #include "ps/VideoMode.h"
@@ -38,15 +36,11 @@
 #include "renderer/RenderingOptions.h"
 #include "renderer/SceneRenderer.h"
 #include "renderer/Renderer.h"
-#include "renderer/RenderingOptions.h"
 #include "renderer/SceneRenderer.h"
 #include "renderer/TimeManager.h"
 #include "renderer/WaterRData.h"
-#include "simulation2/Simulation2.h"
-#include "simulation2/components/ICmpWaterManager.h"
-#include "simulation2/components/ICmpRangeManager.h"
 
-#include <algorithm>
+#include <vector>
 
 struct CoastalPoint
 {
@@ -79,7 +73,7 @@ struct WaveObject
 	float m_TimeDiff;
 };
 
-WaterManager::WaterManager()
+WaterRenderer::WaterRenderer()
 {
 	m_RefTextureSize = 0;
 
@@ -93,7 +87,7 @@ WaterManager::WaterManager()
 	m_WaterReflection = false;
 }
 
-WaterManager::~WaterManager()
+WaterRenderer::~WaterRenderer()
 {
 	// Cleanup if the caller messed up
 	UnloadWaterTextures();
@@ -112,7 +106,7 @@ WaterManager::~WaterManager()
 
 ///////////////////////////////////////////////////////////////////
 // Progressive load of water textures
-void WaterManager::LoadWaterTextures()
+void WaterRenderer::LoadWaterTextures()
 {
 	wchar_t pathname[PATH_MAX];
 
@@ -130,7 +124,7 @@ void WaterManager::LoadWaterTextures()
 	}
 
 	// Load normalmaps (for fancy water)
-	ReloadWaterNormalTextures(L"ocean");
+	ReloadWaterNormalTexturesIfNeeded();
 
 	// Load CoastalWaves
 	{
@@ -155,7 +149,7 @@ void WaterManager::LoadWaterTextures()
 	RecreateOrLoadTexturesIfNeeded();
 }
 
-void WaterManager::RecreateOrLoadTexturesIfNeeded()
+void WaterRenderer::RecreateOrLoadTexturesIfNeeded()
 {
 	Renderer::Backend::IDevice* backendDevice = g_VideoMode.GetBackendDevice();
 
@@ -277,10 +271,14 @@ void WaterManager::RecreateOrLoadTexturesIfNeeded()
 	}
 }
 
-void WaterManager::ReloadWaterNormalTextures(const CStrW& waterType)
+void WaterRenderer::ReloadWaterNormalTexturesIfNeeded()
 {
+	CWater* water = g_Game->GetWorld()->GetWater();
+	const CStrW& waterType = water ? water->m_WaterType : L"ocean";
+
 	if (waterType == m_CachedWaterType && m_NormalMap[0])
 		return;
+
 	m_CachedWaterType = waterType;
 	wchar_t pathname[PATH_MAX];
 	for (size_t i = 0; i < ARRAY_SIZE(m_NormalMap); ++i)
@@ -299,7 +297,7 @@ void WaterManager::ReloadWaterNormalTextures(const CStrW& waterType)
 
 ///////////////////////////////////////////////////////////////////
 // Unload water textures
-void WaterManager::UnloadWaterTextures()
+void WaterRenderer::UnloadWaterTextures()
 {
 	for (size_t i = 0; i < ARRAY_SIZE(m_WaterTexture); i++)
 		m_WaterTexture[i].reset();
@@ -309,11 +307,12 @@ void WaterManager::UnloadWaterTextures()
 
 	m_RefractionFramebuffer.reset();
 	m_ReflectionFramebuffer.reset();
+
 	m_ReflectionTexture.reset();
 	m_RefractionTexture.reset();
 }
 
-void WaterManager::RenderWaves(
+void WaterRenderer::RenderWaves(
 	Renderer::Backend::IDeviceCommandContext* deviceCommandContext,
 	WaterRData& renderData,
 	const CFrustum& frustrum)
@@ -354,12 +353,12 @@ void WaterManager::RenderWaves(
 	const std::vector<std::unique_ptr<WaveObject>>& shoreWaves = renderData.GetShoreWavesData();
 	const CVertexBufferManager::Handle& indices = renderData.GetShoreWavesIndices();
 
-	for (size_t a = 0; a < shoreWaves.size(); ++a)
+	for (size_t i = 0; i < shoreWaves.size(); ++i)
 	{
-		if (!frustrum.IsBoxVisible(shoreWaves[a]->m_AABB))
+		if (!frustrum.IsBoxVisible(shoreWaves[i]->m_AABB))
 			continue;
 
-		CVertexBuffer::VBChunk* VBchunk = shoreWaves[a]->m_VBVertices.Get();
+		CVertexBuffer::VBChunk* VBchunk = shoreWaves[i]->m_VBVertices.Get();
 		VBchunk->m_Owner->UploadIfNeeded(deviceCommandContext);
 		indices->m_Owner->UploadIfNeeded(deviceCommandContext);
 
@@ -399,15 +398,15 @@ void WaterManager::RenderWaves(
 			Renderer::Backend::VertexAttributeRate::PER_VERTEX, 0);
 
 		deviceCommandContext->SetUniform(
-			shader->GetBindingSlot(str_translation), shoreWaves[a]->m_TimeDiff);
+			shader->GetBindingSlot(str_translation), shoreWaves[i]->m_TimeDiff);
 		deviceCommandContext->SetUniform(
-			shader->GetBindingSlot(str_width), static_cast<float>(shoreWaves[a]->m_Width));
+			shader->GetBindingSlot(str_width), static_cast<float>(shoreWaves[i]->m_Width));
 
 		deviceCommandContext->SetVertexBuffer(
 			0, VBchunk->m_Owner->GetBuffer(), firstVertexOffset);
 		deviceCommandContext->SetIndexBuffer(indices->m_Owner->GetBuffer());
 
-		const uint32_t indexCount = (shoreWaves[a]->m_Width - 1) * (7 * 6);
+		const uint32_t indexCount = (shoreWaves[i]->m_Width - 1) * (7 * 6);
 		deviceCommandContext->DrawIndexed(indices->m_Index, indexCount, 0);
 
 		g_Renderer.GetStats().m_DrawCalls++;
@@ -419,7 +418,7 @@ void WaterManager::RenderWaves(
 
 ////////////////////////////////////////////////////////////////////////
 // This will set the bools properly
-void WaterManager::UpdateQuality()
+void WaterRenderer::UpdateQuality()
 {
 	if (g_RenderingOptions.GetWaterEffects() != m_WaterEffects)
 	{
@@ -448,25 +447,25 @@ void WaterManager::UpdateQuality()
 	}
 }
 
-bool WaterManager::WillRenderFancyWater() const
+bool WaterRenderer::WillRenderFancyWater() const
 {
 	return g_VideoMode.GetBackend() != CVideoMode::Backend::GL_ARB &&
 		g_RenderingOptions.GetWaterEffects();
 }
 
-size_t WaterManager::GetCurrentTextureIndex(const double time, const double period) const
+size_t WaterRenderer::GetCurrentTextureIndex(const double time, const double period) const
 {
 	ENSURE(period > 0.0);
 	return static_cast<size_t>(time * ARRAY_SIZE(m_WaterTexture) / period) % ARRAY_SIZE(m_WaterTexture);
 }
 
-size_t WaterManager::GetNextTextureIndex(const double time, const double period) const
+size_t WaterRenderer::GetNextTextureIndex(const double time, const double period) const
 {
 	ENSURE(period > 0.0);
 	return (GetCurrentTextureIndex(time, period) + 1) % ARRAY_SIZE(m_WaterTexture);
 }
 
-float WaterManager::GetWaterPlaneHeight() const
+float WaterRenderer::GetWaterPlaneHeight() const
 {
 	return g_Game->GetWorld()->GetWater()->GetWaterHeight();
 }

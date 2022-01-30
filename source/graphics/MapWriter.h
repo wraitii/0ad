@@ -31,7 +31,7 @@ class CWorld;
 class CCamera;
 class CCinemaManager;
 class CPostprocManager;
-class WaterManager;
+class WaterRenderer;
 class SkyManager;
 class CSimulation2;
 struct MapTrigger;

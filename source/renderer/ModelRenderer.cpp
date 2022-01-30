@@ -40,7 +40,7 @@
 #include "renderer/SceneRenderer.h"
 #include "renderer/SkyManager.h"
 #include "renderer/TimeManager.h"
-#include "renderer/WaterManager.h"
+#include "renderer/WaterRenderer.h"
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
 // ModelRenderer implementation
@@ -714,10 +714,10 @@ void ShaderModelRenderer::Render(
 								if (!boundWaterTexture)
 								{
 									const double period = 1.6;
-									const WaterManager& waterManager = g_Renderer.GetSceneRenderer().GetWaterManager();
-									if (waterManager.WillRenderFancyWater())
+									const WaterRenderer& waterRenderer = g_Renderer.GetSceneRenderer().GetWaterRenderer();
+									if (waterRenderer.WillRenderFancyWater())
 									{
-										const CTexturePtr& waterTexture = waterManager.m_NormalMap[waterManager.GetCurrentTextureIndex(time, period)];
+										const CTexturePtr& waterTexture = waterRenderer.m_NormalMap[waterRenderer.GetCurrentTextureIndex(time, period)];
 										waterTexture->UploadBackendTextureIfNeeded(deviceCommandContext);
 										deviceCommandContext->SetTexture(
 											shader->GetBindingSlot(str_waterTex),

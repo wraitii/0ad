@@ -139,7 +139,7 @@ public:
 		test.AddMock(SYSTEM_ENTITY, IID_Terrain, terrain);
 
 		MockWater water;
-		test.AddMock(SYSTEM_ENTITY, IID_WaterManager, water);
+		test.AddMock(SYSTEM_ENTITY, IID_WaterRenderer, water);
 
 		ICmpPosition* cmp = test.Add<ICmpPosition>(CID_Position, "<Anchor>upright</Anchor><Altitude>23</Altitude><Floating>true</Floating><FloatDepth>1</FloatDepth>");
 

@@ -17,32 +17,20 @@
 
 #include "precompiled.h"
 
-#include "graphics/Terrain.h"
-#include "graphics/TextureManager.h"
-#include "graphics/ShaderManager.h"
-#include "graphics/ShaderProgram.h"
-#include "lib/bits.h"
-#include "lib/timer.h"
-#include "lib/ogl.h"
-#include "lib/tex/tex.h"
-#include "maths/MathUtil.h"
-#include "maths/Vector2D.h"
-#include "ps/CLogger.h"
-#include "ps/CStrInternStatic.h"
-#include "ps/Game.h"
-#include "ps/VideoMode.h"
-#include "ps/World.h"
 #include "renderer/WaterRData.h"
-#include "renderer/Renderer.h"
-#include "renderer/RenderingOptions.h"
-#include "renderer/SceneRenderer.h"
-#include "simulation2/Simulation2.h"
-#include "simulation2/components/ICmpWaterManager.h"
-#include "simulation2/components/ICmpRangeManager.h"
 
 #include "graphics/Water.h"
+#include "maths/MathUtil.h"
+#include "ps/Game.h"
+#include "ps/World.h"
+#include "renderer/Renderer.h"
 
 #include <algorithm>
+#include <deque>
+#include <memory>
+#include <set>
+#include <utility>
+#include <vector>
 
 struct CoastalPoint
 {
@@ -334,7 +322,7 @@ void WaterRData::CreateWaveMeshes()
 
 	float diff = (rand() % 50) / 5.0f;
 
-	float waterHeight = m_Water.GetWaterHeight();
+	const float waterHeight = m_Water.GetWaterHeight();
 
 	std::vector<SWavesVertex> vertices, reversed;
 	for (size_t i = 0; i < CoastalPointsChains.size(); ++i)
@@ -647,7 +635,7 @@ void WaterRData::RecomputeWindStrength()
 		}
 	}
 
-	float waterHeight = m_Water.GetWaterHeight();
+	const float waterHeight = m_Water.GetWaterHeight();
 
 	// We have all starting points ready, move them all until the map is covered.
 	for (SWindPoint& point : startingPoints)

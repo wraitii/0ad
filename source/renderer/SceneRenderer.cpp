@@ -61,7 +61,7 @@
 #include "renderer/SkyManager.h"
 #include "renderer/TerrainOverlay.h"
 #include "renderer/TerrainRenderer.h"
-#include "renderer/WaterManager.h"
+#include "renderer/WaterRenderer.h"
 
 #include <algorithm>
 
@@ -82,7 +82,7 @@ public:
 	~Internals() = default;
 
 	/// Water manager
-	WaterManager waterManager;
+	WaterRenderer waterManager;
 
 	/// Sky manager
 	SkyManager skyManager;
@@ -463,7 +463,7 @@ void CSceneRenderer::SetObliqueFrustumClipping(CCamera& camera, const CVector4D&
 
 void CSceneRenderer::ComputeReflectionCamera(CCamera& camera, const CBoundingBoxAligned& scissor) const
 {
-	WaterManager& wm = m->waterManager;
+	WaterRenderer& wm = m->waterManager;
 
 	CMatrix3D projection;
 	if (m_ViewCamera.GetProjectionType() == CCamera::ProjectionType::PERSPECTIVE)
@@ -479,7 +479,7 @@ void CSceneRenderer::ComputeReflectionCamera(CCamera& camera, const CBoundingBox
 
 	camera = m_ViewCamera;
 
-	float waterHeight = wm.GetWaterPlaneHeight();
+	const float waterHeight = wm.GetWaterPlaneHeight();
 
 	// Temporarily change the camera to one that is reflected.
 	// Also, for texturing purposes, make it render to a view port the size of the
@@ -510,7 +510,7 @@ void CSceneRenderer::ComputeReflectionCamera(CCamera& camera, const CBoundingBox
 
 void CSceneRenderer::ComputeRefractionCamera(CCamera& camera, const CBoundingBoxAligned& scissor) const
 {
-	WaterManager& wm = m->waterManager;
+	WaterRenderer& wm = m->waterManager;
 
 	CMatrix3D projection;
 	if (m_ViewCamera.GetProjectionType() == CCamera::ProjectionType::PERSPECTIVE)
@@ -553,7 +553,7 @@ void CSceneRenderer::RenderReflections(
 	PROFILE3_GPU("water reflections");
 	GPU_SCOPED_LABEL(deviceCommandContext, "Render water reflections");
 
-	WaterManager& wm = m->waterManager;
+	WaterRenderer& wm = m->waterManager;
 
 	// Remember old camera
 	CCamera normalCamera = m_ViewCamera;
@@ -624,7 +624,7 @@ void CSceneRenderer::RenderRefractions(
 	PROFILE3_GPU("water refractions");
 	GPU_SCOPED_LABEL(deviceCommandContext, "Render water refractions");
 
-	WaterManager& wm = m->waterManager;
+	WaterRenderer& wm = m->waterManager;
 
 	// Remember old camera
 	CCamera normalCamera = m_ViewCamera;
@@ -766,6 +766,8 @@ void CSceneRenderer::RenderSubmissions(
 	PROFILE3("render submissions");
 	GPU_SCOPED_LABEL(deviceCommandContext, "Render submissions");
 
+	GetWaterRenderer().ReloadWaterNormalTexturesIfNeeded();
+
 	m->skyManager.LoadAndUploadSkyTexturesIfNeeded(deviceCommandContext);
 
 	GetScene().GetLOSTexture().InterpolateLOS(deviceCommandContext);
@@ -802,22 +804,19 @@ void CSceneRenderer::RenderSubmissions(
 		RenderShadowMap(deviceCommandContext, context);
 	}
 
-	if (true)//m->waterManager.m_RenderWater)
+	if (waterScissor.GetVolume() > 0 && m->waterManager.WillRenderFancyWater())
 	{
-		if (waterScissor.GetVolume() > 0 && m->waterManager.WillRenderFancyWater())
-		{
-			m->waterManager.UpdateQuality();
+		m->waterManager.UpdateQuality();
 
-			PROFILE3_GPU("water scissor");
-			if (g_RenderingOptions.GetWaterReflection())
-				RenderReflections(deviceCommandContext, context, waterScissor);
+		PROFILE3_GPU("water scissor");
+		if (g_RenderingOptions.GetWaterReflection())
+			RenderReflections(deviceCommandContext, context, waterScissor);
 
-			if (g_RenderingOptions.GetWaterRefraction())
-				RenderRefractions(deviceCommandContext, context, waterScissor);
+		if (g_RenderingOptions.GetWaterRefraction())
+			RenderRefractions(deviceCommandContext, context, waterScissor);
 
-			if (g_RenderingOptions.GetWaterFancyEffects())
-				m->terrainRenderer.RenderWaterFoamOccluders(deviceCommandContext, cullGroup);
-		}
+		if (g_RenderingOptions.GetWaterFancyEffects())
+			m->terrainRenderer.RenderWaterFoamOccluders(deviceCommandContext, cullGroup);
 	}
 
 	deviceCommandContext->SetGraphicsPipelineState(
@@ -1119,35 +1118,32 @@ void CSceneRenderer::RenderScene(
 	}
 
 	CBoundingBoxAligned waterScissor;
-	if (true)//m->waterManager.m_RenderWater)
+	waterScissor = m->terrainRenderer.ScissorWater(CULL_DEFAULT, m_ViewCamera);
+
+	if (waterScissor.GetVolume() > 0 && m->waterManager.WillRenderFancyWater())
 	{
-		waterScissor = m->terrainRenderer.ScissorWater(CULL_DEFAULT, m_ViewCamera);
-
-		if (waterScissor.GetVolume() > 0 && m->waterManager.WillRenderFancyWater())
+		if (g_RenderingOptions.GetWaterReflection())
 		{
-			if (g_RenderingOptions.GetWaterReflection())
-			{
-				m_CurrentCullGroup = CULL_REFLECTIONS;
+			m_CurrentCullGroup = CULL_REFLECTIONS;
 
-				CCamera reflectionCamera;
-				ComputeReflectionCamera(reflectionCamera, waterScissor);
+			CCamera reflectionCamera;
+			ComputeReflectionCamera(reflectionCamera, waterScissor);
 
-				scene.EnumerateObjects(reflectionCamera.GetFrustum(), this);
-			}
-
-			if (g_RenderingOptions.GetWaterRefraction())
-			{
-				m_CurrentCullGroup = CULL_REFRACTIONS;
-
-				CCamera refractionCamera;
-				ComputeRefractionCamera(refractionCamera, waterScissor);
-
-				scene.EnumerateObjects(refractionCamera.GetFrustum(), this);
-			}
-
-			// Render the waves to the Fancy effects texture
-			m->waterManager.RenderWaves(deviceCommandContext, g_Game->GetWorld()->GetWater()->GetRData(), frustum);
+			scene.EnumerateObjects(reflectionCamera.GetFrustum(), this);
 		}
+
+		if (g_RenderingOptions.GetWaterRefraction())
+		{
+			m_CurrentCullGroup = CULL_REFRACTIONS;
+
+			CCamera refractionCamera;
+			ComputeRefractionCamera(refractionCamera, waterScissor);
+
+			scene.EnumerateObjects(refractionCamera.GetFrustum(), this);
+		}
+
+		// Render the waves to the Fancy effects texture
+		m->waterManager.RenderWaves(deviceCommandContext, g_Game->GetWorld()->GetWater()->GetRData(), frustum);
 	}
 
 	m_CurrentCullGroup = -1;
@@ -1168,7 +1164,7 @@ void CSceneRenderer::MakeShadersDirty()
 	m->waterManager.m_NeedsReloading = true;
 }
 
-WaterManager& CSceneRenderer::GetWaterManager()
+WaterRenderer& CSceneRenderer::GetWaterRenderer()
 {
 	return m->waterManager;
 }

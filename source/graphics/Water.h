@@ -21,11 +21,9 @@
 #include "graphics/Color.h"
 #include "graphics/RenderableObject.h"
 #include "graphics/Terrain.h"
-
 #include "renderer/WaterRData.h"
-#include <memory>
 
-//class WaterRData;
+#include <memory>
 
 class CWater
 {
@@ -42,37 +40,33 @@ public:
 
 	void SetMapSize(ssize_t size)
 	{
-		m_MapSize = size;
 		m_WaterRData.SetMapSize(size);
-		// No need to mark the terrain as dirty, we can assume that's already been done.
+		// Unlike in SetWaterHeight, no need to mark the terrain as dirty,
+		// as we can assume that's already been done.
 	}
 
 	void SetWaterHeight(float height)
 	{
 		m_WaterHeight = height;
 		m_WaterRData.SetDirty();
+		// TODO: for now, the terrain PatchRData holds water vertices,
+		// so we need to mark them dirty so they get recomputed.
 		m_Terrain.MakeDirty(RENDERDATA_UPDATE_VERTICES);
 	}
 
 	float GetWaterHeight() const { return m_WaterHeight; }
+	float GetExactWaterHeight(float UNUSED(x), float UNUSED(z)) const { return m_WaterHeight; }
 
 	WaterRData& GetRData() { return m_WaterRData; }
 
 	void RecomputeWaterData() { m_WaterRData.SetDirty(); }
-
-protected:
-	CTerrain& m_Terrain;
-
-	float m_WaterHeight;
-
-	ssize_t m_MapSize;
 
 public:
 	// Water parameters - public for convenience in Atlas
 	// TODO: ideally these would be wrapped somehow.
 
 	// Which texture to use.
-	std::wstring m_WaterType;
+	CStrW m_WaterType;
 	// Color of the water without refractions. This is what you're seeing when the water's deep or murkiness high.
 	CColor m_WaterColor;
 	// Tint of refraction in the water.
@@ -84,9 +78,11 @@ public:
 	// In which direction the water waves go.
 	float m_WindAngle;
 
-protected:
-
+private:
+	CTerrain& m_Terrain;
 	WaterRData m_WaterRData;
+
+	float m_WaterHeight = 0.f;
 };
 
 

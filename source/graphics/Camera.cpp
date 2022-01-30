@@ -29,7 +29,7 @@
 #include "ps/World.h"
 #include "renderer/Renderer.h"
 #include "renderer/SceneRenderer.h"
-#include "renderer/WaterManager.h"
+#include "renderer/WaterRenderer.h"
 
 CCamera::CCamera()
 {

@@ -143,7 +143,7 @@ void AtlasViewActor::SetParam(const std::wstring& name, bool value)
 		m_ActorViewer->SetWalkEnabled(value);
 	else if (name == L"ground")
 		m_ActorViewer->SetGroundEnabled(value);
-	// TODO: this causes corruption of WaterManager's global state
+	// TODO: this causes corruption of WaterRenderer's global state
 	//	which should be asociated with terrain or simulation instead
 	//	see http://trac.wildfiregames.com/ticket/2692
 	//else if (name == L"water")

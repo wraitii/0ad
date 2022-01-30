@@ -51,7 +51,7 @@
 #include "renderer/Scene.h"
 #include "renderer/SceneRenderer.h"
 #include "renderer/SkyManager.h"
-#include "renderer/WaterManager.h"
+#include "renderer/WaterRenderer.h"
 #include "scriptinterface/ScriptContext.h"
 #include "simulation2/Simulation2.h"
 #include "simulation2/components/ICmpAttack.h"
@@ -456,8 +456,8 @@ void ActorViewer::SetEnabled(bool enabled)
 		m.OldSky = g_Renderer.GetSceneRenderer().GetSkyManager().IsSkyVisible();
 		g_Renderer.GetSceneRenderer().GetSkyManager().SetSkyVisible(false);
 
-		//m.OldWater = g_Renderer.GetSceneRenderer().GetWaterManager().m_RenderWater;
-		//g_Renderer.GetSceneRenderer().GetWaterManager().m_RenderWater = m.WaterEnabled;
+		//m.OldWater = g_Renderer.GetSceneRenderer().GetWaterRenderer().m_RenderWater;
+		//g_Renderer.GetSceneRenderer().GetWaterRenderer().m_RenderWater = m.WaterEnabled;
 	}
 	else
 	{
