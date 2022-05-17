@@ -66,6 +66,8 @@ protected:
 private:
 };
 
+bool dispatchToEventLoop(void* closure, JS::Dispatchable* dispatchable);
+
 /**
  * Run a job in the thread pool. This returns a promise right away, and once the future completes will resolve the promise.
  */

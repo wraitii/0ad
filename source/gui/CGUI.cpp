@@ -298,6 +298,7 @@ InReaction CGUI::HandleEvent(const SDL_Event_* ev)
 
 void CGUI::TickObjects()
 {
+	m_ScriptInterface->RunJobs();
 	m_BaseObject->RecurseObject(&IGUIObject::IsHiddenOrGhost, &IGUIObject::Tick);
 	SendEventToAll(EventNameTick);
 	m_Tooltip.Update(FindObjectUnderMouse(), m_MousePos, *this);

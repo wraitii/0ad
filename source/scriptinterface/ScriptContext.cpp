@@ -127,10 +127,45 @@ ScriptContext::ScriptContext(int contextSize, int heapGrowthBytesGCTrigger):
 
 	m_jobqueue = std::make_unique<Script::JobQueue>();
 	JS::SetJobQueue(m_cx, m_jobqueue.get());
+
+	JS::InitDispatchToEventLoop(m_cx, Script::dispatchToEventLoop, this);
+}
+
+#include <mutex>
+
+std::mutex t;
+namespace Script
+{
+bool dispatchToEventLoop(void* closure, JS::Dispatchable* dispatchable)
+{
+	((ScriptContext*)closure)->AddDispatchable((void*) dispatchable);
+	return true;
+};
+}
+
+void ScriptContext::AddDispatchable(void* dip)
+{
+	std::lock_guard<std::mutex> lock(t);
+	m_Dispatchables.push_back(dip);
 }
 
 ScriptContext::~ScriptContext()
 {
+	if (!m_Dispatchables.empty())
+	{
+		std::vector<void*> tt;
+		{
+			std::lock_guard<std::mutex> lock(t);
+			tt = m_Dispatchables;
+		}
+		for (void* t : tt)
+			((JS::Dispatchable*)t)->run(m_cx, JS::Dispatchable::MaybeShuttingDown::NotShuttingDown);
+		{
+			std::lock_guard<std::mutex> lock(t);
+			m_Dispatchables.clear();
+		}
+	}
+
 	ENSURE(ScriptEngine::IsInitialised() && "The ScriptEngine must be active (initialized and not yet shut down) when destroying a ScriptContext!");
 
 	JS_DestroyContext(m_cx);
@@ -156,6 +191,22 @@ void ScriptContext::UnRegisterRealm(JS::Realm* realm)
 void ScriptContext::MaybeIncrementalGC(double delay)
 {
 	PROFILE2("MaybeIncrementalGC");
+
+	if (!m_Dispatchables.empty())
+	{
+		std::vector<void*> tt;
+		{
+			std::lock_guard<std::mutex> lock(t);
+			tt = m_Dispatchables;
+		}
+		for (void* t : tt)
+			((JS::Dispatchable*)t)->run(m_cx, JS::Dispatchable::MaybeShuttingDown::NotShuttingDown);
+		{
+			std::lock_guard<std::mutex> lock(t);
+			m_Dispatchables.erase(m_Dispatchables.begin(), m_Dispatchables.begin() + tt.size());
+		}
+	}
+
 
 	if (JS::IsIncrementalGCEnabled(m_cx))
 	{

@@ -78,6 +78,8 @@ public:
 	void RegisterRealm(JS::Realm* realm);
 	void UnRegisterRealm(JS::Realm* realm);
 
+	void AddDispatchable(void* ptr);
+
 	/**
 	 * GetGeneralJSContext returns the context without starting a GC request and without
 	 * entering any compartment. It should only be used in specific situations, such as
@@ -94,6 +96,8 @@ private:
 
 	void PrepareZonesForIncrementalGC() const;
 	std::list<JS::Realm*> m_Realms;
+
+	std::vector<void*> m_Dispatchables;
 
 	int m_ContextSize;
 	int m_HeapGrowthBytesGCTrigger;
