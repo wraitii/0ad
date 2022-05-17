@@ -366,6 +366,22 @@ ScriptInterface_impl::~ScriptInterface_impl()
 	m_context->UnRegisterRealm(JS::GetObjectRealmOrNull(m_glob));
 }
 
+#include "jsfriendapi.h"
+
+/**
+ * This is required to get readable errors when parsing a module with top-level await.
+ */
+struct SEnvParser : public js::ScriptEnvironmentPreparer {
+	virtual ~SEnvParser() {};
+	virtual void invoke(JS::HandleObject UNUSED(global), Closure& closure)
+	{
+		ScriptRequest rq(*si);
+		closure(rq.cx);
+	}
+
+	ScriptInterface* si;
+};
+
 ScriptInterface::ScriptInterface(const char* nativeScopeName, const char* debugName, const std::shared_ptr<ScriptContext>& context) :
 	m(std::make_unique<ScriptInterface_impl>(nativeScopeName, context, nullptr))
 {
@@ -379,6 +395,10 @@ ScriptInterface::ScriptInterface(const char* nativeScopeName, const char* debugN
 	ScriptRequest rq(this);
 	m_CmptPrivate.pScriptInterface = this;
 	JS::SetRealmPrivate(JS::GetObjectRealmOrNull(rq.glob), (void*)&m_CmptPrivate);
+
+	SEnvParser* p = new SEnvParser();
+	p->si = this;
+	js::SetScriptEnvironmentPreparer(rq.cx, p);
 }
 
 ScriptInterface::ScriptInterface(const char* nativeScopeName, const char* debugName, const ScriptInterface& neighbor)

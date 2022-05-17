@@ -98,7 +98,10 @@ JSObject* ScriptModuleLoader::ModuleResolutionHook(JSContext* cx, JS::HandleValu
 	VfsPath filename = VfsPath(pathString);
 	VfsPath refFilename = instance.GetScriptPath(cx, referencingModule);
 
-	VfsPath actualPath = (refFilename / filename).Normalize();
+	VfsPath actualPath = (filename).Normalize();
+
+	if (actualPath.Extension().empty())
+		actualPath = actualPath.ChangeExtension(".js");
 
 	std::map<VfsPath, JS::PersistentRootedObject>::iterator it = instance.m_ResolvedModules.find(actualPath);
 	if (it != instance.m_ResolvedModules.end())
@@ -143,6 +146,11 @@ Status ScriptModuleLoader::HandleChangedFile(const VfsPath& path) const
 	return INFO::OK;
 }
 
+bool MetadataHook(JSContext*, JS::HandleValue, JS::HandleObject UNUSED(metaObject))
+{
+	return true;
+}
+
 bool ScriptModuleLoader::Load(JSContext* cx, const VfsPath& modulePath)
 {
 	ScriptRequest rq(cx);
@@ -152,14 +160,21 @@ bool ScriptModuleLoader::Load(JSContext* cx, const VfsPath& modulePath)
 		return false;
 
 	JS::SetModuleResolveHook(JS_GetRuntime(cx), ModuleResolutionHook);
+	JS::SetModuleMetadataHook(JS_GetRuntime(cx), MetadataHook);
 
 	JS::RootedObject topModule(cx, CompileModule(cx, modulePath));
-
-	if (!topModule || !JS::ModuleInstantiate(cx, topModule) || !JS::ModuleEvaluate(cx, topModule))
+	JS::RootedValue rval(cx);
+	if (!topModule || !JS::ModuleInstantiate(cx, topModule) || !JS::ModuleEvaluate(cx, topModule, &rval))
 	{
 		ScriptException::CatchPending(rq);
 		return false;
 	}
+
+	JS::RootedObject obj(rq.cx, rval.toObjectOrNull());
+	if (obj)
+		JS::ThrowOnModuleEvaluationFailure(cx, obj);
+
+	ScriptException::CatchPending(rq);
 
 	return true;
 }

@@ -13,7 +13,13 @@ class MainMenuPage
 		new ProjectInformationHandler(projectInformation);
 		new CommunityButtonHandler(communityButtons);
 
-		toto();
+		// Need to shim console for this to work
+		globalThis.console = {
+			log: error,
+			warn: error
+		};
+
+		Engine.LoadESModule("wasm/asmExample.mjs");
 	}
 
 	getHotloadData()
