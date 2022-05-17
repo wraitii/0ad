@@ -38,7 +38,7 @@ public:
 
 private:
 
-	static JSObject* ModuleResolutionHook(JSContext* cx, JS::HandleValue referencingModule, JS::HandleString path);
+	static JSObject* ModuleResolutionHook(JSContext* cx, JS::HandleValue referencingModule, JS::HandleObject path);
 
 	static Status FileChangedHook(void* param, const VfsPath& path);
 

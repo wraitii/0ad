@@ -86,13 +86,13 @@ VfsPath ScriptModuleLoader::GetScriptPath(JSContext* cx, JS::HandleValue moduleH
 	return VfsPath(ret);
 }
 
-JSObject* ScriptModuleLoader::ModuleResolutionHook(JSContext* cx, JS::HandleValue referencingModule, JS::HandleString path)
+JSObject* ScriptModuleLoader::ModuleResolutionHook(JSContext* cx, JS::HandleValue referencingModule, JS::HandleObject path)
 {
 	ScriptRequest rq(cx);
 	const ScriptModuleLoader& instance = rq.GetScriptInterface().GetScriptModuleLoader();
 
 	std::wstring pathString;
-	JS::RootedValue pathValue(cx, JS::StringValue(path));
+	JS::RootedValue pathValue(cx, JS::StringValue(JS::GetModuleRequestSpecifier(rq.cx, path)));
 	Script::FromJSVal(rq, pathValue, pathString);
 
 	VfsPath filename = VfsPath(pathString);
