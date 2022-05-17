@@ -42,6 +42,8 @@
 #include <algorithm>
 #include <cstring>
 #include <functional>
+#include <sstream>
+#include <vector>
 
 namespace ERR
 {
@@ -215,6 +217,34 @@ public:
 	Path ChangeExtension(Path extension) const
 	{
 		return Parent() / Path(Basename().string() + extension.string());
+	}
+
+	Path Normalize() const
+	{
+		Path ret;
+
+		std::vector<std::wstring> dirs;
+		std::wstringstream wss(path);
+		std::wstring dir;
+
+		while (std::getline(wss, dir, separator))
+			dirs.push_back(dir);
+
+		for (const std::wstring& dir : dirs)
+		{
+			if (dir == L".")
+				continue;
+
+			if (dir == L"..")
+			{
+				ret = ret.Parent();
+				continue;
+			}
+
+			ret = ret / Path(dir);
+		}
+
+		return ret;
 	}
 
 	Path operator/(Path rhs) const

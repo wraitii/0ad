@@ -56,6 +56,8 @@
 #include "js/ForOfIterator.h"
 #include "js/GCAPI.h"
 #include "js/GCHashTable.h"
+#include "js/Modules.h"
+#include "js/Proxy.h"
 #include "js/SourceText.h"
 #include "js/Proxy.h"
 #include "js/Warnings.h"

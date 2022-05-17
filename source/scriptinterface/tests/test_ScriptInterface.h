@@ -1,4 +1,4 @@
-/* Copyright (C) 2021 Wildfire Games.
+/* Copyright (C) 2022 Wildfire Games.
  * This file is part of 0 A.D.
  *
  * 0 A.D. is free software: you can redistribute it and/or modify
@@ -30,6 +30,17 @@
 class TestScriptInterface : public CxxTest::TestSuite
 {
 public:
+	void setUp()
+	{
+		g_VFS = CreateVfs();
+		TS_ASSERT_OK(g_VFS->Mount(L"", DataDir() / "mods" / "_test.scriptinterface" / "", VFS_MOUNT_MUST_EXIST));
+	}
+
+	void tearDown()
+	{
+		g_VFS.reset();
+	}
+
 	void test_loadscript_basic()
 	{
 		ScriptInterface script("Test", "Test", g_ScriptContext);
@@ -267,5 +278,14 @@ public:
 		int outNbr = 0;
 		Script::FromJSVal(rq, out, outNbr);
 		TS_ASSERT_EQUALS(2, outNbr);
+	}
+
+	void test_loadmodule()
+	{
+		ScriptInterface script("Test", "Test", g_ScriptContext);
+		TestLogger logger;
+		TS_ASSERT(script.LoadESModule(L"test.mjs"));
+		TS_ASSERT_STR_NOT_CONTAINS(logger.GetOutput(), "JavaScript error");
+		TS_ASSERT_STR_NOT_CONTAINS(logger.GetOutput(), "JavaScript warning");
 	}
 };

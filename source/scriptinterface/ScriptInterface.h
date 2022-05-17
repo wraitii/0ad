@@ -57,6 +57,8 @@ class ScriptContext;
 // use their own threads and also their own contexts.
 extern thread_local std::shared_ptr<ScriptContext> g_ScriptContext;
 
+class ScriptModuleLoader;
+
 namespace boost { namespace random { class rand48; } }
 
 class Path;
@@ -142,6 +144,8 @@ public:
 	JSContext* GetGeneralJSContext() const;
 	std::shared_ptr<ScriptContext> GetContext() const;
 
+	const ScriptModuleLoader& GetScriptModuleLoader() const;
+
 	/**
 	 * Load global scripts that most script interfaces need,
 	 * located in the /globalscripts directory. VFS must be initialized.
@@ -204,6 +208,11 @@ public:
 	 * @return true on successful compilation and execution; false otherwise
 	 */
 	bool LoadGlobalScriptFile(const VfsPath& path) const;
+
+	/**
+	 * Load an ES module. VFS must be initialized.
+	 */
+	bool LoadESModule(const VfsPath& path) const;
 
 	/**
 	 * Evaluate some JS code in the global scope.

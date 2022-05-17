@@ -21,6 +21,7 @@
 #include "ScriptContext.h"
 #include "ScriptExtraHeaders.h"
 #include "ScriptInterface.h"
+#include "ScriptModuleLoader.h"
 #include "ScriptStats.h"
 #include "StructuredClone.h"
 
@@ -77,6 +78,7 @@ struct ScriptInterface_impl
 
 		boost::rand48* m_rng;
 		JS::PersistentRootedObject m_nativeScope; // native function scope object
+		std::unique_ptr<ScriptModuleLoader> m_moduleLoader;
 };
 
 /**
@@ -311,7 +313,7 @@ bool ScriptInterface::Math_random(JSContext* cx, uint argc, JS::Value* vp)
 }
 
 ScriptInterface_impl::ScriptInterface_impl(const char* nativeScopeName, const std::shared_ptr<ScriptContext>& context, JS::Compartment* compartment) :
-	m_context(context), m_cx(context->GetGeneralJSContext()), m_glob(context->GetGeneralJSContext()), m_nativeScope(context->GetGeneralJSContext())
+	m_context(context), m_cx(context->GetGeneralJSContext()), m_glob(context->GetGeneralJSContext()), m_nativeScope(context->GetGeneralJSContext()), m_moduleLoader(std::make_unique<ScriptModuleLoader>())
 {
 	JS::RealmCreationOptions creationOpt;
 	// Keep JIT code during non-shrinking GCs. This brings a quite big performance improvement.
@@ -479,6 +481,11 @@ JSContext* ScriptInterface::GetGeneralJSContext() const
 std::shared_ptr<ScriptContext> ScriptInterface::GetContext() const
 {
 	return m->m_context;
+}
+
+const ScriptModuleLoader& ScriptInterface::GetScriptModuleLoader() const
+{
+	return *(m->m_moduleLoader);
 }
 
 void ScriptInterface::CallConstructor(JS::HandleValue ctor, JS::HandleValueArray argv, JS::MutableHandleValue out) const
@@ -744,6 +751,12 @@ void ScriptInterface::WaitOnPendingPromises()
 	for (auto& t : m->m_PromiseCompletions)
 		t.second.Wait();
 	RunJobs();
+}
+
+bool ScriptInterface::LoadESModule(const VfsPath& path) const
+{
+	ScriptRequest rq(this);
+	return m->m_moduleLoader->Load(rq.cx, path);
 }
 
 bool ScriptInterface::Eval(const char* code) const
