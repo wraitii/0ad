@@ -24,6 +24,8 @@
 #include "scriptinterface/ScriptRequest.h"
 #include "scriptinterface/ScriptTypes.h"
 
+#include "ps/FutureForward.h"
+
 #include <map>
 
 ERROR_GROUP(Scripting);
@@ -210,6 +212,11 @@ public:
 	bool Eval(const char* code) const;
 	bool Eval(const char* code, JS::MutableHandleValue out) const;
 	template<typename T> bool Eval(const char* code, T& out) const;
+
+	void AddJob(JS::HandleObject job);
+	void RunJobs();
+	void AddPromise(JS::Heap<JSObject*>& promise, Future<std::function<JS::HandleValue(const ScriptRequest&)>>&& future);
+	void WaitOnPendingPromises();
 
 	/**
 	 * Calls the random number generator assigned to this ScriptInterface instance and returns the generated number.

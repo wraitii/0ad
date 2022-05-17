@@ -25,6 +25,7 @@
 #include "scriptinterface/ScriptExtraHeaders.h"
 #include "scriptinterface/ScriptEngine.h"
 #include "scriptinterface/ScriptInterface.h"
+#include "scriptinterface/Promises.h"
 
 void GCSliceCallbackHook(JSContext* UNUSED(cx), JS::GCProgress progress, const JS::GCDescription& UNUSED(desc))
 {
@@ -123,6 +124,9 @@ ScriptContext::ScriptContext(int contextSize, int heapGrowthBytesGCTrigger):
 	JS::ContextOptionsRef(m_cx).setStrictMode(true);
 
 	ScriptEngine::GetSingleton().RegisterContext(m_cx);
+
+	m_jobqueue = std::make_unique<Script::JobQueue>();
+	JS::SetJobQueue(m_cx, m_jobqueue.get());
 }
 
 ScriptContext::~ScriptContext()

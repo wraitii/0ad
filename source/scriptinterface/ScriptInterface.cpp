@@ -28,6 +28,7 @@
 #include "lib/utf8.h"
 #include "ps/CLogger.h"
 #include "ps/Filesystem.h"
+#include "ps/Future.h"
 #include "ps/Profile.h"
 
 #include <map>
@@ -54,6 +55,13 @@ struct ScriptInterface_impl
 	ScriptInterface_impl(const char* nativeScopeName, const std::shared_ptr<ScriptContext>& context, JS::Compartment* compartment);
 	~ScriptInterface_impl();
 
+	static void Trace(JSTracer* trc, void* data)
+	{
+		ScriptInterface_impl* m = reinterpret_cast<ScriptInterface_impl*>(data);
+		for (auto& t : m->m_PromiseCompletions)
+			JS::TraceEdge(trc, &t.first, "Promise object");
+	}
+
 	// Take care to keep this declaration before heap rooted members. Destructors of heap rooted
 	// members have to be called before the context destructor.
 	std::shared_ptr<ScriptContext> m_context;
@@ -64,6 +72,9 @@ struct ScriptInterface_impl
 		JS::PersistentRootedObject m_glob; // global scope object
 
 	public:
+	std::vector<std::pair<JS::Heap<JSObject*>, Future<std::function<JS::HandleValue(const ScriptRequest&)>>>> m_PromiseCompletions;
+		std::vector<JS::PersistentRootedObject> m_jobs;
+
 		boost::rand48* m_rng;
 		JS::PersistentRootedObject m_nativeScope; // native function scope object
 };
@@ -339,10 +350,17 @@ ScriptInterface_impl::ScriptInterface_impl(const char* nativeScopeName, const st
 	ScriptFunction::Register<&ProfileAttribute>(m_cx, m_nativeScope, "ProfileAttribute");
 
 	m_context->RegisterRealm(JS::GetObjectRealmOrNull(m_glob));
+
+	JS_AddExtraGCRootsTracer(m_cx, &Trace, this);
 }
 
 ScriptInterface_impl::~ScriptInterface_impl()
 {
+	JS_RemoveExtraGCRootsTracer(m_cx, &Trace, this);
+
+	for (auto& t : m_PromiseCompletions)
+		t.second.Wait();
+
 	m_context->UnRegisterRealm(JS::GetObjectRealmOrNull(m_glob));
 }
 
@@ -682,6 +700,50 @@ bool ScriptInterface::LoadGlobalScriptFile(const VfsPath& path) const
 	CStr code = file.DecodeUTF8(); // assume it's UTF-8
 
 	return LoadGlobalScript(path, code);
+}
+
+void ScriptInterface::AddJob(JS::HandleObject job)
+{
+	ScriptRequest rq(this);
+	m->m_jobs.emplace_back(JS::PersistentRootedObject(rq.cx,  job));
+}
+
+void ScriptInterface::AddPromise(JS::Heap<JSObject*>& promise, Future<std::function<JS::HandleValue(const ScriptRequest&)>>&& future)
+{
+	m->m_PromiseCompletions.emplace_back(promise, std::move(future));
+}
+
+#include "js/Promise.h"
+
+void ScriptInterface::RunJobs()
+{
+	ScriptRequest rq(this);
+
+	for (auto& t : m->m_PromiseCompletions)
+		if (t.second.IsReady())
+		{
+			JS::RootedValue ret(rq.cx, t.second.Get()(rq));
+			JS::RootedObject promise(rq.cx, t.first);
+			// This actually enqueues a job below.
+			JS::ResolvePromise(rq.cx, promise, ret);
+		}
+
+	JS::HandleValueArray args(JS::HandleValueArray::empty());
+	JS::RootedValue rval(rq.cx);
+	JS::RootedValue globV(rq.cx, rq.globalValue());
+	size_t i = 0;
+	for (i = 0; i < m->m_jobs.size(); ++i)
+		JS::Call(rq.cx, globV, m->m_jobs[i], args, &rval);
+	m->m_jobs.clear();
+}
+
+void ScriptInterface::WaitOnPendingPromises()
+{
+	ScriptRequest rq(this);
+
+	for (auto& t : m->m_PromiseCompletions)
+		t.second.Wait();
+	RunJobs();
 }
 
 bool ScriptInterface::Eval(const char* code) const

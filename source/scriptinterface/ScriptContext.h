@@ -1,4 +1,4 @@
-/* Copyright (C) 2021 Wildfire Games.
+/* Copyright (C) 2022 Wildfire Games.
  * This file is part of 0 A.D.
  *
  * 0 A.D. is free software: you can redistribute it and/or modify
@@ -26,6 +26,10 @@
 // Those are minimal defaults. The runtime for the main game is larger and GCs upon a larger growth.
 constexpr int DEFAULT_CONTEXT_SIZE = 16 * 1024 * 1024;
 constexpr int DEFAULT_HEAP_GROWTH_BYTES_GCTRIGGER = 2 * 1024 * 1024;
+
+namespace Script {
+class JobQueue;
+}
 
 /**
  * Abstraction around a SpiderMonkey JSContext.
@@ -86,6 +90,7 @@ public:
 private:
 
 	JSContext* m_cx;
+	std::unique_ptr<Script::JobQueue> m_jobqueue;
 
 	void PrepareZonesForIncrementalGC() const;
 	std::list<JS::Realm*> m_Realms;
