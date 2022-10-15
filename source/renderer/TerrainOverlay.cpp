@@ -93,7 +93,7 @@ void ITerrainOverlay::RenderOverlaysAfterWater(
 //////////////////////////////////////////////////////////////////////////
 
 TerrainOverlay::TerrainOverlay(const CSimContext& simContext, int priority /* = 100 */)
-	: ITerrainOverlay(priority), m_Terrain(&simContext.GetTerrain())
+	: ITerrainOverlay(priority), m_Terrain(simContext.GetWorld()->GetTerrain())
 {
 }
 

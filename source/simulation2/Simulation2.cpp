@@ -61,7 +61,6 @@ public:
 		m_MapSettings(cx->GetGeneralJSContext()), m_InitAttributes(cx->GetGeneralJSContext())
 	{
 		m_SimContext.m_UnitManager = &world->GetUnitManager();
-		m_SimContext.m_Terrain = world->GetTerrain();
 		m_SimContext.m_World = world;
 		m_ComponentManager.LoadComponentTypes();
 
@@ -407,10 +406,7 @@ void CSimulation2Impl::Update(int turnLength, const std::vector<SimulationComman
 		if (startRejoinTest)
 			debug_printf("Initializing the secondary simulation\n");
 
-		m_SecondaryTerrain = std::make_unique<CTerrain>();
-
 		m_SecondaryContext = std::make_unique<CSimContext>();
-		m_SecondaryContext->m_Terrain = m_SecondaryTerrain.get();
 
 		m_SecondaryComponentManager = std::make_unique<CComponentManager>(*m_SecondaryContext, scriptInterface.GetContext());
 		m_SecondaryComponentManager->LoadComponentTypes();

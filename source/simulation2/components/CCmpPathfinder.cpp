@@ -369,14 +369,12 @@ Grid<u16> CCmpPathfinder::ComputeShoreGrid(bool expandOnWater)
 	PROFILE3("ComputeShoreGrid");
 
 	CmpPtr<ICmpWaterManager> cmpWaterManager(GetSystemEntity());
-
-	// TODO: these bits should come from ICmpTerrain
-	CTerrain& terrain = GetSimContext().GetTerrain();
+	CmpPtr<ICmpTerrain> cmpTerrain(GetSystemEntity());
 
 	// avoid integer overflow in intermediate calculation
 	const u16 shoreMax = 32767;
 
-	u16 shoreGridSize = terrain.GetTilesPerSide();
+	u16 shoreGridSize = cmpTerrain->GetTilesPerSide();
 
 	// First pass - find underwater tiles
 	Grid<u8> waterGrid(shoreGridSize, shoreGridSize);
@@ -387,7 +385,7 @@ Grid<u16> CCmpPathfinder::ComputeShoreGrid(bool expandOnWater)
 			fixed x, z;
 			Pathfinding::TerrainTileCenter(i, j, x, z);
 
-			bool underWater = cmpWaterManager && (cmpWaterManager->GetWaterLevel(x, z) > terrain.GetExactGroundLevelFixed(x, z));
+			bool underWater = cmpWaterManager && (cmpWaterManager->GetWaterLevel(x, z) > cmpTerrain->GetGroundLevel(x, z));
 			waterGrid.set(i, j, underWater ? 1 : 0);
 		}
 	}
@@ -586,7 +584,6 @@ void CCmpPathfinder::TerrainUpdateHelper(bool expandPassability, int itile0, int
 	CmpPtr<ICmpObstructionManager> cmpObstructionManager(GetSimContext(), SYSTEM_ENTITY);
 	CmpPtr<ICmpWaterManager> cmpWaterManager(GetSimContext(), SYSTEM_ENTITY);
 	CmpPtr<ICmpTerrain> cmpTerrain(GetSimContext(), SYSTEM_ENTITY);
-	CTerrain& terrain = GetSimContext().GetTerrain();
 
 	if (!cmpTerrain || !cmpObstructionManager)
 		return;
@@ -647,7 +644,7 @@ void CCmpPathfinder::TerrainUpdateHelper(bool expandPassability, int itile0, int
 
 			// Gather all the data potentially needed to determine passability:
 
-			fixed height = terrain.GetExactGroundLevelFixed(x, z);
+			fixed height = cmpTerrain->GetGroundLevel(x, z);
 
 			fixed water;
 			if (cmpWaterManager)
@@ -656,7 +653,7 @@ void CCmpPathfinder::TerrainUpdateHelper(bool expandPassability, int itile0, int
 			fixed depth = water - height;
 
 			// Exact slopes give kind of weird output, so just use rough tile-based slopes
-			fixed slope = terrain.GetSlopeFixed(itile, jtile);
+			fixed slope = cmpTerrain->GetSlope(x, z);
 
 			// Get world-space coordinates from shoreGrid (which uses terrain tiles)
 			fixed shoredist = fixed::FromInt(shoreGrid.get(itile, jtile)).MultiplyClamp(TERRAIN_TILE_SIZE);

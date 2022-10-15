@@ -21,6 +21,7 @@
 #include "ICmpMotion.h"
 
 #include "ICmpPosition.h"
+#include "ICmpTerrain.h"
 #include "simulation2/MessageTypes.h"
 
 #include "graphics/Terrain.h"
@@ -94,7 +95,8 @@ void CCmpMotionBall::Move(fixed dt)
 	float x = pos.X.ToFloat();
 	float z = pos.Z.ToFloat();
 
-	CVector3D normal = GetSimContext().GetTerrain().CalcExactNormal(x, z);
+	CmpPtr<ICmpTerrain> cmpTerrain(GetSystemEntity());
+	CVector3D normal = cmpTerrain->CalcExactNormal(x, z);
 	// Flatten the vector, to get the downhill force
 	float g = 10.f;
 	CVector3D force(g * normal.X, 0.f, g * normal.Z);

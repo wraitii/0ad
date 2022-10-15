@@ -85,7 +85,7 @@ public:
 				if (CRenderer::IsInitialised())
 				{
 					const CMessageTerrainChanged& msgData = static_cast<const CMessageTerrainChanged&> (msg);
-					GetSimContext().GetTerrain().MakeDirty(msgData.i0,msgData.j0,msgData.i1,msgData.j1,RENDERDATA_UPDATE_VERTICES);
+					GetSimContext().GetWorld()->GetTerrain()->MakeDirty(msgData.i0,msgData.j0,msgData.i1,msgData.j1,RENDERDATA_UPDATE_VERTICES);
 				}
 				break;
 			}

@@ -40,6 +40,8 @@ public:
 
 	virtual float GetExactGroundLevel(float x, float z) const = 0;
 
+	virtual entity_pos_t GetSlope(entity_pos_t x, entity_pos_t z) const = 0;
+
 	/**
 	 * Returns number of tiles per side on the terrain.
 	 * Return value is always non-zero.

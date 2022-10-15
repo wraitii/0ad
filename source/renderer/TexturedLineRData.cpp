@@ -129,7 +129,7 @@ void CTexturedLineRData::Update(const SOverlayTexturedLine& line)
 	// TODO: if we ever support more than one water level per map, recompute this per point
 	float w = line.m_SimContext->GetWorld()->GetWater()->GetExactWaterHeight(p0.X, p0.Z);
 
-	const CTerrain& terrain = line.m_SimContext->GetTerrain();
+	const CTerrain& terrain = *line.m_SimContext->GetWorld()->GetTerrain();
 
 	p0.Y = terrain.GetExactGroundLevel(p0.X, p0.Z);
 	if (p0.Y < w)

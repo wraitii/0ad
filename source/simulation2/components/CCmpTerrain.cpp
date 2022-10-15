@@ -25,6 +25,7 @@
 #include "renderer/SceneRenderer.h"
 #include "renderer/WaterRenderer.h"
 #include "maths/Vector3D.h"
+#include "ps/World.h"
 #include "simulation2/components/ICmpObstructionManager.h"
 #include "simulation2/components/ICmpRangeManager.h"
 #include "simulation2/MessageTypes.h"
@@ -47,7 +48,7 @@ public:
 
 	void Init(const CParamNode& UNUSED(paramNode)) override
 	{
-		m_Terrain = &GetSimContext().GetTerrain();
+		m_Terrain = GetSimContext().GetWorld()->GetTerrain();
 	}
 
 	void Deinit() override
@@ -90,6 +91,12 @@ public:
 	float GetExactGroundLevel(float x, float z) const override
 	{
 		return m_Terrain->GetExactGroundLevel(x, z);
+	}
+
+	entity_pos_t GetSlope(entity_pos_t x, entity_pos_t z) const override
+	{
+		return m_Terrain->GetSlopeFixed((x / static_cast<int>(TERRAIN_TILE_SIZE)).ToInt_RoundToZero(),
+										(z / static_cast<int>(TERRAIN_TILE_SIZE)).ToInt_RoundToZero());
 	}
 
 	u16 GetTilesPerSide() const override

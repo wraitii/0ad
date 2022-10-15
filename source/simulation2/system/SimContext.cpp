@@ -24,7 +24,7 @@
 #include "ps/Game.h"
 
 CSimContext::CSimContext() :
-	m_ComponentManager(NULL), m_UnitManager(NULL), m_Terrain(NULL)
+	m_ComponentManager(NULL), m_UnitManager(NULL)
 {
 }
 
@@ -46,12 +46,6 @@ CUnitManager& CSimContext::GetUnitManager() const
 {
 	ENSURE(m_UnitManager);
 	return *m_UnitManager;
-}
-
-CTerrain& CSimContext::GetTerrain() const
-{
-	ENSURE(m_Terrain);
-	return *m_Terrain;
 }
 
 void CSimContext::SetComponentManager(CComponentManager* man)

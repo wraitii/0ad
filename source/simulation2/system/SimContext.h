@@ -42,8 +42,6 @@ public:
 	bool HasUnitManager() const;
 	CUnitManager& GetUnitManager() const;
 
-	CTerrain& GetTerrain() const;
-
 	// May return nullptr
 	CWorld* GetWorld() const { return m_World; }
 
@@ -61,7 +59,6 @@ public:
 private:
 	CComponentManager* m_ComponentManager;
 	CUnitManager* m_UnitManager;
-	CTerrain* m_Terrain;
 	CWorld* m_World;
 
 	CEntityHandle m_SystemEntity;
