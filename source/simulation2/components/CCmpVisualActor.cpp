@@ -31,7 +31,6 @@
 #include "ICmpTemplateManager.h"
 #include "ICmpTerrain.h"
 #include "ICmpUnitMotion.h"
-#include "ICmpUnitRenderer.h"
 #include "ICmpValueModificationManager.h"
 #include "ICmpVisibility.h"
 #include "ICmpSound.h"
@@ -97,7 +96,7 @@ private:
 	bool m_SilhouetteOccluder;
 	bool m_DisableShadows;
 
-	ICmpUnitRenderer::tag_t m_ModelTag;
+	CUnitManager::tag_t m_ModelTag;
 
 public:
 	static std::string GetSchema()
@@ -324,8 +323,7 @@ public:
 			const CMessageInterpolatedPositionChanged& msgData = static_cast<const CMessageInterpolatedPositionChanged&> (msg);
 			if (m_ModelTag.valid())
 			{
-				CmpPtr<ICmpUnitRenderer> cmpModelRenderer(GetSystemEntity());
-				cmpModelRenderer->UpdateUnitPos(m_ModelTag, msgData.inWorld, msgData.pos0, msgData.pos1);
+				GetSimContext().GetUnitManager().UpdateUnitPos(m_ModelTag, msgData.inWorld, msgData.pos0, msgData.pos1);
 			}
 			break;
 		}
@@ -340,9 +338,8 @@ public:
 		{
 			if (m_ModelTag.valid())
 			{
-				CmpPtr<ICmpUnitRenderer> cmpModelRenderer(GetSystemEntity());
-				cmpModelRenderer->RemoveUnit(m_ModelTag);
-				m_ModelTag = ICmpUnitRenderer::tag_t();
+				GetSimContext().GetUnitManager().RemoveUnit(m_ModelTag);
+				m_ModelTag = CUnitManager::tag_t();
 			}
 			break;
 		}
@@ -390,11 +387,10 @@ public:
 		if (m_Unit->GetModel().ToCModel())
 		{
 			// Ensure the prop transforms are correct
-			CmpPtr<ICmpUnitRenderer> cmpUnitRenderer(GetSystemEntity());
 			CmpPtr<ICmpPosition> cmpPosition(GetEntityHandle());
-			if (cmpUnitRenderer && cmpPosition)
+			if (cmpPosition)
 			{
-				float frameOffset = cmpUnitRenderer->GetFrameOffset();
+				float frameOffset = GetSimContext().GetUnitManager().GetFrameOffset();
 				CMatrix3D transform(cmpPosition->GetInterpolatedTransform(frameOffset));
 				m_Unit->GetModel().SetTransform(transform);
 				m_Unit->GetModel().ValidatePosition();
@@ -630,22 +626,18 @@ void CCmpVisualActor::InitModel()
 
 	if (!m_ModelTag.valid())
 	{
-		CmpPtr<ICmpUnitRenderer> cmpModelRenderer(GetSystemEntity());
-		if (cmpModelRenderer)
-		{
-			// TODO: this should account for all possible props, animations, etc,
-			// else we might accidentally cull the unit when it should be visible
-			CBoundingBoxAligned bounds = m_Unit->GetModel().GetWorldBoundsRec();
-			CBoundingSphere boundSphere = CBoundingSphere::FromSweptBox(bounds);
+		// TODO: this should account for all possible props, animations, etc,
+		// else we might accidentally cull the unit when it should be visible
+		CBoundingBoxAligned bounds = m_Unit->GetModel().GetWorldBoundsRec();
+		CBoundingSphere boundSphere = CBoundingSphere::FromSweptBox(bounds);
 
-			int flags = 0;
-			if (m_IsActorOnly)
-				flags |= ICmpUnitRenderer::ACTOR_ONLY;
-			if (m_VisibleInAtlasOnly)
-				flags |= ICmpUnitRenderer::VISIBLE_IN_ATLAS_ONLY;
+		int flags = 0;
+		if (m_IsActorOnly)
+			flags |= CUnitManager::ACTOR_ONLY;
+		if (m_VisibleInAtlasOnly)
+			flags |= CUnitManager::VISIBLE_IN_ATLAS_ONLY;
 
-			m_ModelTag = cmpModelRenderer->AddUnit(GetEntityHandle(), m_Unit, boundSphere, flags);
-		}
+		m_ModelTag = GetSimContext().GetUnitManager().AddUnit(GetEntityHandle(), m_Unit, boundSphere, flags);
 	}
 
 	// the model is now responsible for cleaning up the descriptor
@@ -746,10 +738,8 @@ void CCmpVisualActor::ReloadActor()
 	{
 		if (m_ModelTag.valid())
 		{
-			CmpPtr<ICmpUnitRenderer> cmpModelRenderer(GetSystemEntity());
-			if (cmpModelRenderer)
-				cmpModelRenderer->RemoveUnit(m_ModelTag);
-			m_ModelTag = ICmpUnitRenderer::tag_t{};
+			GetSimContext().GetUnitManager().RemoveUnit(m_ModelTag);
+			m_ModelTag = CUnitManager::tag_t{};
 		}
 		return;
 	}
@@ -762,10 +752,9 @@ void CCmpVisualActor::ReloadActor()
 
 	if (m_ModelTag.valid())
 	{
-		CmpPtr<ICmpUnitRenderer> cmpModelRenderer(GetSystemEntity());
 		CBoundingBoxAligned bounds = m_Unit->GetModel().GetWorldBoundsRec();
 		CBoundingSphere boundSphere = CBoundingSphere::FromSweptBox(bounds);
-		cmpModelRenderer->UpdateUnit(m_ModelTag, m_Unit, boundSphere);
+		GetSimContext().GetUnitManager().UpdateUnit(m_ModelTag, m_Unit, boundSphere);
 	}
 }
 

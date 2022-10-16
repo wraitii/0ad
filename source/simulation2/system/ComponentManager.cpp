@@ -697,7 +697,6 @@ void CComponentManager::AddSystemComponents(bool skipScriptedComponents, bool sk
 	AddComponent(m_SystemEntity, CID_Terrain, noParam);
 	AddComponent(m_SystemEntity, CID_TerritoryManager, noParam);
 	AddComponent(m_SystemEntity, CID_UnitMotionManager, noParam);
-	AddComponent(m_SystemEntity, CID_UnitRenderer, noParam);
 	AddComponent(m_SystemEntity, CID_WaterManager, noParam);
 
 	// Add scripted system components:

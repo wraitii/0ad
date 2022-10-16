@@ -200,9 +200,6 @@ COMPONENT(UnitMotionScripted)
 INTERFACE(UnitMotionManager)
 COMPONENT(UnitMotionManager)
 
-INTERFACE(UnitRenderer)
-COMPONENT(UnitRenderer)
-
 INTERFACE(Visibility)
 COMPONENT(VisibilityScripted)
 

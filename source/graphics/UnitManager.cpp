@@ -257,7 +257,7 @@ void CUnitManager::PickAllEntitiesAtPoint(std::vector<std::pair<CEntityHandle, C
 
 void CUnitManager::TurnStart()
 {
-	PROFILE3("UnitRenderer::TurnStart");
+	PROFILE3("CUnitManager::TurnStart");
 
 	// Assume units have stopped moving after the previous turn. If that assumption is not
 	// correct, we will get a UpdateUnitPos to tell us about its movement in the new turn.
@@ -274,7 +274,7 @@ void CUnitManager::TurnStart()
 
 void CUnitManager::Interpolate(u32 turn, float frameTime, float frameOffset)
 {
-	PROFILE3("UnitRenderer::Interpolate");
+	PROFILE3("CUnitManager::Interpolate");
 
 	++m_FrameNumber;
 	m_FrameOffset = frameOffset;
@@ -320,7 +320,7 @@ void CUnitManager::RenderSubmit(SceneCollector& collector, const CFrustum& frust
 	// culling. (And once it's cheap enough, we can do multiple culling passes
 	// per frame - one for shadow generation, one for water reflections, etc.)
 
-	PROFILE3("UnitRenderer::RenderSubmit");
+	PROFILE3("CUnitManager::RenderSubmit");
 
 	for (size_t i = 0; i < m_UnitsData.size(); ++i)
 	{

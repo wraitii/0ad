@@ -20,6 +20,7 @@
 #include "Selection.h"
 
 #include "graphics/Camera.h"
+#include "graphics/UnitManager.h"
 #include "ps/CLogger.h"
 #include "ps/Profiler2.h"
 #include "simulation2/components/ICmpIdentity.h"
@@ -28,7 +29,6 @@
 #include "simulation2/components/ICmpTemplateManager.h"
 #include "simulation2/components/ICmpSelectable.h"
 #include "simulation2/components/ICmpVisual.h"
-#include "simulation2/components/ICmpUnitRenderer.h"
 #include "simulation2/system/ComponentManager.h"
 
 entity_id_t EntitySelection::PickEntityAtPoint(CSimulation2& simulation, const CCamera& camera, int screenX, int screenY, player_id_t player, bool allowEditorSelectables)
@@ -37,11 +37,8 @@ entity_id_t EntitySelection::PickEntityAtPoint(CSimulation2& simulation, const C
 	CVector3D origin, dir;
 	camera.BuildCameraRay(screenX, screenY, origin, dir);
 
-	CmpPtr<ICmpUnitRenderer> cmpUnitRenderer(simulation.GetSimContext().GetSystemEntity());
-	ENSURE(cmpUnitRenderer);
-
 	std::vector<std::pair<CEntityHandle, CVector3D> > entities;
-	cmpUnitRenderer->PickAllEntitiesAtPoint(entities, origin, dir, allowEditorSelectables);
+	simulation.GetSimContext().GetUnitManager().PickAllEntitiesAtPoint(entities, origin, dir, allowEditorSelectables);
 	if (entities.empty())
 		return INVALID_ENTITY;
 
