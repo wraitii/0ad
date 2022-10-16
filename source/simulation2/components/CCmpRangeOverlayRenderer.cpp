@@ -26,7 +26,7 @@
 #include "simulation2/components/ICmpOwnership.h"
 #include "simulation2/components/ICmpPlayer.h"
 #include "simulation2/components/ICmpPlayerManager.h"
-#include "simulation2/components/ICmpPosition.h"
+#include "simulation2/components/ICmpVisual.h"
 #include "simulation2/helpers/Render.h"
 #include "simulation2/system/Component.h"
 
@@ -188,13 +188,13 @@ private:
 		if (!CRenderer::IsInitialised())
 			return;
 
-		CmpPtr<ICmpPosition> cmpPosition(GetEntityHandle());
-		if (!cmpPosition || !cmpPosition->IsInWorld())
+		CmpPtr<ICmpVisual> cmpVisual(GetEntityHandle());
+		if (!cmpVisual || !cmpVisual->IsInWorld())
 			return;
 
 		float rotY;
 		CVector2D origin;
-		cmpPosition->GetInterpolatedPosition2D(frameOffset, origin.X, origin.Y, rotY);
+		cmpVisual->GetInterpolatedPosition2D(frameOffset, origin.X, origin.Y, rotY);
 
 		rangeOverlay.line = std::make_unique<SOverlayTexturedLine>();
 		rangeOverlay.line->m_SimContext = &GetSimContext();

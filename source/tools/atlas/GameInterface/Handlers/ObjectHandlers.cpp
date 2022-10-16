@@ -952,10 +952,9 @@ BEGIN_COMMAND(RotateObject)
 
 			m_AngleOld[id] = cmpPosition->GetRotation().Y.ToFloat();
 
-			CMatrix3D transform = cmpPosition->GetInterpolatedTransform(0.f);
-			CVector3D pos = transform.GetTranslation();
-			CVector3D target = msg->target->GetWorldSpace(pos.Y);
-			m_AngleNew[id] = atan2(target.X-pos.X, target.Z-pos.Z);
+			CFixedVector3D pos = cmpPosition->GetPosition();
+			CVector3D target = msg->target->GetWorldSpace(pos.Y.ToFloat());
+			m_AngleNew[id] = atan2(target.X-pos.X.ToFloat(), target.Z-pos.Z.ToFloat());
 		}
 
 		SetAngle(m_AngleNew);

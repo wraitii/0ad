@@ -476,4 +476,4 @@ CMatrix3D CUnitManager::GetInterpolatedTransform(SUnit& unit, float frameOffset)
 	m.Translate(pos);
 
 	return m;
-	}
+}

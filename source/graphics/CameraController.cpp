@@ -40,8 +40,8 @@
 #include "renderer/SceneRenderer.h"
 #include "renderer/WaterRenderer.h"
 #include "simulation2/Simulation2.h"
-#include "simulation2/components/ICmpPosition.h"
 #include "simulation2/components/ICmpRangeManager.h"
+#include "simulation2/components/ICmpVisual.h"
 #include "simulation2/helpers/Los.h"
 
 extern int g_xres, g_yres;
@@ -222,20 +222,20 @@ void CCameraController::Update(const float deltaRealTime)
 
 	if (m_FollowEntity)
 	{
-		CmpPtr<ICmpPosition> cmpPosition(*(g_Game->GetSimulation2()), m_FollowEntity);
+		CmpPtr<ICmpVisual> cmpVisual(*(g_Game->GetSimulation2()), m_FollowEntity);
 		CmpPtr<ICmpRangeManager> cmpRangeManager(*(g_Game->GetSimulation2()), SYSTEM_ENTITY);
-		if (cmpPosition && cmpPosition->IsInWorld() &&
+		if (cmpVisual && cmpVisual->IsInWorld() &&
 			cmpRangeManager && cmpRangeManager->GetLosVisibility(m_FollowEntity, g_Game->GetViewedPlayerID()) == LosVisibility::VISIBLE)
 		{
 			// Get the most recent interpolated position
 			float frameOffset = g_Game->GetSimulation2()->GetLastFrameOffset();
-			CMatrix3D transform = cmpPosition->GetInterpolatedTransform(frameOffset);
+			CMatrix3D transform = cmpVisual->GetInterpolatedTransform(frameOffset);
 			CVector3D pos = transform.GetTranslation();
 
 			if (m_FollowFirstPerson)
 			{
 				float x, z, angle;
-				cmpPosition->GetInterpolatedPosition2D(frameOffset, x, z, angle);
+				cmpVisual->GetInterpolatedPosition2D(frameOffset, x, z, angle);
 				float height = 4.f;
 				m_Camera.m_Orientation.SetIdentity();
 				m_Camera.m_Orientation.RotateX(static_cast<float>(M_PI) / 24.f);

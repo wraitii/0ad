@@ -48,11 +48,25 @@ public:
 	 */
 	virtual CBoundingBoxOriented GetSelectionBox() const = 0;
 
+	virtual bool IsInWorld() const = 0;
+
 	/**
 	 * Get the world-space position of the base point of the object's visual representation.
 	 * (Not safe for use in simulation code.)
 	 */
 	virtual CVector3D GetPosition() const = 0;
+
+	/**
+	 * Get the current interpolated 2D position and orientation, for rendering.
+	 * Must not be called unless IsInWorld is true.
+	 */
+	virtual void GetInterpolatedPosition2D(float frameOffset, float& x, float& z, float& rotY) const = 0;
+
+	/**
+	 * Get the current interpolated transform matrix, for rendering.
+	 * Must not be called unless IsInWorld is true.
+	 */
+	virtual CMatrix3D GetInterpolatedTransform(float frameOffset) const = 0;
 
 	/**
 	 * Return the filename of the actor to be used for projectiles from this unit, or the empty string if none.

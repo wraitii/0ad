@@ -372,6 +372,33 @@ public:
 		return m_Unit->GetModel().GetTransform().GetTranslation();
 	}
 
+	bool IsInWorld() const override
+	{
+		if (!m_ModelTag.valid())
+			return false;
+		GetSimContext().GetUnitManager().(GetSimContext().GetUnitManager().LookupUnit(m_ModelTag), 0.f)
+		returnGetSimContext().GetUnitManager().GetInterpolatedTransform(GetSimContext().GetUnitManager().LookupUnit(m_ModelTag), 0.f)
+	}
+
+	/**
+	 * Get the world-space position of the base point of the object's visual representation.
+	 * (Not safe for use in simulation code.)
+	 */
+	virtual CVector3D GetPosition() const = 0;
+
+	/**
+	 * Get the current interpolated 2D position and orientation, for rendering.
+	 * Must not be called unless IsInWorld is true.
+	 */
+	virtual void GetInterpolatedPosition2D(float frameOffset, float& x, float& z, float& rotY) const = 0;
+
+	/**
+	 * Get the current interpolated transform matrix, for rendering.
+	 * Must not be called unless IsInWorld is true.
+	 */
+	virtual CMatrix3D GetInterpolatedTransform(float frameOffset) const = 0;
+
+
 	std::wstring GetProjectileActor() const override
 	{
 		if (!m_Unit)

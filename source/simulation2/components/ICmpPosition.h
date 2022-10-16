@@ -231,18 +231,6 @@ public:
 	 */
 	virtual fixed GetDistanceTravelled() const = 0;
 
-	/**
-	 * Get the current interpolated 2D position and orientation, for rendering.
-	 * Must not be called unless IsInWorld is true.
-	 */
-	virtual void GetInterpolatedPosition2D(float frameOffset, float& x, float& z, float& rotY) const = 0;
-
-	/**
-	 * Get the current interpolated transform matrix, for rendering.
-	 * Must not be called unless IsInWorld is true.
-	 */
-	virtual CMatrix3D GetInterpolatedTransform(float frameOffset) const = 0;
-
 	DECLARE_INTERFACE_TYPE(Position)
 };
 
