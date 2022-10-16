@@ -42,6 +42,7 @@
 #include "ps/CLogger.h"
 #include "ps/ConfigDB.h"
 #include "ps/Filesystem.h"
+#include "ps/Future.h"
 #include "ps/Loader.h"
 #include "ps/Profile.h"
 #include "ps/Pyrogenesis.h"
@@ -136,6 +137,9 @@ public:
 
 	bool m_EnableOOSLog;
 	OsPath m_OOSLogPath;
+
+
+	std::mutex m_SimLock;
 
 	// Functions and data for the serialization test mode: (see Update() for relevant comments)
 
@@ -634,14 +638,42 @@ void CSimulation2Impl::DumpState()
 
 ////////////////////////////////////////////////////////////////
 
-CSimulation2::CSimulation2(std::shared_ptr<ScriptContext> cx, CWorld* world) :
-	m(new CSimulation2Impl(cx, world))
+std::thread* simthread = nullptr;
+std::atomic<bool> stop = false;
+std::atomic<bool> hasFunc = false;
+std::function<void()> func;
+
+CSimulation2::CSimulation2(std::shared_ptr<ScriptContext> cx, CWorld* world)
 {
+	Future<void> future;
+	auto task = future.Wrap([](){});
+	simthread = new std::thread([this, world, &task]() {
+		g_Profiler2.RegisterCurrentThread("sim thread");
+		const int contextSize = 384 * 1024 * 1024;
+		const int heapGrowthBytesGCTrigger = 20 * 1024 * 1024;
+		m = new CSimulation2Impl(ScriptContext::CreateContext(contextSize, heapGrowthBytesGCTrigger), world);
+		task();
+		while (!stop)
+		{
+			{
+				std::lock_guard<std::mutex> lock(m->m_SimLock);
+				if (hasFunc) {
+					func();
+					hasFunc = false;
+				}
+			}
+		}
+	});
+	future.Wait();
 }
 
 CSimulation2::~CSimulation2()
 {
+	stop = true;
+	if (simthread)
+		simthread->join();
 	delete m;
+	delete simthread;
 }
 
 // Forward all method calls to the appropriate CSimulation2Impl/CComponentManager methods:
@@ -669,52 +701,112 @@ void CSimulation2::EnableOOSLog()
 
 entity_id_t CSimulation2::AddEntity(const std::wstring& templateName)
 {
-	return m->m_ComponentManager.AddEntity(templateName, m->m_ComponentManager.AllocateNewEntity());
+	entity_id_t result;
+	Future<entity_id_t> future;
+	auto task = future.Wrap([&result]() { return result; });
+	{
+		std::lock_guard<std::mutex> lock(m->m_SimLock);
+		hasFunc = true;
+		func = [this, templateName, &task, &result]() {
+			result = m->m_ComponentManager.AddEntity(templateName, m->m_ComponentManager.AllocateNewEntity());
+			task();
+		};
+	}
+	future.Wait();
+	printf("AddEntity %i\n", result);
+	return result;
 }
 
 entity_id_t CSimulation2::AddEntity(const std::wstring& templateName, entity_id_t preferredId)
 {
-	return m->m_ComponentManager.AddEntity(templateName, m->m_ComponentManager.AllocateNewEntity(preferredId));
+	entity_id_t result;
+	Future<entity_id_t> future;
+	auto task = future.Wrap([&result]() { return result; });
+	{
+		std::lock_guard<std::mutex> lock(m->m_SimLock);
+		hasFunc = true;
+		func = [this, templateName, &task, &result, preferredId]() {
+			result = m->m_ComponentManager.AddEntity(templateName, m->m_ComponentManager.AllocateNewEntity(preferredId));
+			task();
+		};
+	}
+	future.Wait();
+	printf("AddEntity2 %i\n", result);
+	return result;
 }
 
 entity_id_t CSimulation2::AddLocalEntity(const std::wstring& templateName)
 {
-	return m->m_ComponentManager.AddEntity(templateName, m->m_ComponentManager.AllocateNewLocalEntity());
+	entity_id_t result;
+	Future<entity_id_t> future;
+	auto task = future.Wrap([&result]() { return result; });
+	{
+		std::lock_guard<std::mutex> lock(m->m_SimLock);
+		hasFunc = true;
+		func = [this, templateName, &task, &result]() {
+			result = m->m_ComponentManager.AddEntity(templateName, m->m_ComponentManager.AllocateNewLocalEntity());
+			task();
+		};
+	}
+	future.Wait();
+	printf("AddLocalEntity %i\n", result);
+	return result;
 }
 
 void CSimulation2::DestroyEntity(entity_id_t ent)
 {
-	m->m_ComponentManager.DestroyComponentsSoon(ent);
+	printf("destroy entity\n");
+	//m->m_ComponentManager.DestroyComponentsSoon(ent);
 }
 
 void CSimulation2::FlushDestroyedEntities()
 {
-	m->m_ComponentManager.FlushDestroyedComponents();
+	//printf("FlushDestroyedEntities\n");
+	//m->m_ComponentManager.FlushDestroyedComponents();
 }
 
 IComponent* CSimulation2::QueryInterface(entity_id_t ent, int iid) const
 {
-	return m->m_ComponentManager.QueryInterface(ent, iid);
+	printf("QueryInterface\n");
+	return nullptr;
+	//return m->m_ComponentManager.QueryInterface(ent, iid);
 }
 
 void CSimulation2::PostMessage(entity_id_t ent, const CMessage& msg) const
 {
-	m->m_ComponentManager.PostMessage(ent, msg);
+	printf("PostMessage\n");
+	//m->m_ComponentManager.PostMessage(ent, msg);
 }
 
 void CSimulation2::BroadcastMessage(const CMessage& msg) const
 {
-	m->m_ComponentManager.BroadcastMessage(msg);
+	printf("BroadcastMessage\n");
+	//m->m_ComponentManager.BroadcastMessage(msg);
 }
 
 CSimulation2::InterfaceList CSimulation2::GetEntitiesWithInterface(int iid)
 {
-	return m->m_ComponentManager.GetEntitiesWithInterface(iid);
+	printf("GetEntitiesWithInterface\n");
+	return {};
+	//return m->m_ComponentManager.GetEntitiesWithInterface(iid);
 }
 
 const CSimulation2::InterfaceListUnordered& CSimulation2::GetEntitiesWithInterfaceUnordered(int iid)
 {
-	return m->m_ComponentManager.GetEntitiesWithInterfaceUnordered(iid);
+	const CSimulation2::InterfaceListUnordered* result;
+	Future<void> future;
+	auto task = future.Wrap([]() {});
+	{
+		std::lock_guard<std::mutex> lock(m->m_SimLock);
+		hasFunc = true;
+		func = [this, &task, &result]() {
+			result = &m->m_ComponentManager.GetEntitiesWithInterfaceUnordered(76876);
+			task();
+		};
+	}
+	future.Wait();
+	printf("GetEntitiesWithInterfaceUnordered %i\n", iid);
+	return *result;
 }
 
 const CSimContext& CSimulation2::GetSimContext() const
@@ -722,20 +814,45 @@ const CSimContext& CSimulation2::GetSimContext() const
 	return m->m_SimContext;
 }
 
-ScriptInterface& CSimulation2::GetScriptInterface() const
+/*ScriptInterface& CSimulation2::GetScriptInterface() const
+{
+	return m->m_ComponentManager.GetScriptInterface();
+}
+*/
+ScriptInterface& CSimulation2::GetScriptInterfaceUnsafe() const
 {
 	return m->m_ComponentManager.GetScriptInterface();
 }
 
+void CSimulation2::ExecuteInScriptContext(std::function<void(const ScriptInterface& si)> execute) {
+	Future<void> future;
+	auto task = future.Wrap([]() {});
+	{
+		std::lock_guard<std::mutex> lock(m->m_SimLock);
+		hasFunc = true;
+		func = [this, execute = std::move(execute), &task]() {
+			execute(m->m_ComponentManager.GetScriptInterface());
+			task();
+		};
+	}
+	future.Wait();
+	printf("ExecuteInScriptContext\n");
+}
+
 void CSimulation2::PreInitGame()
 {
+	printf("PreInitGame\n");
+	/*
 	ScriptRequest rq(GetScriptInterface());
 	JS::RootedValue global(rq.cx, rq.globalValue());
 	ScriptFunction::CallVoid(rq, global, "PreInitGame");
+	 */
 }
 
 void CSimulation2::InitGame()
 {
+	printf("InitGame\n");
+	/*
 	ScriptRequest rq(GetScriptInterface());
 	JS::RootedValue global(rq.cx, rq.globalValue());
 
@@ -744,16 +861,20 @@ void CSimulation2::InitGame()
 	Script::GetProperty(rq, tmpInitAttributes, "settings", &settings);
 
 	ScriptFunction::CallVoid(rq, global, "InitGame", settings);
+	 */
 }
 
 void CSimulation2::Update(int turnLength)
 {
-	std::vector<SimulationCommand> commands;
-	m->Update(turnLength, commands);
+	printf("Update\n");
+	//std::vector<SimulationCommand> commands;
+	//m->Update(turnLength, commands);
 }
 
 void CSimulation2::Update(int turnLength, const std::vector<SimulationCommand>& commands)
 {
+	printf("Update2\n");
+	std::this_thread::sleep_for(std::chrono::milliseconds(250));
 	m->Update(turnLength, commands);
 }
 
@@ -768,8 +889,8 @@ void CSimulation2::RenderSubmit(SceneCollector& collector, const CFrustum& frust
 	PROFILE3("sim submit");
 
 	GetSimContext().GetUnitManager().RenderSubmit(collector, frustum, culling);
-	//CMessageRenderSubmit msg(collector, frustum, culling);
-	//m->m_ComponentManager.BroadcastMessage(msg);
+//	CMessageRenderSubmit msg(collector, frustum, culling);
+//	m->m_ComponentManager.BroadcastMessage(msg);
 }
 
 float CSimulation2::GetLastFrameOffset() const
@@ -779,27 +900,42 @@ float CSimulation2::GetLastFrameOffset() const
 
 bool CSimulation2::LoadScripts(const VfsPath& path)
 {
-	return m->LoadScripts(m->m_ComponentManager, &m->m_LoadedScripts, path);
+	printf("LoadScripts\n");
+	return true;
+	//return m->LoadScripts(m->m_ComponentManager, &m->m_LoadedScripts, path);
 }
 
 bool CSimulation2::LoadDefaultScripts()
 {
-	return m->LoadDefaultScripts(m->m_ComponentManager, &m->m_LoadedScripts);
+	printf("LoadDefaultScripts\n");
+	bool test;
+	ExecuteInScriptContext([&] (const ScriptInterface &) {
+		test = m->LoadDefaultScripts(m->m_ComponentManager, &m->m_LoadedScripts);
+	});
+	return test;
 }
 
 void CSimulation2::SetStartupScript(const std::string& code)
 {
-	m->m_StartupScript = code;
+	printf("SetStartupScript\n");
+	//m->m_StartupScript = code;
 }
 
 const std::string& CSimulation2::GetStartupScript()
 {
-	return m->m_StartupScript;
+	return "";
+	//return m->m_StartupScript;
 }
 
-void CSimulation2::SetInitAttributes(JS::HandleValue attribs)
+void CSimulation2::SetInitAttributes(const Script::StructuredClone& attribs)
 {
-	m->m_InitAttributes = attribs;
+	ExecuteInScriptContext([&](const ScriptInterface& si) {
+		ScriptRequest rq(si);
+		JS::RootedValue ret(rq.cx);
+		Script::ReadStructuredClone(rq, attribs, &ret);
+		m->m_InitAttributes = ret;
+	});
+	printf("SetInitAttributes\n");	//
 }
 
 JS::Value CSimulation2::GetInitAttributes()
@@ -809,41 +945,53 @@ JS::Value CSimulation2::GetInitAttributes()
 
 void CSimulation2::GetInitAttributes(JS::MutableHandleValue ret)
 {
-	ret.set(m->m_InitAttributes);
+	//ret.set(m->m_InitAttributes);
 }
 
 void CSimulation2::SetMapSettings(const std::string& settings)
 {
-	Script::ParseJSON(ScriptRequest(m->m_ComponentManager.GetScriptInterface()), settings, &m->m_MapSettings);
+	printf("SetMapSettings\n");
+	//Script::ParseJSON(ScriptRequest(m->m_ComponentManager.GetScriptInterface()), settings, &m->m_MapSettings);
 }
 
 void CSimulation2::SetMapSettings(JS::HandleValue settings)
 {
-	m->m_MapSettings = settings;
+	printf("SetMapSettings2\n");
+	ExecuteInScriptContext([&](const ScriptInterface& si) {
+		m->m_MapSettings = settings;
 
-	m->InitRNGSeedSimulation();
-	m->InitRNGSeedAI();
+		m->InitRNGSeedSimulation();
+		m->InitRNGSeedAI();
+	});
 }
 
 std::string CSimulation2::GetMapSettingsString()
 {
-	return Script::StringifyJSON(ScriptRequest(m->m_ComponentManager.GetScriptInterface()), &m->m_MapSettings);
+	printf("GetMapSettingsString\n");
+	return "";
+	//return Script::StringifyJSON(ScriptRequest(m->m_ComponentManager.GetScriptInterface()), &m->m_MapSettings);
 }
 
 void CSimulation2::GetMapSettings(JS::MutableHandleValue ret)
 {
-	ret.set(m->m_MapSettings);
+	printf("GetMapSettings\n");
+	//ret.set(m->m_MapSettings);
 }
 
 void CSimulation2::LoadPlayerSettings(bool newPlayers)
 {
-	ScriptRequest rq(GetScriptInterface());
-	JS::RootedValue global(rq.cx, rq.globalValue());
-	ScriptFunction::CallVoid(rq, global, "LoadPlayerSettings", m->m_MapSettings, newPlayers);
+	printf("LoadPlayerSettings\n");
+	ExecuteInScriptContext([&](const ScriptInterface& si) {
+		ScriptRequest rq(si);
+		JS::RootedValue global(rq.cx, rq.globalValue());
+		ScriptFunction::CallVoid(rq, global, "LoadPlayerSettings", m->m_MapSettings, newPlayers);
+	});
 }
 
 void CSimulation2::LoadMapSettings()
 {
+	printf("LoadMapSettings\n");
+	/*
 	ScriptRequest rq(GetScriptInterface());
 
 	JS::RootedValue global(rq.cx, rq.globalValue());
@@ -859,26 +1007,38 @@ void CSimulation2::LoadMapSettings()
 
 	// Load the trigger scripts after we have loaded the simulation and the map.
 	m->LoadTriggerScripts(m->m_ComponentManager, m->m_MapSettings, &m->m_LoadedScripts);
+	 */
 }
 
 int CSimulation2::ProgressiveLoad()
 {
-	return m->ProgressiveLoad();
+	printf("ProgressiveLoad\n");
+	int ret;
+	ExecuteInScriptContext([&](const ScriptInterface& si) {
+		ret = m->ProgressiveLoad();
+	});
+	return ret;
+	//return m->ProgressiveLoad();
 }
 
 Status CSimulation2::ReloadChangedFile(const VfsPath& path)
 {
-	return m->ReloadChangedFile(path);
+	return INFO::OK;
+	//return m->ReloadChangedFile(path);
 }
 
 void CSimulation2::ResetState(bool skipScriptedComponents, bool skipAI)
 {
+	printf("ResetState\n");
+	//ExecuteInScriptContext([&](const ScriptInterface& si) {
 	m->ResetState(skipScriptedComponents, skipAI);
+	//});
 }
 
 bool CSimulation2::ComputeStateHash(std::string& outHash, bool quick)
 {
-	return m->m_ComponentManager.ComputeStateHash(outHash, quick);
+	return true;
+	//return m->m_ComponentManager.ComputeStateHash(outHash, quick);
 }
 
 bool CSimulation2::DumpDebugState(std::ostream& stream)
@@ -983,6 +1143,8 @@ std::string CSimulation2::GetMapSizes()
 
 std::string CSimulation2::GetAIData()
 {
+	return "";
+	/*
 	const ScriptInterface& scriptInterface = GetScriptInterface();
 	ScriptRequest rq(scriptInterface);
 	JS::RootedValue aiData(rq.cx, ICmpAIManager::GetAIs(scriptInterface));
@@ -994,4 +1156,5 @@ std::string CSimulation2::GetAIData()
 		return std::string();
 
 	return Script::StringifyJSON(rq, &ais);
+	 */
 }

@@ -340,6 +340,7 @@ void Interface::ApplyMessage(const GameMessage& msg)
 				EndGame();
 
 			g_Game = new CGame(m_ScenarioConfig.saveReplay);
+			/*
 			ScriptInterface& scriptInterface = g_Game->GetSimulation2()->GetScriptInterface();
 			ScriptRequest rq(scriptInterface);
 			JS::RootedValue attrs(rq.cx);
@@ -369,6 +370,8 @@ void Interface::ApplyMessage(const GameMessage& msg)
 				g_GUI->SwitchPage(L"page_loading.xml", &scriptInterface, initData);
 				m_NeedsGameState = true;
 			}
+
+			 */
 			break;
 		}
 
@@ -381,6 +384,7 @@ void Interface::ApplyMessage(const GameMessage& msg)
 				m_MsgLock.unlock();
 				return;
 			}
+			/*
 			const ScriptInterface& scriptInterface = g_Game->GetSimulation2()->GetScriptInterface();
 			CLocalTurnManager* turnMgr = static_cast<CLocalTurnManager*>(g_Game->GetTurnManager());
 
@@ -405,6 +409,7 @@ void Interface::ApplyMessage(const GameMessage& msg)
 			m_ReturnValue = GetGameState();
 			m_MsgApplied.notify_one();
 			m_MsgLock.unlock();
+			 */
 			break;
 		}
 		case GameMessageType::Evaluate:
@@ -416,6 +421,7 @@ void Interface::ApplyMessage(const GameMessage& msg)
 				m_MsgLock.unlock();
 				return;
 			}
+			/*
 			const ScriptInterface& scriptInterface = g_Game->GetSimulation2()->GetScriptInterface();
 			ScriptRequest rq(scriptInterface);
 			JS::RootedValue ret(rq.cx);
@@ -423,6 +429,7 @@ void Interface::ApplyMessage(const GameMessage& msg)
 			m_ReturnValue = Script::StringifyJSON(rq, &ret, false);
 			m_MsgApplied.notify_one();
 			m_MsgLock.unlock();
+			 */
 			break;
 		}
 		default:
@@ -432,6 +439,8 @@ void Interface::ApplyMessage(const GameMessage& msg)
 
 std::string Interface::GetGameState() const
 {
+	return "";
+	/*
 	const ScriptInterface& scriptInterface = g_Game->GetSimulation2()->GetScriptInterface();
 	const CSimContext simContext = g_Game->GetSimulation2()->GetSimContext();
 	CmpPtr<ICmpAIInterface> cmpAIInterface(simContext.GetSystemEntity());
@@ -439,6 +448,7 @@ std::string Interface::GetGameState() const
 	JS::RootedValue state(rq.cx);
 	cmpAIInterface->GetFullRepresentation(&state, true);
 	return Script::StringifyJSON(rq, &state, false);
+	 */
 }
 
 bool Interface::IsGameRunning() const

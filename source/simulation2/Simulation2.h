@@ -19,6 +19,7 @@
 #define INCLUDED_SIMULATION2
 
 #include "lib/file/vfs/vfs_path.h"
+#include "scriptinterface/StructuredClone.h"
 #include "simulation2/helpers/SimulationCommand.h"
 #include "simulation2/system/CmpPtr.h"
 #include "simulation2/system/Components.h"
@@ -94,7 +95,7 @@ public:
 	 * Set the attributes identifying the scenario/RMS used to initialise this
 	 * simulation.
 	 */
-	void SetInitAttributes(JS::HandleValue settings);
+	void SetInitAttributes(const Script::StructuredClone& settings);
 
 	/**
 	 * Get the data passed to SetInitAttributes.
@@ -221,7 +222,9 @@ public:
 	const InterfaceListUnordered& GetEntitiesWithInterfaceUnordered(int iid);
 
 	const CSimContext& GetSimContext() const;
-	ScriptInterface& GetScriptInterface() const;
+	//ScriptInterface& GetScriptInterface() const;
+	ScriptInterface& GetScriptInterfaceUnsafe() const;
+	void ExecuteInScriptContext(std::function<void(const ScriptInterface& si)> execute);
 
 	bool ComputeStateHash(std::string& outHash, bool quick);
 	bool DumpDebugState(std::ostream& stream);

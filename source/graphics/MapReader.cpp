@@ -41,6 +41,7 @@
 #include "renderer/SkyManager.h"
 #include "scriptinterface/Object.h"
 #include "scriptinterface/ScriptContext.h"
+#include "scriptinterface/ScriptInterface.h"
 #include "scriptinterface/ScriptRequest.h"
 #include "scriptinterface/JSON.h"
 #include "simulation2/Simulation2.h"
@@ -1280,7 +1281,8 @@ int CMapReader::LoadRMSettings()
 
 int CMapReader::GenerateMap()
 {
-	ScriptRequest rq(pSimulation2->GetScriptInterface());
+	ScriptInterface interface("test", "tatat", g_ScriptContext);
+	ScriptRequest rq(interface);
 
 	if (!m_MapGen)
 	{
@@ -1342,76 +1344,78 @@ int CMapReader::GenerateMap()
 int CMapReader::ParseTerrain()
 {
 	TIMER(L"ParseTerrain");
-	ScriptRequest rq(pSimulation2->GetScriptInterface());
+	pSimulation2->ExecuteInScriptContext([this](const ScriptInterface& scriptInterface) {
+		ScriptRequest rq(scriptInterface);
 
-	// parse terrain from map data
-	//	an error here should stop the loading process
+		// parse terrain from map data
+		//	an error here should stop the loading process
 #define GET_TERRAIN_PROPERTY(val, prop, out)\
 if (!Script::GetProperty(rq, val, #prop, out))\
-		{	LOGERROR("CMapReader::ParseTerrain() failed to get '%s' property", #prop);\
-			throw PSERROR_Game_World_MapLoadFailed("Error parsing terrain data.\nCheck application log for details"); }
+{	LOGERROR("CMapReader::ParseTerrain() failed to get '%s' property", #prop);\
+throw PSERROR_Game_World_MapLoadFailed("Error parsing terrain data.\nCheck application log for details"); }
 
-	u32 size;
-	GET_TERRAIN_PROPERTY(m_MapData, size, size)
+		u32 size;
+		GET_TERRAIN_PROPERTY(m_MapData, size, size)
 
-	m_PatchesPerSide = size / PATCH_SIZE;
+		m_PatchesPerSide = size / PATCH_SIZE;
 
-	// flat heightmap of u16 data
-	GET_TERRAIN_PROPERTY(m_MapData, height, m_Heightmap)
+		// flat heightmap of u16 data
+		GET_TERRAIN_PROPERTY(m_MapData, height, m_Heightmap)
 
-	// load textures
-	std::vector<std::string> textureNames;
-	GET_TERRAIN_PROPERTY(m_MapData, textureNames, textureNames)
-	num_terrain_tex = textureNames.size();
+		// load textures
+		std::vector<std::string> textureNames;
+		GET_TERRAIN_PROPERTY(m_MapData, textureNames, textureNames)
+		num_terrain_tex = textureNames.size();
 
-	while (cur_terrain_tex < num_terrain_tex)
-	{
-		if (CTerrainTextureManager::IsInitialised())
+		while (cur_terrain_tex < num_terrain_tex)
 		{
-			CTerrainTextureEntry* texentry = g_TexMan.FindTexture(textureNames[cur_terrain_tex]);
-			m_TerrainTextures.push_back(texentry);
+			if (CTerrainTextureManager::IsInitialised())
+			{
+				CTerrainTextureEntry* texentry = g_TexMan.FindTexture(textureNames[cur_terrain_tex]);
+				m_TerrainTextures.push_back(texentry);
+			}
+
+			cur_terrain_tex++;
 		}
 
-		cur_terrain_tex++;
-	}
+		// build tile data
+		m_Tiles.resize(SQR(size));
 
-	// build tile data
-	m_Tiles.resize(SQR(size));
+		JS::RootedValue tileData(rq.cx);
+		GET_TERRAIN_PROPERTY(m_MapData, tileData, &tileData)
 
-	JS::RootedValue tileData(rq.cx);
-	GET_TERRAIN_PROPERTY(m_MapData, tileData, &tileData)
+		// parse tile data object into flat arrays
+		std::vector<u16> tileIndex;
+		std::vector<u16> tilePriority;
+		GET_TERRAIN_PROPERTY(tileData, index, tileIndex);
+		GET_TERRAIN_PROPERTY(tileData, priority, tilePriority);
 
-	// parse tile data object into flat arrays
-	std::vector<u16> tileIndex;
-	std::vector<u16> tilePriority;
-	GET_TERRAIN_PROPERTY(tileData, index, tileIndex);
-	GET_TERRAIN_PROPERTY(tileData, priority, tilePriority);
+		ENSURE(SQR(size) == tileIndex.size() && SQR(size) == tilePriority.size());
 
-	ENSURE(SQR(size) == tileIndex.size() && SQR(size) == tilePriority.size());
-
-	// reorder by patches and store
-	for (size_t x = 0; x < size; ++x)
-	{
-		size_t patchX = x / PATCH_SIZE;
-		size_t offX = x % PATCH_SIZE;
-		for (size_t y = 0; y < size; ++y)
+		// reorder by patches and store
+		for (size_t x = 0; x < size; ++x)
 		{
-			size_t patchY = y / PATCH_SIZE;
-			size_t offY = y % PATCH_SIZE;
+			size_t patchX = x / PATCH_SIZE;
+			size_t offX = x % PATCH_SIZE;
+			for (size_t y = 0; y < size; ++y)
+			{
+				size_t patchY = y / PATCH_SIZE;
+				size_t offY = y % PATCH_SIZE;
 
-			STileDesc tile;
-			tile.m_Tex1Index = tileIndex[y*size + x];
-			tile.m_Tex2Index = 0xFFFF;
-			tile.m_Priority = tilePriority[y*size + x];
+				STileDesc tile;
+				tile.m_Tex1Index = tileIndex[y*size + x];
+				tile.m_Tex2Index = 0xFFFF;
+				tile.m_Priority = tilePriority[y*size + x];
 
-			m_Tiles[(patchY * m_PatchesPerSide + patchX) * SQR(PATCH_SIZE) + (offY * PATCH_SIZE + offX)] = tile;
+				m_Tiles[(patchY * m_PatchesPerSide + patchX) * SQR(PATCH_SIZE) + (offY * PATCH_SIZE + offX)] = tile;
+			}
 		}
-	}
 
-	// reset generator state
-	cur_terrain_tex = 0;
+		// reset generator state
+		cur_terrain_tex = 0;
 
 #undef GET_TERRAIN_PROPERTY
+	});
 
 	return 0;
 }
@@ -1419,63 +1423,65 @@ if (!Script::GetProperty(rq, val, #prop, out))\
 int CMapReader::ParseEntities()
 {
 	TIMER(L"ParseEntities");
-	ScriptRequest rq(pSimulation2->GetScriptInterface());
+	pSimulation2->ExecuteInScriptContext([this](const ScriptInterface& scriptInterface) {
+		ScriptRequest rq(scriptInterface);
 
-	// parse entities from map data
-	std::vector<Entity> entities;
+		// parse entities from map data
+		std::vector<Entity> entities;
 
-	if (!Script::GetProperty(rq, m_MapData, "entities", entities))
-		LOGWARNING("CMapReader::ParseEntities() failed to get 'entities' property");
+		if (!Script::GetProperty(rq, m_MapData, "entities", entities))
+			LOGWARNING("CMapReader::ParseEntities() failed to get 'entities' property");
 
-	CSimulation2& sim = *pSimulation2;
-	CmpPtr<ICmpPlayerManager> cmpPlayerManager(sim, SYSTEM_ENTITY);
+		CSimulation2& sim = *pSimulation2;
+		CmpPtr<ICmpPlayerManager> cmpPlayerManager(sim, SYSTEM_ENTITY);
 
-	size_t entity_idx = 0;
-	size_t num_entities = entities.size();
+		size_t entity_idx = 0;
+		size_t num_entities = entities.size();
 
-	Entity currEnt;
+		Entity currEnt;
 
-	while (entity_idx < num_entities)
-	{
-		// Get current entity struct
-		currEnt = entities[entity_idx];
-
-		entity_id_t ent = pSimulation2->AddEntity(currEnt.templateName, currEnt.entityID);
-		entity_id_t player = cmpPlayerManager->GetPlayerByID(currEnt.playerID);
-		if (ent == INVALID_ENTITY || player == INVALID_ENTITY)
-		{	// Don't add entities with invalid player IDs
-			LOGERROR("Failed to load entity template '%s'", utf8_from_wstring(currEnt.templateName));
-		}
-		else
+		while (entity_idx < num_entities)
 		{
-			CmpPtr<ICmpPosition> cmpPosition(sim, ent);
-			if (cmpPosition)
+			// Get current entity struct
+			currEnt = entities[entity_idx];
+
+			entity_id_t ent = pSimulation2->AddEntity(currEnt.templateName, currEnt.entityID);
+			entity_id_t player = cmpPlayerManager->GetPlayerByID(currEnt.playerID);
+			if (ent == INVALID_ENTITY || player == INVALID_ENTITY)
+			{	// Don't add entities with invalid player IDs
+				LOGERROR("Failed to load entity template '%s'", utf8_from_wstring(currEnt.templateName));
+			}
+			else
 			{
-				cmpPosition->JumpTo(currEnt.position.X * (int)TERRAIN_TILE_SIZE, currEnt.position.Z * (int)TERRAIN_TILE_SIZE);
-				cmpPosition->SetYRotation(currEnt.rotation.Y);
-				// TODO: other parts of the position
+				CmpPtr<ICmpPosition> cmpPosition(sim, ent);
+				if (cmpPosition)
+				{
+					cmpPosition->JumpTo(currEnt.position.X * (int)TERRAIN_TILE_SIZE, currEnt.position.Z * (int)TERRAIN_TILE_SIZE);
+					cmpPosition->SetYRotation(currEnt.rotation.Y);
+					// TODO: other parts of the position
+				}
+
+				CmpPtr<ICmpOwnership> cmpOwnership(sim, ent);
+				if (cmpOwnership)
+					cmpOwnership->SetOwner(currEnt.playerID);
+
+				// Detect and fix collisions between foundation-blocking entities.
+				// This presently serves to copy wall tower control groups to wall
+				// segments, allowing players to expand RMS-generated walls.
+				CmpPtr<ICmpObstruction> cmpObstruction(sim, ent);
+				if (cmpObstruction)
+					cmpObstruction->ResolveFoundationCollisions();
+
+				if (currEnt.playerID == m_PlayerID && (boost::algorithm::ends_with(currEnt.templateName, L"civil_centre") || m_StartingCameraTarget == INVALID_ENTITY))
+				{
+					// Focus on civil centre or first entity owned by player
+					m_StartingCameraTarget = currEnt.entityID;
+				}
 			}
 
-			CmpPtr<ICmpOwnership> cmpOwnership(sim, ent);
-			if (cmpOwnership)
-				cmpOwnership->SetOwner(currEnt.playerID);
-
-			// Detect and fix collisions between foundation-blocking entities.
-			// This presently serves to copy wall tower control groups to wall
-			// segments, allowing players to expand RMS-generated walls.
-			CmpPtr<ICmpObstruction> cmpObstruction(sim, ent);
-			if (cmpObstruction)
-				cmpObstruction->ResolveFoundationCollisions();
-
-			if (currEnt.playerID == m_PlayerID && (boost::algorithm::ends_with(currEnt.templateName, L"civil_centre") || m_StartingCameraTarget == INVALID_ENTITY))
-			{
-				// Focus on civil centre or first entity owned by player
-				m_StartingCameraTarget = currEnt.entityID;
-			}
+			entity_idx++;
 		}
-
-		entity_idx++;
-	}
+	});
 
 	return 0;
 }
@@ -1483,135 +1489,140 @@ int CMapReader::ParseEntities()
 int CMapReader::ParseEnvironment()
 {
 	// parse environment settings from map data
-	ScriptRequest rq(pSimulation2->GetScriptInterface());
+	pSimulation2->ExecuteInScriptContext([this](const ScriptInterface& scriptInterface) {
+		ScriptRequest rq(scriptInterface);
 
-#define GET_ENVIRONMENT_PROPERTY(val, prop, out)\
-	if (!Script::GetProperty(rq, val, #prop, out))\
-		LOGWARNING("CMapReader::ParseEnvironment() failed to get '%s' property", #prop);
+	#define GET_ENVIRONMENT_PROPERTY(val, prop, out)\
+		if (!Script::GetProperty(rq, val, #prop, out))\
+			LOGWARNING("CMapReader::ParseEnvironment() failed to get '%s' property", #prop);
 
-	JS::RootedValue envObj(rq.cx);
-	GET_ENVIRONMENT_PROPERTY(m_MapData, Environment, &envObj)
+		JS::RootedValue envObj(rq.cx);
+		GET_ENVIRONMENT_PROPERTY(m_MapData, Environment, &envObj)
 
-	if (envObj.isUndefined())
-	{
-		LOGWARNING("CMapReader::ParseEnvironment(): Environment settings not found");
-		return 0;
-	}
+		if (envObj.isUndefined())
+		{
+			LOGWARNING("CMapReader::ParseEnvironment(): Environment settings not found");
+			return;
+		}
 
-	if (pPostproc)
-		pPostproc->SetPostEffect(L"default");
+		if (pPostproc)
+			pPostproc->SetPostEffect(L"default");
 
-	std::wstring skySet;
-	GET_ENVIRONMENT_PROPERTY(envObj, SkySet, skySet)
-	if (pSkyMan)
-		pSkyMan->SetSkySet(skySet);
+		std::wstring skySet;
+		GET_ENVIRONMENT_PROPERTY(envObj, SkySet, skySet)
+		if (pSkyMan)
+			pSkyMan->SetSkySet(skySet);
 
-	CColor sunColor;
-	GET_ENVIRONMENT_PROPERTY(envObj, SunColor, sunColor)
-	m_LightEnv.m_SunColor = RGBColor(sunColor.r, sunColor.g, sunColor.b);
+		CColor sunColor;
+		GET_ENVIRONMENT_PROPERTY(envObj, SunColor, sunColor)
+		m_LightEnv.m_SunColor = RGBColor(sunColor.r, sunColor.g, sunColor.b);
 
-	GET_ENVIRONMENT_PROPERTY(envObj, SunElevation, m_LightEnv.m_Elevation)
-	GET_ENVIRONMENT_PROPERTY(envObj, SunRotation, m_LightEnv.m_Rotation)
+		GET_ENVIRONMENT_PROPERTY(envObj, SunElevation, m_LightEnv.m_Elevation)
+		GET_ENVIRONMENT_PROPERTY(envObj, SunRotation, m_LightEnv.m_Rotation)
 
-	CColor ambientColor;
-	GET_ENVIRONMENT_PROPERTY(envObj, AmbientColor, ambientColor)
-	m_LightEnv.m_AmbientColor = RGBColor(ambientColor.r, ambientColor.g, ambientColor.b);
+		CColor ambientColor;
+		GET_ENVIRONMENT_PROPERTY(envObj, AmbientColor, ambientColor)
+		m_LightEnv.m_AmbientColor = RGBColor(ambientColor.r, ambientColor.g, ambientColor.b);
 
-	// Water properties
-	JS::RootedValue waterObj(rq.cx);
-	GET_ENVIRONMENT_PROPERTY(envObj, Water, &waterObj)
+		// Water properties
+		JS::RootedValue waterObj(rq.cx);
+		GET_ENVIRONMENT_PROPERTY(envObj, Water, &waterObj)
 
-	JS::RootedValue waterBodyObj(rq.cx);
-	GET_ENVIRONMENT_PROPERTY(waterObj, WaterBody, &waterBodyObj)
+		JS::RootedValue waterBodyObj(rq.cx);
+		GET_ENVIRONMENT_PROPERTY(waterObj, WaterBody, &waterBodyObj)
 
-	// Water level - necessary
-	float waterHeight;
-	GET_ENVIRONMENT_PROPERTY(waterBodyObj, Height, waterHeight)
+		// Water level - necessary
+		float waterHeight;
+		GET_ENVIRONMENT_PROPERTY(waterBodyObj, Height, waterHeight)
 
-	CmpPtr<ICmpWaterManager> cmpWaterManager(*pSimulation2, SYSTEM_ENTITY);
-	ENSURE(cmpWaterManager);
-	cmpWaterManager->SetWaterLevel(entity_pos_t::FromFloat(waterHeight));
+		CmpPtr<ICmpWaterManager> cmpWaterManager(*pSimulation2, SYSTEM_ENTITY);
+		ENSURE(cmpWaterManager);
+		cmpWaterManager->SetWaterLevel(entity_pos_t::FromFloat(waterHeight));
 
-	// If we have graphics, get rest of settings
-	if (pWater)
-	{
-		pWater->SetWaterHeight(waterHeight);
+		// If we have graphics, get rest of settings
+		if (pWater)
+		{
+			pWater->SetWaterHeight(waterHeight);
 
-		GET_ENVIRONMENT_PROPERTY(waterBodyObj, Type, pWater->m_WaterType)
-		if (pWater->m_WaterType == L"default")
-			pWater->m_WaterType = L"ocean";
-		GET_ENVIRONMENT_PROPERTY(waterBodyObj, Color, pWater->m_WaterColor)
-		GET_ENVIRONMENT_PROPERTY(waterBodyObj, Tint, pWater->m_WaterTint)
-		GET_ENVIRONMENT_PROPERTY(waterBodyObj, Waviness, pWater->m_Waviness)
-		GET_ENVIRONMENT_PROPERTY(waterBodyObj, Murkiness, pWater->m_Murkiness)
-		GET_ENVIRONMENT_PROPERTY(waterBodyObj, WindAngle, pWater->m_WindAngle)
-	}
+			GET_ENVIRONMENT_PROPERTY(waterBodyObj, Type, pWater->m_WaterType)
+			if (pWater->m_WaterType == L"default")
+				pWater->m_WaterType = L"ocean";
+			GET_ENVIRONMENT_PROPERTY(waterBodyObj, Color, pWater->m_WaterColor)
+			GET_ENVIRONMENT_PROPERTY(waterBodyObj, Tint, pWater->m_WaterTint)
+			GET_ENVIRONMENT_PROPERTY(waterBodyObj, Waviness, pWater->m_Waviness)
+			GET_ENVIRONMENT_PROPERTY(waterBodyObj, Murkiness, pWater->m_Murkiness)
+			GET_ENVIRONMENT_PROPERTY(waterBodyObj, WindAngle, pWater->m_WindAngle)
+		}
 
-	JS::RootedValue fogObject(rq.cx);
-	GET_ENVIRONMENT_PROPERTY(envObj, Fog, &fogObject);
+		JS::RootedValue fogObject(rq.cx);
+		GET_ENVIRONMENT_PROPERTY(envObj, Fog, &fogObject);
 
-	GET_ENVIRONMENT_PROPERTY(fogObject, FogFactor, m_LightEnv.m_FogFactor);
-	GET_ENVIRONMENT_PROPERTY(fogObject, FogThickness, m_LightEnv.m_FogMax);
+		GET_ENVIRONMENT_PROPERTY(fogObject, FogFactor, m_LightEnv.m_FogFactor);
+		GET_ENVIRONMENT_PROPERTY(fogObject, FogThickness, m_LightEnv.m_FogMax);
 
-	CColor fogColor;
-	GET_ENVIRONMENT_PROPERTY(fogObject, FogColor, fogColor);
-	m_LightEnv.m_FogColor = RGBColor(fogColor.r, fogColor.g, fogColor.b);
+		CColor fogColor;
+		GET_ENVIRONMENT_PROPERTY(fogObject, FogColor, fogColor);
+		m_LightEnv.m_FogColor = RGBColor(fogColor.r, fogColor.g, fogColor.b);
 
-	JS::RootedValue postprocObject(rq.cx);
-	GET_ENVIRONMENT_PROPERTY(envObj, Postproc, &postprocObject);
+		JS::RootedValue postprocObject(rq.cx);
+		GET_ENVIRONMENT_PROPERTY(envObj, Postproc, &postprocObject);
 
-	std::wstring postProcEffect;
-	GET_ENVIRONMENT_PROPERTY(postprocObject, PostprocEffect, postProcEffect);
+		std::wstring postProcEffect;
+		GET_ENVIRONMENT_PROPERTY(postprocObject, PostprocEffect, postProcEffect);
 
-	if (pPostproc)
-		pPostproc->SetPostEffect(postProcEffect);
+		if (pPostproc)
+			pPostproc->SetPostEffect(postProcEffect);
 
-	GET_ENVIRONMENT_PROPERTY(postprocObject, Brightness, m_LightEnv.m_Brightness);
-	GET_ENVIRONMENT_PROPERTY(postprocObject, Contrast, m_LightEnv.m_Contrast);
-	GET_ENVIRONMENT_PROPERTY(postprocObject, Saturation, m_LightEnv.m_Saturation);
-	GET_ENVIRONMENT_PROPERTY(postprocObject, Bloom, m_LightEnv.m_Bloom);
+		GET_ENVIRONMENT_PROPERTY(postprocObject, Brightness, m_LightEnv.m_Brightness);
+		GET_ENVIRONMENT_PROPERTY(postprocObject, Contrast, m_LightEnv.m_Contrast);
+		GET_ENVIRONMENT_PROPERTY(postprocObject, Saturation, m_LightEnv.m_Saturation);
+		GET_ENVIRONMENT_PROPERTY(postprocObject, Bloom, m_LightEnv.m_Bloom);
 
-	m_LightEnv.CalculateSunDirection();
+		m_LightEnv.CalculateSunDirection();
 
-#undef GET_ENVIRONMENT_PROPERTY
+	#undef GET_ENVIRONMENT_PROPERTY
+
+	});
 
 	return 0;
 }
 
 int CMapReader::ParseCamera()
 {
-	ScriptRequest rq(pSimulation2->GetScriptInterface());
+	pSimulation2->ExecuteInScriptContext([this](const ScriptInterface& scriptInterface) {
+		ScriptRequest rq(scriptInterface);
 
-	// parse camera settings from map data
-	// defaults if we don't find player starting camera
-	float declination = DEGTORAD(30.f), rotation = DEGTORAD(-45.f);
-	CVector3D translation = CVector3D(100, 150, -100);
+		// parse camera settings from map data
+		// defaults if we don't find player starting camera
+		float declination = DEGTORAD(30.f), rotation = DEGTORAD(-45.f);
+		CVector3D translation = CVector3D(100, 150, -100);
 
-#define GET_CAMERA_PROPERTY(val, prop, out)\
-	if (!Script::GetProperty(rq, val, #prop, out))\
-		LOGWARNING("CMapReader::ParseCamera() failed to get '%s' property", #prop);
+	#define GET_CAMERA_PROPERTY(val, prop, out)\
+		if (!Script::GetProperty(rq, val, #prop, out))\
+			LOGWARNING("CMapReader::ParseCamera() failed to get '%s' property", #prop);
 
-	JS::RootedValue cameraObj(rq.cx);
-	GET_CAMERA_PROPERTY(m_MapData, Camera, &cameraObj)
+		JS::RootedValue cameraObj(rq.cx);
+		GET_CAMERA_PROPERTY(m_MapData, Camera, &cameraObj)
 
-	if (!cameraObj.isUndefined())
-	{	// If camera property exists, read values
-		CFixedVector3D pos;
-		GET_CAMERA_PROPERTY(cameraObj, Position, pos)
-		translation = pos;
+		if (!cameraObj.isUndefined())
+		{	// If camera property exists, read values
+			CFixedVector3D pos;
+			GET_CAMERA_PROPERTY(cameraObj, Position, pos)
+			translation = pos;
 
-		GET_CAMERA_PROPERTY(cameraObj, Rotation, rotation)
-		GET_CAMERA_PROPERTY(cameraObj, Declination, declination)
-	}
-#undef GET_CAMERA_PROPERTY
+			GET_CAMERA_PROPERTY(cameraObj, Rotation, rotation)
+			GET_CAMERA_PROPERTY(cameraObj, Declination, declination)
+		}
+	#undef GET_CAMERA_PROPERTY
 
-	if (pGameView)
-	{
-		pGameView->GetCamera()->m_Orientation.SetXRotation(declination);
-		pGameView->GetCamera()->m_Orientation.RotateY(rotation);
-		pGameView->GetCamera()->m_Orientation.Translate(translation);
-		pGameView->GetCamera()->UpdateFrustum();
-	}
+		if (pGameView)
+		{
+			pGameView->GetCamera()->m_Orientation.SetXRotation(declination);
+			pGameView->GetCamera()->m_Orientation.RotateY(rotation);
+			pGameView->GetCamera()->m_Orientation.Translate(translation);
+			pGameView->GetCamera()->UpdateFrustum();
+		}
+	});
 
 	return 0;
 }

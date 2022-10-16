@@ -22,7 +22,7 @@
 #include "ps/CStr.h"
 #include "ps/Errors.h"
 #include "lib/os_path.h"
-#include "scriptinterface/ScriptTypes.h"
+#include "scriptinterface/StructuredClone.h"
 #include "simulation2/helpers/Player.h"
 
 #include <vector>
@@ -90,7 +90,7 @@ public:
 	 **/
 	bool m_Paused;
 
-	void StartGame(JS::MutableHandleValue attribs, const std::string& savedState);
+	void StartGame(const Script::StructuredClone& attribs, const std::string& savedState);
 	PSRETURN ReallyStartGame();
 
 	bool StartVisualReplay(const OsPath& replayPath);
@@ -206,7 +206,7 @@ public:
 private:
 	static const CStr EventNameSimulationUpdate;
 
-	void RegisterInit(const JS::HandleValue attribs, const std::string& savedState);
+	void RegisterInit(const Script::StructuredClone& attribs, const std::string& savedState);
 	IReplayLogger* m_ReplayLogger;
 
 	std::vector<CColor> m_PlayerColors;

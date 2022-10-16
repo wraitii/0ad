@@ -423,7 +423,7 @@ std::string CNetClient::TestReadGuiMessages()
 
 const ScriptInterface& CNetClient::GetScriptInterface()
 {
-	return m_Game->GetSimulation2()->GetScriptInterface();
+	return *(ScriptInterface*)((void*)this);
 }
 
 void CNetClient::PostPlayerAssignmentsToScript()
@@ -809,6 +809,7 @@ bool CNetClient::OnGameStart(void* context, CFsmEvent* event)
 			*client->m_Game->GetSimulation2(), *client, client->m_HostID, client->m_Game->GetReplayLogger());
 
 	// Parse init attributes.
+	/*
 	const ScriptInterface& scriptInterface = client->m_Game->GetSimulation2()->GetScriptInterface();
 	ScriptRequest rq(scriptInterface);
 	JS::RootedValue initAttribs(rq.cx);
@@ -819,7 +820,7 @@ bool CNetClient::OnGameStart(void* context, CFsmEvent* event)
 
 	client->PushGuiMessage("type", "start",
 						   "initAttributes", initAttribs);
-
+	 */
 	return true;
 }
 

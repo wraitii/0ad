@@ -81,9 +81,9 @@ CGame::CGame(bool replayLog):
 	m_ReplayStream(NULL)
 {
 	// TODO: should use CDummyReplayLogger unless activated by cmd-line arg, perhaps?
-	if (replayLog)
+	/*if (replayLog)
 		m_ReplayLogger = new CReplayLogger(m_Simulation2->GetScriptInterface());
-	else
+	else*/
 		m_ReplayLogger = new CDummyReplayLogger();
 
 	// Need to set the CObjectManager references after various objects have
@@ -192,13 +192,14 @@ bool CGame::StartVisualReplay(const OsPath& replayPath)
 	std::string line;
 	std::getline(*m_ReplayStream, line);
 
+	/*
 	const ScriptInterface& scriptInterface = m_Simulation2->GetScriptInterface();
 	ScriptRequest rq(scriptInterface);
 
 	JS::RootedValue attribs(rq.cx);
 	Script::ParseJSON(rq, line, &attribs);
 	StartGame(&attribs, "");
-
+	*/
 	return true;
 }
 
@@ -207,27 +208,31 @@ bool CGame::StartVisualReplay(const OsPath& replayPath)
  * Makes calls to initialize the game view, world, and simulation objects.
  * Calls are made to facilitate progress reporting of the initialization.
  **/
-void CGame::RegisterInit(const JS::HandleValue attribs, const std::string& savedState)
+void CGame::RegisterInit(const Script::StructuredClone& attribs, const std::string& savedState)
 {
-	const ScriptInterface& scriptInterface = m_Simulation2->GetScriptInterface();
-	ScriptRequest rq(scriptInterface);
-
 	m_InitialSavedState = savedState;
 	m_IsSavedGame = !savedState.empty();
 
 	m_Simulation2->SetInitAttributes(attribs);
 
 	std::string mapType;
-	Script::GetProperty(rq, attribs, "mapType", mapType);
 
-	float speed;
-	if (Script::HasProperty(rq, attribs, "gameSpeed"))
-	{
-		if (Script::GetProperty(rq, attribs, "gameSpeed", speed))
-			SetSimRate(speed);
-		else
-			LOGERROR("GameSpeed could not be parsed.");
-	}
+	m_Simulation2->ExecuteInScriptContext([&](const ScriptInterface& scriptInterface) {
+		ScriptRequest rq(scriptInterface);
+
+		JS::RootedValue att(rq.cx);
+		Script::ReadStructuredClone(rq, attribs, &att);
+		Script::GetProperty(rq, att, "mapType", mapType);
+
+		float speed;
+		if (Script::HasProperty(rq, att, "gameSpeed"))
+		{
+			if (Script::GetProperty(rq, att, "gameSpeed", speed))
+				SetSimRate(speed);
+			else
+				LOGERROR("GameSpeed could not be parsed.");
+		}
+	});
 
 	LDR_BeginRegistering();
 
@@ -241,26 +246,32 @@ void CGame::RegisterInit(const JS::HandleValue attribs, const std::string& saved
 	if (m_GameView)
 		m_GameView->RegisterInit();
 
-	if (mapType == "random")
-	{
-		// Load random map attributes
-		std::wstring scriptFile;
-		JS::RootedValue settings(rq.cx);
+	m_Simulation2->ExecuteInScriptContext([&](const ScriptInterface& scriptInterface) {
+		ScriptRequest rq(scriptInterface);
+		JS::RootedValue att(rq.cx);
+		Script::ReadStructuredClone(rq, attribs, &att);
 
-		Script::GetProperty(rq, attribs, "script", scriptFile);
-		Script::GetProperty(rq, attribs, "settings", &settings);
+		if (mapType == "random")
+		{
+			// Load random map attributes
+			std::wstring scriptFile;
+			JS::RootedValue settings(rq.cx);
 
-		m_World->RegisterInitRMS(scriptFile, *scriptInterface.GetContext(), settings, m_PlayerID);
-	}
-	else
-	{
-		std::wstring mapFile;
-		JS::RootedValue settings(rq.cx);
-		Script::GetProperty(rq, attribs, "map", mapFile);
-		Script::GetProperty(rq, attribs, "settings", &settings);
+			Script::GetProperty(rq, att, "script", scriptFile);
+			Script::GetProperty(rq, att, "settings", &settings);
 
-		m_World->RegisterInit(mapFile, *scriptInterface.GetContext(), settings, m_PlayerID);
-	}
+			m_World->RegisterInitRMS(scriptFile, *scriptInterface.GetContext(), settings, m_PlayerID);
+		}
+		else
+		{
+			std::wstring mapFile;
+			JS::RootedValue settings(rq.cx);
+			Script::GetProperty(rq, att, "map", mapFile);
+			Script::GetProperty(rq, att, "settings", &settings);
+
+			m_World->RegisterInit(mapFile, *scriptInterface.GetContext(), settings, m_PlayerID);
+		}
+	});
 
 	if (m_IsSavedGame)
 		RegMemFun(this, &CGame::LoadInitialState, L"Loading game", 1000);
@@ -368,10 +379,10 @@ void CGame::SetViewedPlayerID(player_id_t playerID)
 	m_ViewedPlayerID = playerID;
 }
 
-void CGame::StartGame(JS::MutableHandleValue attribs, const std::string& savedState)
+void CGame::StartGame(const Script::StructuredClone& attribs, const std::string& savedState)
 {
-	if (m_ReplayLogger)
-		m_ReplayLogger->StartGame(attribs);
+	//if (m_ReplayLogger)
+		//m_ReplayLogger->StartGame(attribs);
 
 	RegisterInit(attribs, savedState);
 }

@@ -1221,6 +1221,8 @@ bool Autostart(const CmdLineArgs& args)
 
 bool AutostartVisualReplay(const std::string& replayFile)
 {
+	return false;
+	/*
 	if (!FileExists(OsPath(replayFile)))
 		return false;
 
@@ -1249,6 +1251,7 @@ bool AutostartVisualReplay(const std::string& replayFile)
 	InitPs(true, L"page_loading.xml", &scriptInterface, sessionInitData);
 
 	return true;
+	 */
 }
 
 void CancelLoad(const CStrW& message)

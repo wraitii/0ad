@@ -43,8 +43,8 @@ CTurnManager::CTurnManager(CSimulation2& simulation, u32 defaultTurnLength, u32 
 	m_PlayerId(-1), m_ClientId(clientId), m_DeltaSimTime(0), m_Replay(replay),
 	m_FinalTurn(std::numeric_limits<u32>::max()), m_TimeWarpNumTurns(0)
 {
-	ScriptRequest rq(m_Simulation2.GetScriptInterface());
-	m_QuickSaveMetadata.init(rq.cx);
+	//ScriptRequest rq(m_Simulation2.GetScriptInterface());
+	//m_QuickSaveMetadata.init(rq.cx);
 	m_QueuedCommands.resize(1);
 }
 
@@ -225,14 +225,16 @@ void CTurnManager::AddCommand(int client, int player, JS::HandleValue data, u32 
 		return;
 	}
 
-	ScriptRequest rq(m_Simulation2.GetScriptInterface());
+	m_Simulation2.ExecuteInScriptContext([&](const ScriptInterface& scriptInterface) {
+		ScriptRequest rq(scriptInterface);
 
-	Script::FreezeObject(rq, data, true);
+		Script::FreezeObject(rq, data, true);
 
-	size_t command_in_turns = turn - (m_CurrentTurn+1);
-	if (m_QueuedCommands.size() <= command_in_turns)
-		m_QueuedCommands.resize(command_in_turns+1);
-	m_QueuedCommands[turn - (m_CurrentTurn+1)][client].emplace_back(player, rq.cx, data);
+		size_t command_in_turns = turn - (m_CurrentTurn+1);
+		if (m_QueuedCommands.size() <= command_in_turns)
+			m_QueuedCommands.resize(command_in_turns+1);
+		m_QueuedCommands[turn - (m_CurrentTurn+1)][client].emplace_back(player, rq.cx, data);
+	});
 }
 
 void CTurnManager::FinishedAllCommands(u32 turn, u32 turnLength)
@@ -284,6 +286,8 @@ void CTurnManager::RewindTimeWarp()
 
 void CTurnManager::QuickSave(JS::HandleValue GUIMetadata)
 {
+	return;
+	/*
 	TIMER(L"QuickSave");
 
 	std::stringstream stream;
@@ -302,10 +306,13 @@ void CTurnManager::QuickSave(JS::HandleValue GUIMetadata)
 	Script::FreezeObject(rq, m_QuickSaveMetadata, true);
 
 	LOGMESSAGERENDER("Quicksaved game");
+	 */
 }
 
 void CTurnManager::QuickLoad()
 {
+	return;
+	/*
 	TIMER(L"QuickLoad");
 
 	if (m_QuickSaveState.empty())
@@ -337,4 +344,5 @@ void CTurnManager::QuickLoad()
 	g_GUI->SendEventToAll(EventNameSavegameLoaded, paramData);
 
 	LOGMESSAGERENDER("Quickloaded game");
+	 */
 }

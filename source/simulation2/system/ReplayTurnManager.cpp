@@ -89,6 +89,7 @@ void CReplayTurnManager::NotifyFinishedUpdate(u32 turn)
 	m_HasSyncError = true;
 	LOGERROR("Replay out of sync on turn %d", turn);
 
+	/*
 	const ScriptInterface& scriptInterface = m_Simulation2.GetScriptInterface();
 	ScriptRequest rq(scriptInterface);
 
@@ -105,10 +106,12 @@ void CReplayTurnManager::NotifyFinishedUpdate(u32 turn)
 	ignore_result(paramData.append(expectedHashVal));
 
 	g_GUI->SendEventToAll(EventNameReplayOutOfSync, paramData);
+	 */
 }
 
 void CReplayTurnManager::DoTurn(u32 turn)
 {
+	/*
 	debug_printf("Executing turn %u of %u\n", turn, m_FinalTurn);
 
 	m_TurnLength = m_ReplayTurnLengths[turn];
@@ -125,4 +128,5 @@ void CReplayTurnManager::DoTurn(u32 turn)
 
 	if (turn == m_FinalTurn)
 		g_GUI->SendEventToAll(EventNameReplayFinished);
+	 */
 }

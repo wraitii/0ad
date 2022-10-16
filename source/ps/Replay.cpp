@@ -118,6 +118,7 @@ void CReplayLogger::SaveMetadata(const CSimulation2& simulation)
 		return;
 	}
 
+	/*
 	ScriptInterface& scriptInterface = simulation.GetScriptInterface();
 	ScriptRequest rq(scriptInterface);
 
@@ -137,6 +138,7 @@ void CReplayLogger::SaveMetadata(const CSimulation2& simulation)
 	}
 	else
 		debug_printf("FILES| Failed to write replay metadata to '%s'\n", fileName.string8().c_str());
+	*/
 
 }
 
@@ -189,6 +191,7 @@ void CheckReplayMods(const std::vector<Mod::ModData>& replayMods)
 
 void CReplayPlayer::Replay(const bool serializationtest, const int rejointestturn, const bool ooslog, const bool testHashFull, const bool testHashQuick)
 {
+	/*
 	ENSURE(m_Stream);
 
 	new CProfileViewer;
@@ -329,6 +332,7 @@ void CReplayPlayer::Replay(const bool serializationtest, const int rejointesttur
 	delete &g_Profiler;
 	delete &g_ProfileViewer;
 	SAFE_DELETE(g_ScriptStatsTable);
+	 */
 }
 
 void CReplayPlayer::TestHash(const std::string& hashType, const std::string& replayHash, const bool testHashFull, const bool testHashQuick)

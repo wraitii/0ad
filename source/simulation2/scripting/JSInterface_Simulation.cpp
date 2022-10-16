@@ -54,12 +54,12 @@ JS::Value GuiInterfaceCall(const ScriptInterface& scriptInterface, const std::ws
 	if (!cmpGuiInterface)
 		return JS::UndefinedValue();
 
-	ScriptRequest rqSim(sim->GetScriptInterface());
-	JS::RootedValue arg(rqSim.cx, Script::CloneValueFromOtherCompartment(sim->GetScriptInterface(), scriptInterface, data));
+	ScriptRequest rqSim(sim->GetScriptInterfaceUnsafe());
+	JS::RootedValue arg(rqSim.cx, Script::CloneValueFromOtherCompartment(sim->GetScriptInterfaceUnsafe(), scriptInterface, data));
 	JS::RootedValue ret(rqSim.cx);
 	cmpGuiInterface->ScriptCall(g_Game->GetViewedPlayerID(), name, arg, &ret);
 
-	return Script::CloneValueFromOtherCompartment(scriptInterface, sim->GetScriptInterface(), ret);
+	return Script::CloneValueFromOtherCompartment(scriptInterface, sim->GetScriptInterfaceUnsafe(), ret);
 }
 
 void PostNetworkCommand(const ScriptInterface& scriptInterface, JS::HandleValue cmd)
@@ -74,8 +74,8 @@ void PostNetworkCommand(const ScriptInterface& scriptInterface, JS::HandleValue 
 	if (!cmpCommandQueue)
 		return;
 
-	ScriptRequest rqSim(sim->GetScriptInterface());
-	JS::RootedValue cmd2(rqSim.cx, Script::CloneValueFromOtherCompartment(sim->GetScriptInterface(), scriptInterface, cmd));
+	ScriptRequest rqSim(sim->GetScriptInterfaceUnsafe());
+	JS::RootedValue cmd2(rqSim.cx, Script::CloneValueFromOtherCompartment(sim->GetScriptInterfaceUnsafe(), scriptInterface, cmd));
 
 	cmpCommandQueue->PostNetworkCommand(cmd2);
 }

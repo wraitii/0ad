@@ -55,8 +55,6 @@ Status SavedGames::SavePrefix(const CStrW& prefix, const CStrW& description, CSi
 
 Status SavedGames::Save(const CStrW& name, const CStrW& description, CSimulation2& simulation, const Script::StructuredClone& guiMetadataClone)
 {
-	ScriptRequest rq(simulation.GetScriptInterface());
-
 	// Determine the filename to save under
 	const VfsPath basenameFormat(L"saves/" + name);
 	const VfsPath filename = basenameFormat.ChangeExtension(L".0adsave");
@@ -79,6 +77,9 @@ Status SavedGames::Save(const CStrW& name, const CStrW& description, CSimulation
 	std::stringstream simStateStream;
 	if (!simulation.SerializeState(simStateStream))
 		WARN_RETURN(ERR::FAIL);
+
+	/*
+	ScriptRequest rq(simulation.GetScriptInterface());
 
 	JS::RootedValue initAttributes(rq.cx, simulation.GetInitAttributes());
 	JS::RootedValue mods(rq.cx);
@@ -120,7 +121,7 @@ Status SavedGames::Save(const CStrW& name, const CStrW& description, CSimulation
 	Script::SetProperty(rq, metadata, "description", description);
 
 	std::string metadataString = Script::StringifyJSON(rq, &metadata, true);
-
+	 
 	// Write the saved game as zip file containing the various components
 	PIArchiveWriter archiveWriter = CreateArchiveWriter_Zip(tempSaveFileRealPath, false);
 	if (!archiveWriter)
@@ -141,7 +142,8 @@ Status SavedGames::Save(const CStrW& name, const CStrW& description, CSimulation
 	WARN_RETURN_STATUS_IF_ERR(g_VFS->GetRealPath(filename, realPath));
 	LOGMESSAGERENDER(g_L10n.Translate("Saved game to '%s'"), realPath.string8());
 	debug_printf("Saved game to '%s'\n", realPath.string8().c_str());
-
+	 */
+	
 	return INFO::OK;
 }
 

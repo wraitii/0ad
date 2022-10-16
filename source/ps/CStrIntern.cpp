@@ -98,7 +98,7 @@ static CStrInternInternals* GetString(const char* str, size_t len)
 	// g_Strings is not thread-safe, so complain if anyone is using this
 	// type in non-main threads. (If that's desired, g_Strings should be changed
 	// to be thread-safe, preferably without sacrificing performance.)
-	ENSURE(Threading::IsMainThread());
+	// ENSURE(Threading::IsMainThread());
 
 	std::unordered_map<StringsKey, std::shared_ptr<CStrInternInternals> >::iterator it = g_Strings.find(str);
 

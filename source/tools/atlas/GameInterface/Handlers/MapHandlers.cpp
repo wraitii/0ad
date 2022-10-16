@@ -81,7 +81,7 @@ namespace
 
 	void StartGame(JS::MutableHandleValue attrs)
 	{
-		g_Game->StartGame(attrs, "");
+		//g_Game->StartGame(attrs, "");
 
 		// TODO: Non progressive load can fail - need a decent way to handle this
 		LDR_NonprogressiveLoad();
@@ -106,6 +106,7 @@ QUERYHANDLER(GenerateMap)
 		InitGame();
 
 		// Random map
+		/*
 		const ScriptInterface& scriptInterface = g_Game->GetSimulation2()->GetScriptInterface();
 		ScriptRequest rq(scriptInterface);
 
@@ -122,6 +123,7 @@ QUERYHANDLER(GenerateMap)
 			"settings", settings);
 
 		StartGame(&attrs);
+		 */
 
 		msg->status = 0;
 	}
@@ -133,6 +135,7 @@ QUERYHANDLER(GenerateMap)
 		// Since map generation failed and we don't know why, use the blank map as a fallback
 
 		InitGame();
+		/*
 
 		const ScriptInterface& scriptInterface = g_Game->GetSimulation2()->GetScriptInterface();
 		ScriptRequest rq(scriptInterface);
@@ -164,7 +167,7 @@ QUERYHANDLER(GenerateMap)
 			"settings", settings);
 
 		StartGame(&attrs);
-
+		 */
 		msg->status = -1;
 	}
 }
@@ -172,7 +175,7 @@ QUERYHANDLER(GenerateMap)
 MESSAGEHANDLER(LoadMap)
 {
 	InitGame();
-
+	/*
 	const ScriptInterface& scriptInterface = g_Game->GetSimulation2()->GetScriptInterface();
 	ScriptRequest rq(scriptInterface);
 
@@ -189,6 +192,7 @@ MESSAGEHANDLER(LoadMap)
 		"map", mapBase);
 
 	StartGame(&attrs);
+	 */
 }
 
 MESSAGEHANDLER(ImportHeightmap)

@@ -52,7 +52,7 @@ class IReplayLogger;
  * Default turn length in SP & MP.
  * This value should be as low as possible, while not introducing un-necessary lag.
  */
-inline constexpr u32 DEFAULT_TURN_LENGTH = 200;
+inline constexpr u32 DEFAULT_TURN_LENGTH = 500;
 
 /**
  * In single-player, commands are directly scheduled for the next turn.

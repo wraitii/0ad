@@ -97,6 +97,7 @@ JS::Value StartSavedGame(const ScriptInterface& scriptInterface, const std::wstr
 
 	g_Game = new CGame(true);
 
+	/*
 	{
 		CSimulation2* sim = g_Game->GetSimulation2();
 		ScriptRequest rqGame(sim->GetScriptInterface());
@@ -111,7 +112,7 @@ JS::Value StartSavedGame(const ScriptInterface& scriptInterface, const std::wstr
 		g_Game->SetPlayerID(playerID);
 		g_Game->StartGame(&gameInitAttributes, savedState);
 	}
-
+	 */
 	return guiContextMetadata;
 }
 
