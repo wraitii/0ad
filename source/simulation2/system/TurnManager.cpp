@@ -20,6 +20,7 @@
 #include "TurnManager.h"
 
 #include "gui/GUIManager.h"
+#include "graphics/UnitManager.h"
 #include "maths/MathUtil.h"
 #include "ps/Pyrogenesis.h"
 #include "ps/Profile.h"
@@ -107,6 +108,9 @@ bool CTurnManager::Update(float simFrameLength, size_t maxTurns)
 		// Check that the i'th next turn is still ready
 		if (m_ReadyTurn <= m_CurrentTurn && m_CommandDelay > 1)
 			break;
+
+		// TEMP -> once messages are sent this can probably be moved back?
+		m_Simulation2.GetSimContext().GetUnitManager().TurnStart();
 
 		// To avoid confusing the profiler, we need to trigger the new turn
 		// while we're not nested inside any PROFILE blocks

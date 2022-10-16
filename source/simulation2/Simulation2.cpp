@@ -35,6 +35,7 @@
 
 #include "graphics/MapReader.h"
 #include "graphics/Terrain.h"
+#include "graphics/UnitManager.h"
 #include "lib/timer.h"
 #include "lib/file/vfs/vfs_util.h"
 #include "maths/MathUtil.h"
@@ -594,11 +595,11 @@ void CSimulation2Impl::Interpolate(float simFrameLength, float frameOffset, floa
 
 	m_LastFrameOffset = frameOffset;
 
-	CMessageInterpolate msg(simFrameLength, frameOffset, realFrameLength);
-	m_ComponentManager.BroadcastMessage(msg);
+//	CMessageInterpolate msg(simFrameLength, frameOffset, realFrameLength);
+//	m_ComponentManager.BroadcastMessage(msg);
 
 	// Clean up any entities destroyed during interpolate (e.g. local corpses)
-	m_ComponentManager.FlushDestroyedComponents();
+//	m_ComponentManager.FlushDestroyedComponents();
 }
 
 void CSimulation2Impl::DumpState()
@@ -758,15 +759,17 @@ void CSimulation2::Update(int turnLength, const std::vector<SimulationCommand>& 
 
 void CSimulation2::Interpolate(float simFrameLength, float frameOffset, float realFrameLength)
 {
-	m->Interpolate(simFrameLength, frameOffset, realFrameLength);
+	GetSimContext().GetUnitManager().Interpolate(1, realFrameLength, frameOffset);
+	//m->Interpolate(simFrameLength, frameOffset, realFrameLength);
 }
 
 void CSimulation2::RenderSubmit(SceneCollector& collector, const CFrustum& frustum, bool culling)
 {
 	PROFILE3("sim submit");
 
-	CMessageRenderSubmit msg(collector, frustum, culling);
-	m->m_ComponentManager.BroadcastMessage(msg);
+	GetSimContext().GetUnitManager().RenderSubmit(collector, frustum, culling);
+	//CMessageRenderSubmit msg(collector, frustum, culling);
+	//m->m_ComponentManager.BroadcastMessage(msg);
 }
 
 float CSimulation2::GetLastFrameOffset() const

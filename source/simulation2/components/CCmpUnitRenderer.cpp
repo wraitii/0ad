@@ -32,6 +32,7 @@
 #include "graphics/ObjectEntry.h"
 #include "graphics/Overlay.h"
 #include "graphics/Unit.h"
+#include "graphics/UnitManager.h"
 #include "maths/BoundingSphere.h"
 #include "maths/Frustum.h"
 #include "maths/Matrix3D.h"
@@ -127,8 +128,6 @@ public:
 	static void ClassInit(CComponentManager& componentManager)
 	{
 		componentManager.SubscribeToMessageType(MT_TurnStart);
-		componentManager.SubscribeToMessageType(MT_Interpolate);
-		componentManager.SubscribeToMessageType(MT_RenderSubmit);
 	}
 
 	DEFAULT_COMPONENT_ALLOCATOR(UnitRenderer)
@@ -167,18 +166,6 @@ public:
 			TurnStart();
 			break;
 		}
-		case MT_Interpolate:
-		{
-			const CMessageInterpolate& msgData = static_cast<const CMessageInterpolate&> (msg);
-			Interpolate(msgData.deltaSimTime, msgData.offset);
-			break;
-		}
-		case MT_RenderSubmit:
-		{
-			const CMessageRenderSubmit& msgData = static_cast<const CMessageRenderSubmit&> (msg);
-			RenderSubmit(msgData.collector, msgData.frustum, msgData.culling);
-			break;
-		}
 		}
 	}
 
@@ -191,6 +178,8 @@ public:
 
 	tag_t AddUnit(CEntityHandle entity, CUnit* actor, const CBoundingSphere& boundsApprox, int flags) override
 	{
+		GetSimContext().GetUnitManager().AddUnit(entity, actor, boundsApprox, flags);
+
 		ENSURE(actor != NULL);
 
 		tag_t tag;
@@ -220,6 +209,7 @@ public:
 
 	void RemoveUnit(tag_t tag) override
 	{
+		GetSimContext().GetUnitManager().RemoveUnit(*(CUnitManager::tag_t*)((void*)(&tag)));
 		SUnit* unit = LookupUnit(tag);
 		unit->actor = NULL;
 		unit->inWorld = false;
@@ -237,6 +227,7 @@ public:
 
 	void UpdateUnit(tag_t tag, CUnit* actor, const CBoundingSphere& boundsApprox) override
 	{
+		GetSimContext().GetUnitManager().UpdateUnit(*(CUnitManager::tag_t*)((void*)(&tag)), actor, boundsApprox);
 		SUnit* unit = LookupUnit(tag);
 		unit->actor = actor;
 		unit->boundsApprox = boundsApprox;
@@ -245,6 +236,7 @@ public:
 
 	void UpdateUnitPos(tag_t tag, bool inWorld, const CVector3D& pos0, const CVector3D& pos1) override
 	{
+		GetSimContext().GetUnitManager().UpdateUnitPos(*(CUnitManager::tag_t*)((void*)(&tag)), inWorld, pos0, pos1);
 		SUnit* unit = LookupUnit(tag);
 		unit->inWorld = inWorld;
 		unit->pos0 = pos0;
@@ -253,11 +245,8 @@ public:
 		RecomputeSweptBounds(unit);
 	}
 
-	void TurnStart();
-	void Interpolate(float frameTime, float frameOffset);
-	void RenderSubmit(SceneCollector& collector, const CFrustum& frustum, bool culling);
-
-	void UpdateVisibility(SUnit& unit) const;
+	void TurnStart() {
+	}
 
 	float GetFrameOffset() const override
 	{
@@ -325,149 +314,5 @@ public:
 		}
 	}
 };
-
-void CCmpUnitRenderer::TurnStart()
-{
-	PROFILE3("UnitRenderer::TurnStart");
-
-	// Assume units have stopped moving after the previous turn. If that assumption is not
-	// correct, we will get a UpdateUnitPos to tell us about its movement in the new turn.
-	for (size_t i = 0; i < m_Units.size(); i++)
-	{
-		SUnit& unit = m_Units[i];
-		unit.pos0 = unit.pos1;
-		unit.sweptBounds = CBoundingSphere(unit.pos1, unit.boundsApprox.GetRadius());
-
-		// Visibility must be recomputed on the first frame during this turn
-		unit.visibilityDirty = true;
-	}
-}
-
-void CCmpUnitRenderer::Interpolate(float frameTime, float frameOffset)
-{
-	PROFILE3("UnitRenderer::Interpolate");
-
-	++m_FrameNumber;
-	m_FrameOffset = frameOffset;
-
-	// TODO: we shouldn't update all the animations etc for units that are off-screen
-	// (but need to be careful about e.g. sounds triggered by animations of off-screen
-	// units)
-	for (size_t i = 0; i < m_Units.size(); i++)
-	{
-		SUnit& unit = m_Units[i];
-		if (unit.actor)
-			unit.actor->UpdateModel(frameTime);
-	}
-
-	m_DebugSpheres.clear();
-	if (m_EnableDebugOverlays)
-	{
-		for (size_t i = 0; i < m_Units.size(); i++)
-		{
-			SUnit& unit = m_Units[i];
-			if (!(unit.actor && unit.inWorld))
-				continue;
-
-			SOverlaySphere sphere;
-			sphere.m_Center = unit.sweptBounds.GetCenter();
-			sphere.m_Radius = unit.sweptBounds.GetRadius();
-			if (unit.culled)
-				sphere.m_Color = CColor(1.0f, 0.5f, 0.5f, 0.5f);
-			else
-				sphere.m_Color = CColor(0.5f, 0.5f, 1.0f, 0.5f);
-
-			m_DebugSpheres.push_back(sphere);
-		}
-	}
-}
-
-void CCmpUnitRenderer::RenderSubmit(SceneCollector& collector, const CFrustum& frustum, bool culling)
-{
-	// TODO: need a coarse culling pass based on some kind of spatial data
-	// structure - that's the main point of this design. Once we've got a
-	// rough list of possibly-visible units, then we can do the more precise
-	// culling. (And once it's cheap enough, we can do multiple culling passes
-	// per frame - one for shadow generation, one for water reflections, etc.)
-
-	PROFILE3("UnitRenderer::RenderSubmit");
-
-	for (size_t i = 0; i < m_Units.size(); ++i)
-	{
-		SUnit& unit = m_Units[i];
-
-		unit.culled = true;
-
-		if (!unit.actor)
-			continue;
-
-		if (unit.visibilityDirty)
-			UpdateVisibility(unit);
-
-		if (unit.visibility == LosVisibility::HIDDEN)
-			continue;
-
-		if (!g_AtlasGameLoop->running && !g_RenderingOptions.GetRenderActors() && (unit.flags & ACTOR_ONLY))
-			continue;
-
-		if (!g_AtlasGameLoop->running && (unit.flags & VISIBLE_IN_ATLAS_ONLY))
-			continue;
-
-		if (culling && !frustum.IsSphereVisible(unit.sweptBounds.GetCenter(), unit.sweptBounds.GetRadius()))
-			continue;
-
-		unit.culled = false;
-
-		CModelAbstract& unitModel = unit.actor->GetModel();
-
-		if (unit.lastTransformFrame != m_FrameNumber)
-		{
-			CmpPtr<ICmpPosition> cmpPosition(unit.entity);
-			if (!cmpPosition)
-				continue;
-
-			CMatrix3D transform(cmpPosition->GetInterpolatedTransform(m_FrameOffset));
-
-			unitModel.SetTransform(transform);
-
-			unit.lastTransformFrame = m_FrameNumber;
-		}
-
-		if (culling && !frustum.IsBoxVisible(unitModel.GetWorldBoundsRec()))
-			continue;
-
-		collector.SubmitRecursive(&unitModel);
-	}
-
-	for (size_t i = 0; i < m_DebugSpheres.size(); ++i)
-		collector.Submit(&m_DebugSpheres[i]);
-}
-
-void CCmpUnitRenderer::UpdateVisibility(SUnit& unit) const
-{
-	if (unit.inWorld)
-	{
-		// The 'always visible' flag means we should always render the unit
-		// (regardless of whether the LOS system thinks it's visible)
-		CmpPtr<ICmpVisibility> cmpVisibility(unit.entity);
-		if (cmpVisibility && cmpVisibility->GetAlwaysVisible())
-			unit.visibility = LosVisibility::VISIBLE;
-		else
-		{
-			CmpPtr<ICmpRangeManager> cmpRangeManager(GetSystemEntity());
-			unit.visibility = cmpRangeManager->GetLosVisibility(unit.entity,
-					GetSimContext().GetCurrentDisplayedPlayer());
-		}
-	}
-	else
-		unit.visibility = LosVisibility::HIDDEN;
-
-	// Change the visibility of the visual actor's selectable if it has one.
-	CmpPtr<ICmpSelectable> cmpSelectable(unit.entity);
-	if (cmpSelectable)
-		cmpSelectable->SetVisibility(unit.visibility != LosVisibility::HIDDEN);
-
-	unit.visibilityDirty = false;
-}
 
 REGISTER_COMPONENT_TYPE(UnitRenderer)
