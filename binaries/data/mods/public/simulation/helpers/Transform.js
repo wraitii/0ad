@@ -4,6 +4,9 @@
 function ChangeEntityTemplate(oldEnt, newTemplate)
 {
 	// Done un/packing, copy our parameters to the final entity
+	Engine.UpdateEntityTemplate(newTemplate, oldEnt);
+	return oldEnt;
+
 	var newEnt = Engine.AddEntity(newTemplate);
 	if (newEnt == INVALID_ENTITY)
 	{

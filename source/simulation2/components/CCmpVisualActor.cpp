@@ -1,4 +1,4 @@
-/* Copyright (C) 2022 Wildfire Games.
+/* Copyright (C) 2023 Wildfire Games.
  * This file is part of 0 A.D.
  *
  * 0 A.D. is free software: you can redistribute it and/or modify
@@ -227,6 +227,27 @@ public:
 			GetSimContext().GetUnitManager().DeleteUnit(m_Unit);
 			m_Unit = NULL;
 		}
+	}
+
+	void Update(const CParamNode& paramNode) override
+	{
+		m_ConstructionPreview = paramNode.GetChild("ConstructionPreview").IsOk();
+		m_IsFoundationActor = paramNode.GetChild("Foundation").IsOk() && paramNode.GetChild("FoundationActor").IsOk();
+
+		m_BaseActorName = paramNode.GetChild(m_IsFoundationActor ? "FoundationActor" : "Actor").ToWString();
+		// Don't parse, we recompute down below
+
+		m_VisibleInAtlasOnly = paramNode.GetChild("VisibleInAtlasOnly").ToBool();
+		m_IsActorOnly = paramNode.GetChild("ActorOnly").IsOk();
+
+		m_SilhouetteDisplay = paramNode.GetChild("SilhouetteDisplay").ToBool();
+		m_SilhouetteOccluder = paramNode.GetChild("SilhouetteOccluder").ToBool();
+		m_DisableShadows = paramNode.GetChild("DisableShadows").ToBool();
+
+		delete m_ShapeDescriptor;
+		InitSelectionShapeDescriptor(paramNode);
+
+		RecomputeActorName();
 	}
 
 	template<typename S>

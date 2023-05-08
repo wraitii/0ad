@@ -1,4 +1,4 @@
-/* Copyright (C) 2021 Wildfire Games.
+/* Copyright (C) 2023 Wildfire Games.
  * This file is part of 0 A.D.
  *
  * 0 A.D. is free software: you can redistribute it and/or modify
@@ -36,7 +36,7 @@ void CComponentTypeScript::Init(const CParamNode& paramNode, entity_id_t ent)
 {
 	ScriptRequest rq(m_ScriptInterface);
 	Script::SetProperty(rq, m_Instance, "entity", (int)ent, true, false);
-	Script::SetProperty(rq, m_Instance, "template", paramNode, true, false);
+	Script::SetProperty(rq, m_Instance, "template", paramNode, false, false);
 	ScriptFunction::CallVoid(rq, m_Instance, "Init");
 }
 
@@ -44,6 +44,12 @@ void CComponentTypeScript::Deinit()
 {
 	ScriptRequest rq(m_ScriptInterface);
 	ScriptFunction::CallVoid(rq, m_Instance, "Deinit");
+}
+
+void CComponentTypeScript::Update(const CParamNode& paramNode) {
+	ScriptRequest rq(m_ScriptInterface);
+	ScriptFunction::CallVoid(rq, m_Instance, "Update", paramNode);
+	Script::SetProperty(rq, m_Instance, "template", paramNode, false, false);
 }
 
 void CComponentTypeScript::HandleMessage(const CMessage& msg, bool global)

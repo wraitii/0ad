@@ -1,4 +1,4 @@
-/* Copyright (C) 2022 Wildfire Games.
+/* Copyright (C) 2023 Wildfire Games.
  * This file is part of 0 A.D.
  *
  * 0 A.D. is free software: you can redistribute it and/or modify
@@ -85,6 +85,7 @@ CComponentManager::CComponentManager(CSimContext& context, std::shared_ptr<Scrip
 		ScriptFunction::Register<&CComponentManager::Script_BroadcastMessage, Getter>(rq, "BroadcastMessage");
 		ScriptFunction::Register<&CComponentManager::Script_AddEntity, Getter>(rq, "AddEntity");
 		ScriptFunction::Register<&CComponentManager::Script_AddLocalEntity, Getter>(rq, "AddLocalEntity");
+		ScriptFunction::Register<&CComponentManager::Script_UpdateEntityTemplate, Getter>(rq, "UpdateEntityTemplate");
 		ScriptFunction::Register<&CComponentManager::QueryInterface, Getter>(rq, "QueryInterface");
 		ScriptFunction::Register<&CComponentManager::DestroyComponentsSoon, Getter>(rq, "DestroyEntity");
 		ScriptFunction::Register<&CComponentManager::FlushDestroyedComponents, Getter>(rq, "FlushDestroyedEntities");
@@ -473,6 +474,13 @@ int CComponentManager::Script_AddLocalEntity(const std::wstring& templateName)
 	// TODO: should validate the string to make sure it doesn't contain scary characters
 	// that will let it access non-component-template files
 	return AddEntity(templateName, AllocateNewLocalEntity());
+}
+
+bool CComponentManager::Script_UpdateEntityTemplate(const std::wstring& templateName, entity_id_t ent)
+{
+	// TODO: should validate the string to make sure it doesn't contain scary characters
+	// that will let it access non-component-template files
+	return UpdateEntityTemplate(templateName, ent);
 }
 
 void CComponentManager::ResetState()
@@ -869,6 +877,61 @@ entity_id_t CComponentManager::AddEntity(const std::wstring& templateName, entit
 	PostMessage(ent, msg);
 
 	return ent;
+}
+
+bool CComponentManager::UpdateEntityTemplate(const std::wstring& templateName, entity_id_t ent)
+{
+	LOGWARNING("Update template : %s, %i", utf8_from_wstring(templateName), ent);
+	ICmpTemplateManager *cmpTemplateManager = static_cast<ICmpTemplateManager*> (QueryInterface(SYSTEM_ENTITY, IID_TemplateManager));
+	if (!cmpTemplateManager)
+	{
+		debug_warn(L"No ICmpTemplateManager loaded");
+		return false;
+	}
+
+	// Don't use loadTemplate, that updates the cache
+	const CParamNode* newTemplate = cmpTemplateManager->GetTemplate(utf8_from_wstring(templateName));
+	if (!newTemplate)
+		return false; // LoadTemplate will have reported the error
+
+	CEntityHandle handle = LookupEntityHandle(ent, false);
+	if (handle.GetComponentCache() == nullptr)
+	{
+		LOGERROR("Entity %i does not exist", ent);
+		return false;
+	}
+
+	const CParamNode* oldTemplate = cmpTemplateManager->GetTemplate(cmpTemplateManager->GetCurrentTemplateName(ent));
+
+	const CParamNode::ChildrenMap& tmplChilds = newTemplate->GetChildren();
+
+	// Now pass through the new template and update the components
+	for (CParamNode::ChildrenMap::const_iterator it = tmplChilds.begin(); it != tmplChilds.end(); ++it)
+	{
+		// Ignore attributes on the root element
+		if (it->first.length() && it->first[0] == '@')
+			continue;
+
+		CComponentManager::ComponentTypeId cid = LookupCID(it->first);
+		if (cid == CID__Invalid)
+		{
+			LOGERROR("Unrecognized component type name '%s' in entity template '%s'", it->first, utf8_from_wstring(templateName));
+			return INVALID_ENTITY;
+		}
+		IComponent* component = handle.GetComponentCache()->interfaces[m_ComponentTypesById[cid].iid];
+		if (!component)
+		{
+			LOGWARNING("TODO");
+			continue;
+		}
+		LOGWARNING("Handling %s", it->first);
+		component->Update(it->second);
+	}
+
+	// Update the cache
+	cmpTemplateManager->LoadTemplate(ent, utf8_from_wstring(templateName));
+
+	return true;
 }
 
 bool CComponentManager::EntityExists(entity_id_t ent) const

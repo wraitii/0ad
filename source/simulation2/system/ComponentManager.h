@@ -1,4 +1,4 @@
-/* Copyright (C) 2022 Wildfire Games.
+/* Copyright (C) 2023 Wildfire Games.
  * This file is part of 0 A.D.
  *
  * 0 A.D. is free software: you can redistribute it and/or modify
@@ -213,6 +213,8 @@ public:
 	 */
 	entity_id_t AddEntity(const std::wstring& templateName, entity_id_t ent);
 
+	bool UpdateEntityTemplate(const std::wstring& templateName, entity_id_t ent);
+
 	/**
 	 * Destroys all the components belonging to the specified entity when FlushDestroyedComponents is called.
 	 * Has no effect if the entity does not exist, or has already been added to the destruction queue.
@@ -286,6 +288,7 @@ private:
 	void Script_BroadcastMessage(int mtid, JS::HandleValue data);
 	int Script_AddEntity(const std::wstring& templateName);
 	int Script_AddLocalEntity(const std::wstring& templateName);
+	bool Script_UpdateEntityTemplate(const std::wstring& templateName, entity_id_t ent);
 	const CParamNode& Script_GetTemplate(const std::string& templateName);
 
 	CMessage* ConstructMessage(int mtid, JS::HandleValue data);

@@ -1,4 +1,4 @@
-/* Copyright (C) 2021 Wildfire Games.
+/* Copyright (C) 2023 Wildfire Games.
  * This file is part of 0 A.D.
  *
  * 0 A.D. is free software: you can redistribute it and/or modify
@@ -45,6 +45,8 @@ public:
 
 	virtual void Init(const CParamNode& paramNode) = 0;
 	virtual void Deinit() = 0;
+
+	virtual void Update(const CParamNode& paramNode);
 
 	virtual void HandleMessage(const CMessage& msg, bool global);
 

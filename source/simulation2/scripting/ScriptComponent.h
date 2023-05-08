@@ -1,4 +1,4 @@
-/* Copyright (C) 2022 Wildfire Games.
+/* Copyright (C) 2023 Wildfire Games.
  * This file is part of 0 A.D.
  *
  * 0 A.D. is free software: you can redistribute it and/or modify
@@ -41,6 +41,7 @@ public:
 
 	void Init(const CParamNode& paramNode, entity_id_t ent);
 	void Deinit();
+	void Update(const CParamNode& paramNode);
 	void HandleMessage(const CMessage& msg, bool global);
 
 	void Serialize(ISerializer& serialize);
@@ -109,6 +110,10 @@ private:
 	void Deinit() override \
 	{ \
 		m_Script.Deinit(); \
+	} \
+	void Update(const CParamNode& paramNode) override \
+	{ \
+		m_Script.Update(paramNode); \
 	} \
 	void HandleMessage(const CMessage& msg, bool global) override \
 	{ \

@@ -1,4 +1,4 @@
-/* Copyright (C) 2021 Wildfire Games.
+/* Copyright (C) 2023 Wildfire Games.
  * This file is part of 0 A.D.
  *
  * 0 A.D. is free software: you can redistribute it and/or modify
@@ -55,4 +55,8 @@ bool IComponent::NewJSObject(const ScriptInterface& UNUSED(scriptInterface), JS:
 JS::Value IComponent::GetJSInstance() const
 {
 	return JS::NullValue();
+}
+
+void IComponent::Update(const CParamNode& paramNode) {
+	// TODO: remove this, this is just a placeholder for compilation.
 }

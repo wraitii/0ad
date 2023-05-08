@@ -92,12 +92,27 @@ Identity.prototype.Init = function()
 	this.classesList = GetIdentityClasses(this.template);
 	this.visibleClassesList = GetVisibleIdentityClasses(this.template);
 	if (this.template.Phenotype)
-		this.phenotype = pickRandom(this.GetPossiblePhenotypes());
+		this.phenotype = pickRandom(this.GetPossiblePhenotypes(this.template));
 	else
 		this.phenotype = "default";
 
 	this.controllable = this.template.Controllable ? this.template.Controllable == "true" : true;
 };
+
+Identity.prototype.Update = function(template)
+{
+	this.classesList = GetIdentityClasses(template);
+	this.visibleClassesList = GetVisibleIdentityClasses(template);
+
+	if (this.GetPossiblePhenotypes(template).indexOf(this.phenotype) === -1)
+		if (this.template.Phenotype)
+			this.phenotype = pickRandom(this.GetPossiblePhenotypes(this.template));
+		else
+			this.phenotype = "default";
+
+	this.controllable = template.Controllable ? template.Controllable == "true" : true;
+};
+
 
 Identity.prototype.GetCiv = function()
 {
@@ -111,11 +126,12 @@ Identity.prototype.GetLang = function()
 
 /**
  * Get a list of possible Phenotypes.
+ * @param template - Template to consider
  * @return {string[]} A list of possible phenotypes.
  */
-Identity.prototype.GetPossiblePhenotypes = function()
+Identity.prototype.GetPossiblePhenotypes = function(template)
 {
-	return this.template.Phenotype._string.split(/\s+/);
+	return template.Phenotype._string.split(/\s+/);
 };
 
 /**
