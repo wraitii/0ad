@@ -13,6 +13,20 @@ Garrisonable.prototype.Init = function()
 {
 };
 
+Garrisonable.prototype.Update = function(newTemplate)
+{
+	if (!this.holder)
+		return;
+
+	let holder = this.holder;
+	this.UnGarrison(true, true);
+
+	this.
+	let cmpGarrisonable = Engine.QueryInterface(msg.newentity, IID_Garrisonable);
+	if (cmpGarrisonable)
+		cmpGarrisonable.Garrison(holder, true);
+};
+
 /**
  * @param {string} type - Unused.
  * @param {number} target - The entity ID of the target to check.

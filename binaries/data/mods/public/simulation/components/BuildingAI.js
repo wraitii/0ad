@@ -30,6 +30,13 @@ BuildingAI.prototype.Init = function()
 	this.targetUnits = [];
 };
 
+BuildingAI.prototype.Update = function(oldTemplate)
+{
+	this.targetUnits = [];
+	this.SetupRangeQuery();
+	this.SetupGaiaRangeQuery();
+};
+
 BuildingAI.prototype.OnGarrisonedUnitsChanged = function(msg)
 {
 	let classes = this.template.GarrisonArrowClasses;

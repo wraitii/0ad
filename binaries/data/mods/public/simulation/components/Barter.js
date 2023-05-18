@@ -34,6 +34,11 @@ Barter.prototype.Init = function()
 	this.restoreTimer = undefined;
 };
 
+Barter.prototype.Update = function(oldTemplate)
+{
+	this.Init();
+};
+
 Barter.prototype.GetPrices = function(cmpPlayer)
 {
 	let prices = { "buy": {}, "sell": {} };

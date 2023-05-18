@@ -27,6 +27,11 @@ Cost.prototype.Init = function()
 	this.populationCost = +this.template.Population;
 };
 
+Cost.prototype.Update = function()
+{
+	this.populationCost = +this.template.Population;
+};
+
 Cost.prototype.GetPopCost = function()
 {
 	return this.populationCost;

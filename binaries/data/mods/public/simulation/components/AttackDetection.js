@@ -22,6 +22,12 @@ AttackDetection.prototype.Init = function()
 	this.suppressedList = [];
 };
 
+AttackDetection.prototype.Update = function(oldTemplate)
+{
+	this.Init();
+};
+
+
 AttackDetection.prototype.ActivateTimer = function()
 {
 	Engine.QueryInterface(SYSTEM_ENTITY, IID_Timer).SetTimeout(this.entity, IID_AttackDetection, "HandleTimeout", this.suppressionTime);

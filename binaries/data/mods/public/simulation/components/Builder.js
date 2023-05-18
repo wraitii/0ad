@@ -27,6 +27,13 @@ Builder.prototype.Init = function()
 {
 };
 
+Builder.prototype.Update = function(oldTemplate)
+{
+	if (this.target) {
+		warn("TODO Builder Update");
+	}	
+};
+
 Builder.prototype.GetEntitiesList = function()
 {
 	let string = this.template.Entities._string;

@@ -39,6 +39,11 @@ BattleDetection.prototype.Init = function()
 	this.state = "PEACE";
 };
 
+BattleDetection.prototype.Update = function()
+{
+	this.Init();
+}
+
 BattleDetection.prototype.SetState = function(state)
 {
 	if (state == this.state)

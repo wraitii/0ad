@@ -19,6 +19,10 @@ Capturable.prototype.Init = function()
 	this.capturePoints = [];
 };
 
+Capturable.prototype.Update = function() {
+	warn("TODO update capturable");
+}
+
 // Interface functions
 
 /**

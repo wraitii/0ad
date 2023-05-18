@@ -5,6 +5,11 @@ class AutoBuildable
 		this.UpdateRate();
 	}
 
+	Update()
+	{
+		this.UpdateRate();
+	}
+
 	/**
 	 * @return {number} - The rate with technologies and aura modification applied.
 	 */

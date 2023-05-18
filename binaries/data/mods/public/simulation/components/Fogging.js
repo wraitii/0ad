@@ -39,6 +39,10 @@ Fogging.prototype.Init = function()
 	}
 };
 
+Fogging.prototype.Update = function(oldTemplate) {
+	// Do we need to do anything ?
+}
+
 Fogging.prototype.Activate = function()
 {
 	let mustUpdate = !this.activated;

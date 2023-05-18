@@ -23,6 +23,8 @@ Foundation.prototype.Init = function()
 	this.previewEntity = INVALID_ENTITY;
 };
 
+// TODO: update
+
 Foundation.prototype.Serialize = function()
 {
 	let ret = Object.assign({}, this);
