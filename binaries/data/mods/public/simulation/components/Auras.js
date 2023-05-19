@@ -18,8 +18,9 @@ Auras.prototype.Init = function()
 	this.Clean();
 };
 
-AttackDetection.prototype.Update = function(oldTemplate)
+AttackDetection.prototype.Update = function(newTemplate)
 {
+	this.template = newTemplate;
 	this.Init();
 };
 

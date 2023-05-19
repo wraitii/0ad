@@ -55,6 +55,10 @@ Upgrade.prototype.Init = function()
 	this.expendedResources = {};
 };
 
+Upgrade.prototype.Update = function(newTemplate) {
+	warn("Upgrade.Update() is not implemented");
+};
+
 // This will also deal with the "OnDestroy" case.
 Upgrade.prototype.OnOwnershipChanged = function(msg)
 {

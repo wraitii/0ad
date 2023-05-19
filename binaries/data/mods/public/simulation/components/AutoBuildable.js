@@ -5,8 +5,9 @@ class AutoBuildable
 		this.UpdateRate();
 	}
 
-	Update()
+	Update(newTemplate)
 	{
+		this.template = newTemplate;
 		this.UpdateRate();
 	}
 

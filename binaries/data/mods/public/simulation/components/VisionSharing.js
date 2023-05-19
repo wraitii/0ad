@@ -23,6 +23,10 @@ VisionSharing.prototype.Init = function()
 	this.spies = undefined;
 };
 
+VisionSharing.prototype.Update = function(newTemplate) {
+	warn("VisionSharing.Update: not implemented");
+};
+
 /**
  * As entities have not necessarily the VisionSharing component, it has to be activated
  * before use so that the rangeManager can register it

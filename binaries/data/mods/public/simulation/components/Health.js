@@ -64,6 +64,13 @@ Health.prototype.Init = function()
 	this.UpdateActor();
 };
 
+Health.prototype.Update = function(newTemplate)
+{
+	this.template = newTemplate;
+	// TODO:
+	warn("Health.Update: not implemented");
+};
+
 /**
  * Returns the current hitpoint value.
  * This is 0 if (and only if) the unit is dead.

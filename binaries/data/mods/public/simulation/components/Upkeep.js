@@ -15,6 +15,11 @@ Upkeep.prototype.Init = function()
 	this.CheckTimer();
 };
 
+Upkeep.prototype.Update = function(newTemplate) {
+	this.template = newTemplate;
+	this.CheckTimer();
+};
+
 /**
  * @return {number} - The interval between resource subtractions, in ms.
  */

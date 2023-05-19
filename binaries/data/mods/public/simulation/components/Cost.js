@@ -27,8 +27,9 @@ Cost.prototype.Init = function()
 	this.populationCost = +this.template.Population;
 };
 
-Cost.prototype.Update = function()
+Cost.prototype.Update = function(newTemplate)
 {
+	this.template = newTemplate;
 	this.populationCost = +this.template.Population;
 };
 

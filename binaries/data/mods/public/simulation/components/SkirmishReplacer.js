@@ -13,6 +13,11 @@ SkirmishReplacer.prototype.Init = function()
 {
 };
 
+SkirmishReplacer.prototype.Update = function(newTemplate)
+{
+	this.template = newTemplate;
+};
+
 SkirmishReplacer.prototype.Serialize = null; // We have no dynamic state to save
 
 function getReplacementEntities(civ)

@@ -28,6 +28,10 @@ Trader.prototype.Init = function()
 	};
 };
 
+Trader.prototype.Update = function() {
+	warn("Trader.Update is not implemented")
+}
+
 Trader.prototype.CalculateGain = function(currentMarket, nextMarket)
 {
 	let cmpMarket = QueryMiragedInterface(currentMarket, IID_Market);

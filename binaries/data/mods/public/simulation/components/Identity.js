@@ -92,25 +92,27 @@ Identity.prototype.Init = function()
 	this.classesList = GetIdentityClasses(this.template);
 	this.visibleClassesList = GetVisibleIdentityClasses(this.template);
 	if (this.template.Phenotype)
-		this.phenotype = pickRandom(this.GetPossiblePhenotypes(this.template));
+		this.phenotype = pickRandom(this.GetPossiblePhenotypes());
 	else
 		this.phenotype = "default";
 
 	this.controllable = this.template.Controllable ? this.template.Controllable == "true" : true;
 };
 
-Identity.prototype.Update = function(template)
+Identity.prototype.Update = function(newTemplate)
 {
-	this.classesList = GetIdentityClasses(template);
-	this.visibleClassesList = GetVisibleIdentityClasses(template);
+	this.template = newTemplate;
 
-	if (this.GetPossiblePhenotypes(template).indexOf(this.phenotype) === -1)
+	this.classesList = GetIdentityClasses(this.template);
+	this.visibleClassesList = GetVisibleIdentityClasses(this.template);
+
+	if (this.GetPossiblePhenotypes().indexOf(this.phenotype) === -1)
 		if (this.template.Phenotype)
-			this.phenotype = pickRandom(this.GetPossiblePhenotypes(this.template));
+			this.phenotype = pickRandom(this.GetPossiblePhenotypes());
 		else
 			this.phenotype = "default";
 
-	this.controllable = template.Controllable ? template.Controllable == "true" : true;
+	this.controllable = this.template.Controllable ? this.template.Controllable == "true" : true;
 };
 
 
@@ -126,12 +128,11 @@ Identity.prototype.GetLang = function()
 
 /**
  * Get a list of possible Phenotypes.
- * @param template - Template to consider
  * @return {string[]} A list of possible phenotypes.
  */
-Identity.prototype.GetPossiblePhenotypes = function(template)
+Identity.prototype.GetPossiblePhenotypes = function()
 {
-	return template.Phenotype._string.split(/\s+/);
+	return this.template.Phenotype._string.split(/\s+/);
 };
 
 /**

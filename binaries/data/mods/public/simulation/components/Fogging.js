@@ -39,9 +39,11 @@ Fogging.prototype.Init = function()
 	}
 };
 
-Fogging.prototype.Update = function(oldTemplate) {
+Fogging.prototype.Update = function(newTemplate)
+{
+	this.template = newTemplate;
 	// Do we need to do anything ?
-}
+};
 
 Fogging.prototype.Activate = function()
 {

@@ -16,6 +16,12 @@ Mirage.prototype.Init = function()
 	this.miragedIids = new Map();
 };
 
+Mirage.prototype.Update = function(newTemplate)
+{
+	this.template = newTemplate;
+	warn("Mirage.Update: not implemented");
+};
+
 Mirage.prototype.SetParent = function(ent)
 {
 	this.parent = ent;

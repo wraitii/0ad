@@ -21,7 +21,9 @@ Garrisonable.prototype.Update = function(newTemplate)
 	let holder = this.holder;
 	this.UnGarrison(true, true);
 
-	this.
+	// Now that we're ungarrisoned, we can update our size.
+	this.template = newTemplate;
+
 	let cmpGarrisonable = Engine.QueryInterface(msg.newentity, IID_Garrisonable);
 	if (cmpGarrisonable)
 		cmpGarrisonable.Garrison(holder, true);

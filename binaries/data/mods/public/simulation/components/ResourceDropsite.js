@@ -18,6 +18,11 @@ ResourceDropsite.prototype.Init = function()
 	this.shared = this.sharable;
 };
 
+ResourceDropsite.prototype.Update = function(newTemplate)
+{
+	warn("Repairable.Update: not implemented");
+};
+
 /**
  * Returns the list of resource types accepted by this dropsite,
  * as defined by it being referred to in the template and the resource being enabled.

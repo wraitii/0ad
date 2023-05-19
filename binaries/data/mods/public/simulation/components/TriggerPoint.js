@@ -18,6 +18,10 @@ TriggerPoint.prototype.Init = function()
 	this.triggers = {};
 };
 
+TriggerPoint.prototype.Update = function() {
+	error("TriggerPoint cannot be upgraded");
+};
+
 TriggerPoint.prototype.OnDestroy = function()
 {
 	if (this.template && this.template.EntityReference)

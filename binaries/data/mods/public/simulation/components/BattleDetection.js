@@ -39,8 +39,9 @@ BattleDetection.prototype.Init = function()
 	this.state = "PEACE";
 };
 
-BattleDetection.prototype.Update = function()
+BattleDetection.prototype.Update = function(newTemplate)
 {
+	this.template = newTemplate;
 	this.Init();
 }
 

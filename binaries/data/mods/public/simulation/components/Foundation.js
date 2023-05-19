@@ -23,7 +23,11 @@ Foundation.prototype.Init = function()
 	this.previewEntity = INVALID_ENTITY;
 };
 
-// TODO: update
+Foundation.prototype.Update = function(newTemplate)
+{
+	// TODO
+	warn("Foundation component doesn't support template updates yet");
+}
 
 Foundation.prototype.Serialize = function()
 {

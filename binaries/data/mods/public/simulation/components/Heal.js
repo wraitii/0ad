@@ -49,6 +49,13 @@ Heal.prototype.Init = function()
 {
 };
 
+Heal.prototype.Update = function(newTemplate)
+{
+	this.template = newTemplate;
+	// TODO
+	warn("TODO: Heal component update");
+};
+
 Heal.prototype.GetTimers = function()
 {
 	return {

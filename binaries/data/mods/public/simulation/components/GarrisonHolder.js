@@ -49,6 +49,14 @@ GarrisonHolder.prototype.Init = function()
 	this.allowedClasses = ApplyValueModificationsToEntity("GarrisonHolder/List/_string", this.template.List._string, this.entity);
 };
 
+
+GarrisonHolder.prototype.Update = function(newTemplate)
+{
+	this.template = newTemplate;
+	this.allowedClasses = ApplyValueModificationsToEntity("GarrisonHolder/List/_string", this.template.List._string, this.entity);
+	this.EjectOrKill(this.entities.filter(entity => !this.IsAllowedToBeGarrisoned(entity)));
+};
+
 /**
  * @param {number} entity - The entity to verify.
  * @return {boolean} - Whether the given entity is garrisoned in this GarrisonHolder.

@@ -13,6 +13,10 @@ TreasureCollector.prototype.Init = function()
 {
 };
 
+TreasureCollector.prototype.Update = function() {
+	warn("TreasureCollector.Update is not implemented")
+};
+
 /**
  * @return {Object} - Min/Max range at which this entity can claim a treasure.
  */

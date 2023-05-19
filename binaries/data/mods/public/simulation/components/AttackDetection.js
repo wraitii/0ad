@@ -22,8 +22,9 @@ AttackDetection.prototype.Init = function()
 	this.suppressedList = [];
 };
 
-AttackDetection.prototype.Update = function(oldTemplate)
+AttackDetection.prototype.Update = function(newTemplate)
 {
+	this.template = newTemplate;
 	this.Init();
 };
 

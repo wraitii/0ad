@@ -27,8 +27,9 @@ Builder.prototype.Init = function()
 {
 };
 
-Builder.prototype.Update = function(oldTemplate)
+Builder.prototype.Update = function(newTemplate)
 {
+	this.template = newTemplate;
 	if (this.target) {
 		warn("TODO Builder Update");
 	}	

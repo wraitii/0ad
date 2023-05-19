@@ -19,7 +19,9 @@ Capturable.prototype.Init = function()
 	this.capturePoints = [];
 };
 
-Capturable.prototype.Update = function() {
+Capturable.prototype.Update = function(newTemplate)
+{
+	this.template = newTemplate;
 	warn("TODO update capturable");
 }
 

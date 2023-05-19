@@ -10,6 +10,12 @@ FormationAttack.prototype.Init = function()
 	this.canAttackAsFormation = this.template.CanAttackAsFormation == "true";
 };
 
+FormationAttack.prototype.Update = function(newTemplate)
+{
+	// TODO
+	warn("FormationAttack component doesn't support template updates yet");
+};
+
 FormationAttack.prototype.CanAttackAsFormation = function()
 {
 	return this.canAttackAsFormation;

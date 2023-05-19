@@ -41,6 +41,11 @@ Researcher.prototype.Item = function(templateName, researcher, metadata)
 	this.metadata = metadata;
 };
 
+Researcher.prototype.Update = function(newTemplate)
+{
+	warn("Repairable.Update: not implemented");
+};
+
 /**
  * Prepare for the queue.
  * @param {Object} techCostMultiplier - The multipliers to use when calculating costs.

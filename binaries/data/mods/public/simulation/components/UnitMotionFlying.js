@@ -63,6 +63,10 @@ UnitMotionFlying.prototype.Init = function()
 	this.passabilityClass = Engine.QueryInterface(SYSTEM_ENTITY, IID_Pathfinder).GetPassabilityClass(this.template.PassabilityClass);
 };
 
+UnitMotionFlying.prototype.Update = function(newTemplate) {
+	warn("UnitMotionFlying.Update() is not implemented");
+};
+
 UnitMotionFlying.prototype.OnUpdate = function(msg)
 {
 	let turnLength = msg.turnLength;

@@ -76,6 +76,11 @@ Resistance.prototype.Init = function()
 	this.attackers = new Set();
 };
 
+Resistance.prototype.Update = function(newTemplate)
+{
+	warn("Repairable.Update: not implemented");
+};
+
 Resistance.prototype.IsInvulnerable = function()
 {
 	return this.invulnerable;

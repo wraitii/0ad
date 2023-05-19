@@ -14,6 +14,12 @@ Population.prototype.Init = function()
 	this.bonus = +this.template.Bonus;
 };
 
+Population.prototype.Update = function(newTemplate)
+{
+	this.template = newTemplate;
+	this.RecalculateValues();
+};
+
 /**
  * @return {number} - The population space provided by this entity.
  */

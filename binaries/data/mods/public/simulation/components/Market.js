@@ -21,6 +21,12 @@ Market.prototype.Init = function()
 	this.tradeType = new Set(this.template.TradeType.split(/\s+/));
 };
 
+Market.prototype.Update = function(newTemplate)
+{
+	this.template = newTemplate;
+	warn("Market.Update: not implemented");
+};
+
 Market.prototype.AddTrader = function(ent)
 {
 	this.traders.add(ent);

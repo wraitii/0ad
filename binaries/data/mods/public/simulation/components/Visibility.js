@@ -18,6 +18,7 @@ Visibility.prototype.Schema =
 		"<data type='boolean'/>" +
 	"</element>";
 
+	
 Visibility.prototype.Init = function()
 {
 	this.retainInFog = this.template.RetainInFog == "true";
@@ -29,6 +30,10 @@ Visibility.prototype.Init = function()
 
 	if (this.preview || this.corpse)
 		this.SetActivated(true);
+};
+
+Visibility.prototype.Update = function(newTemplate) {
+	warn("Visibility.Update: not implemented");
 };
 
 /**

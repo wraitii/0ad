@@ -20,6 +20,13 @@ Gate.prototype.Init = function()
 	this.locked = false;
 };
 
+Gate.prototype.Update = function(newTemplate)
+{
+	this.template = newTemplate;
+	// We should have an owner, as we had one before the template change.
+	this.SetupRangeQuery(Engine.QueryInterface(this.entity, IID_Ownership).GetOwner());
+};
+
 Gate.prototype.OnOwnershipChanged = function(msg)
 {
 	if (msg.to != INVALID_PLAYER)

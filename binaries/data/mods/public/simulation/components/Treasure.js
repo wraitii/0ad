@@ -21,6 +21,10 @@ Treasure.prototype.Init = function()
 {
 };
 
+Treasure.prototype.Update = function() {
+	warn("Treasure.Update is not implemented")
+};
+
 Treasure.prototype.ComputeReward = function()
 {
 	for (let resource in this.template.Resources)

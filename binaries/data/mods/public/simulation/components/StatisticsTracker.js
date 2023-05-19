@@ -92,6 +92,10 @@ StatisticsTracker.prototype.Init = function()
 		this.entity, IID_StatisticsTracker, "UpdateSequences", 0, this.UpdateSequenceInterval);
 };
 
+StatisticsTracker.prototype.Update = function() {
+	warn("StatisticsTracker.Update is not implemented")
+}
+
 StatisticsTracker.prototype.OnGlobalInitGame = function()
 {
 	this.sequences = clone(this.GetStatistics());

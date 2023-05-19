@@ -111,6 +111,11 @@ Player.prototype.Init = function()
 		});
 };
 
+Player.prototype.Update = function(newTemplate)
+{
+	warn("Player.Update: not implemented");
+};
+
 Player.prototype.SetPlayerID = function(id)
 {
 	this.playerID = id;

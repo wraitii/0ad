@@ -48,8 +48,8 @@ void CComponentTypeScript::Deinit()
 
 void CComponentTypeScript::Update(const CParamNode& paramNode) {
 	ScriptRequest rq(m_ScriptInterface);
-	ScriptFunction::CallVoid(rq, m_Instance, "Update", paramNode);
-	Script::SetProperty(rq, m_Instance, "template", paramNode, false, false);
+	if (!ScriptFunction::CallVoid(rq, m_Instance, "Update", paramNode))
+		Script::SetProperty(rq, m_Instance, "template", paramNode, false, false);
 }
 
 void CComponentTypeScript::HandleMessage(const CMessage& msg, bool global)

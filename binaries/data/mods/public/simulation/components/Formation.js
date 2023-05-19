@@ -159,6 +159,11 @@ Formation.prototype.Init = function(deserialized = false)
 		.SetInterval(this.entity, IID_Formation, "ShapeUpdate", 1000, 1000, null);
 };
 
+Formation.prototype.Update = function(newTemplate)
+{
+	warn("Updating Formation is not supported");
+};
+
 Formation.prototype.Serialize = function()
 {
 	let result = {};

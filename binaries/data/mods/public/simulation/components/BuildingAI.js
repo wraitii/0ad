@@ -30,8 +30,9 @@ BuildingAI.prototype.Init = function()
 	this.targetUnits = [];
 };
 
-BuildingAI.prototype.Update = function(oldTemplate)
+BuildingAI.prototype.Update = function(newTemplate)
 {
+	this.template = newTemplate;
 	this.targetUnits = [];
 	this.SetupRangeQuery();
 	this.SetupGaiaRangeQuery();

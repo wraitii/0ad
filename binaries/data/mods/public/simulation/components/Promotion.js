@@ -19,6 +19,13 @@ Promotion.prototype.Init = function()
 	this.ComputeTrickleRate();
 };
 
+Promotion.prototype.Update = function(newTemplate)
+{
+	this.template = newTemplate;
+	this.ComputeTrickleRate();
+	this.IncreaseXp(0);
+};
+
 Promotion.prototype.GetRequiredXp = function()
 {
 	return ApplyValueModificationsToEntity("Promotion/RequiredXp", +this.template.RequiredXp, this.entity);

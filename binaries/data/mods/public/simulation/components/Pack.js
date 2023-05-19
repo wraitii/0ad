@@ -24,6 +24,12 @@ Pack.prototype.Init = function()
 	this.timer = undefined;
 };
 
+Pack.prototype.Update = function(newTemplate)
+{
+	this.template = newTemplate;
+	warn("Pack.Update: not implemented");
+};
+
 Pack.prototype.OnDestroy = function()
 {
 	this.CancelTimer();

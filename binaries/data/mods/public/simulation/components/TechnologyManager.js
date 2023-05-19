@@ -3,6 +3,10 @@ function TechnologyManager() {}
 TechnologyManager.prototype.Schema =
 	"<empty/>";
 
+TechnologyManager.prototype.Update = function() {
+	warn("TechnologyManager.Update: not implemented");
+}
+
 /**
  * This object represents a technology under research.
  * @param {string} templateName - The name of the template to research.

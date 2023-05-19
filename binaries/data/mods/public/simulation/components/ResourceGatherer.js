@@ -49,6 +49,11 @@ ResourceGatherer.prototype.Init = function()
 	this.lastCarriedType = undefined; // { generic, specific }
 };
 
+ResourceGatherer.prototype.Update = function(newTemplate)
+{
+	warn("ResourceGatherer.Update: not implemented");
+};
+
 /**
  * Returns data about what resources the unit is currently carrying,
  * in the form [ {"type":"wood", "amount":7, "max":10} ]

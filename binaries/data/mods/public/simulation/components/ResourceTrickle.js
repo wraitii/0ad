@@ -15,6 +15,11 @@ ResourceTrickle.prototype.Init = function()
 	this.CheckTimer();
 };
 
+ResourceTrickle.prototype.Update = function()
+{
+	warn("ResourceTrickle.Update not implemented");
+};
+
 ResourceTrickle.prototype.GetInterval = function()
 {
 	return this.trickleInterval;

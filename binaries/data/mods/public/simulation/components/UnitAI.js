@@ -3469,6 +3469,10 @@ UnitAI.prototype.Init = function()
 	this.SetStance(this.template.DefaultStance);
 };
 
+UnitAI.prototype.Update = function(newTemplate) {
+	warn("UnitAI.Update() is not implemented");
+};
+
 /**
  * @param {cmpTurretable} cmpTurretable - Optionally the component to save a query here.
  * @return {boolean} - Whether we are occupying a turret point.

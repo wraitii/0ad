@@ -34,8 +34,9 @@ Barter.prototype.Init = function()
 	this.restoreTimer = undefined;
 };
 
-Barter.prototype.Update = function(oldTemplate)
+Barter.prototype.Update = function(newTemplate)
 {
+	this.template = newTemplate;
 	this.Init();
 };
 

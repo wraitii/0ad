@@ -14,6 +14,13 @@ RangeOverlayManager.prototype.Init = function()
 	this.rangeVisualizations = new Map();
 };
 
+RangeOverlayManager.prototype.Update = function()
+{
+	this.UpdateRangeOverlays("Heal")
+	this.UpdateRangeOverlays("Attack");
+	this.RegenerateRangeOverlays(false);
+};
+
 // The GUI enables visualizations
 RangeOverlayManager.prototype.Serialize = null;
 

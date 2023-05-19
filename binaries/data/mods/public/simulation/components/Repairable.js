@@ -18,6 +18,11 @@ Repairable.prototype.Init = function()
 	this.repairTimeRatio = +this.template.RepairTimeRatio;
 };
 
+Repairable.prototype.Update = function(newTemplate)
+{
+	warn("Repairable.Update: not implemented");
+};
+
 /**
  * Returns the current build progress in a [0,1] range.
  */

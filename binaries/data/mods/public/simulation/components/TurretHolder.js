@@ -25,6 +25,10 @@ class TurretHolder
 			});
 	}
 
+	Update() {
+		warn("TurretHolder.js: Update() is not implemented");
+	}
+
 	/**
 	 * Add a subunit as specified in the template.
 	 * This function creates an entity and places it on the turret point.

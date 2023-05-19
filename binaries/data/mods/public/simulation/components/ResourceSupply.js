@@ -115,6 +115,11 @@ ResourceSupply.prototype.Init = function()
 	}
 };
 
+ResourceSupply.prototype.Update = function()
+{
+	warn("ResourceSupply.Update not implemented");
+};
+
 ResourceSupply.prototype.IsInfinite = function()
 {
 	return !isFinite(+this.template.Max);
