@@ -18,7 +18,7 @@ Visibility.prototype.Schema =
 		"<data type='boolean'/>" +
 	"</element>";
 
-	
+
 Visibility.prototype.Init = function()
 {
 	this.retainInFog = this.template.RetainInFog == "true";

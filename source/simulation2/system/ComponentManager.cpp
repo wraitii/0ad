@@ -924,7 +924,6 @@ bool CComponentManager::UpdateEntityTemplate(const std::wstring& templateName, e
 			LOGWARNING("TODO");
 			continue;
 		}
-		LOGWARNING("Handling %s", it->first);
 		component->Update(it->second);
 	}
 

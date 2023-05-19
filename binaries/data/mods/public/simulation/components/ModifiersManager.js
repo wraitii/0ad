@@ -254,6 +254,45 @@ ModifiersManager.prototype.OnGlobalOwnershipChanged = function(msg)
 		Engine.PostMessage(msg.entity, MT_ValueModification, { "entities": [msg.entity], "component": component, "valueNames": modifiedComponents[component] });
 };
 
+ModifiersManager.prototype.InvalidateForTemplateChange = function(entity, newclasses, oldclasses)
+{
+	// Invalidate all caches.
+	for (let propName of this.cachedValues.keys())
+		this.InvalidateCache(propName, entity);
+
+	// Warn entities that our values have changed.
+	// Local modifiers will be added by the relevant components, so no need to check for them here.
+	let modifiedComponents = {};
+	let modifs = this.modifiersStorage.GetAllItems(entity);
+
+	let owner = QueryOwnerEntityID(entity);
+	if (owner)
+	{
+		let playerModifs = this.modifiersStorage.GetAllItems(QueryOwnerEntityID(entity));
+		for (let propertyName in playerModifs)
+			modifs[propertyName] = playerModifs[propertyName];
+	}
+
+	for (let propertyName in modifs)
+	{
+		// We only need to find one one tech per component for a match.
+		let component = propertyName.split("/")[0];
+		// Only inform if the modifier actually applies to the entity as an optimisation.
+		// TODO: would it be better to call FetchModifiedProperty here and compare values?
+		modifs[propertyName].forEach(item => item.value.forEach(modif => {
+			if (!DoesModificationApply(modif, newclasses) && !DoesModificationApply(modif, oldclasses))
+				return;
+			if (!modifiedComponents[component])
+				modifiedComponents[component] = [];
+			modifiedComponents[component].push(propertyName);
+		}));
+	}
+
+	for (let component in modifiedComponents)
+		Engine.PostMessage(entity, MT_ValueModification, { "entities": [entity], "component": component, "valueNames": modifiedComponents[component] });
+};
+
+
 /**
  * The following functions simply proxy MultiKeyMap's interface.
  */

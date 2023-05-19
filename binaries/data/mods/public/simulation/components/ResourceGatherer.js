@@ -51,7 +51,17 @@ ResourceGatherer.prototype.Init = function()
 
 ResourceGatherer.prototype.Update = function(newTemplate)
 {
-	warn("ResourceGatherer.Update: not implemented");
+	this.template = newTemplate;
+	this.RecalculateGatherRates();
+	this.RecalculateCapacities();
+	warn(uneval(this.carrying));
+	warn(uneval(this.capacities));
+	for (let type in this.carrying) {
+		if (!(type in this.capacities))
+			delete this.carrying[type];
+		if (this.carrying[type] > this.capacities[type])
+			this.carrying[type] = this.capacities[type];
+	}
 };
 
 /**

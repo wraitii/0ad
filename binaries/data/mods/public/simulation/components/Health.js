@@ -67,8 +67,7 @@ Health.prototype.Init = function()
 Health.prototype.Update = function(newTemplate)
 {
 	this.template = newTemplate;
-	// TODO:
-	warn("Health.Update: not implemented");
+	this.RecalculateValues();
 };
 
 /**

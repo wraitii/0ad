@@ -103,6 +103,7 @@ Identity.prototype.Update = function(newTemplate)
 {
 	this.template = newTemplate;
 
+	const oldClasses = this.classesList;
 	this.classesList = GetIdentityClasses(this.template);
 	this.visibleClassesList = GetVisibleIdentityClasses(this.template);
 
@@ -113,6 +114,10 @@ Identity.prototype.Update = function(newTemplate)
 			this.phenotype = "default";
 
 	this.controllable = this.template.Controllable ? this.template.Controllable == "true" : true;
+
+	const cmpModifiersManager = Engine.QueryInterface(SYSTEM_ENTITY, IID_ModifiersManager);
+	if (cmpModifiersManager)
+		cmpModifiersManager.InvalidateForTemplateChange(this.entity, this.classesList, oldClasses);
 };
 
 

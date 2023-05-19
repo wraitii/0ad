@@ -25,7 +25,7 @@ Trainer.prototype.Schema =
 Trainer.prototype.Update = function() {
 	warn("Trainer.Update is not implemented")
 }
-	
+
 /**
  * This object represents a batch of entities being trained.
  * @param {string} templateName - The name of the template we ought to train.

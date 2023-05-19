@@ -41,9 +41,8 @@ BattleDetection.prototype.Init = function()
 
 BattleDetection.prototype.Update = function(newTemplate)
 {
-	this.template = newTemplate;
-	this.Init();
-}
+	warn("BattleDetection.Update() is not implemented");
+};
 
 BattleDetection.prototype.SetState = function(state)
 {

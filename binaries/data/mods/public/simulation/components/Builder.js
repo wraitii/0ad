@@ -32,7 +32,7 @@ Builder.prototype.Update = function(newTemplate)
 	this.template = newTemplate;
 	if (this.target) {
 		warn("TODO Builder Update");
-	}	
+	}
 };
 
 Builder.prototype.GetEntitiesList = function()

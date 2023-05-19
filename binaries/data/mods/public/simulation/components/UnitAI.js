@@ -3470,7 +3470,16 @@ UnitAI.prototype.Init = function()
 };
 
 UnitAI.prototype.Update = function(newTemplate) {
-	warn("UnitAI.Update() is not implemented");
+	this.template = newTemplate;
+	this.cheeringTime = +(this.template.CheeringTime || 0);
+
+	// The current order might not be so achievable anymore, so re-run it.
+	// TODO: would it be better to send an event to the FSM? Probably
+	// TODO: this should be done after all components are updated.
+	if (!this.orderQueue.length)
+		return;
+	let order = this.orderQueue.splice(0, 1)[0];
+	this.PushOrderFront(order.type, order.data);
 };
 
 /**

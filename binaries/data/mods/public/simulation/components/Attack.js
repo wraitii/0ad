@@ -207,6 +207,15 @@ Attack.prototype.Init = function()
 {
 };
 
+Attack.prototype.Update = function(newTemplate) {
+	this.template = newTemplate;
+
+	// TODO: this should probably be done in UnitAI directly instead.
+	let cmpUnitAI = Engine.QueryInterface(this.entity, IID_UnitAI);
+	if (cmpUnitAI)
+		cmpUnitAI.UpdateRangeQueries();
+};
+
 Attack.prototype.GetAttackTypes = function(wantedTypes)
 {
 	let types = g_AttackTypes.filter(type => !!this.template[type]);

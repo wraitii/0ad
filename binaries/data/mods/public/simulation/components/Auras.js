@@ -18,12 +18,11 @@ Auras.prototype.Init = function()
 	this.Clean();
 };
 
-AttackDetection.prototype.Update = function(newTemplate)
+Auras.prototype.Update = function(newTemplate)
 {
 	this.template = newTemplate;
 	this.Init();
 };
-
 
 // We can modify identifier if we want stackable auras in some case.
 Auras.prototype.GetModifierIdentifier = function(name)
