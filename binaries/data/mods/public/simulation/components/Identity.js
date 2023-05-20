@@ -107,17 +107,14 @@ Identity.prototype.Update = function(newTemplate)
 	this.classesList = GetIdentityClasses(this.template);
 	this.visibleClassesList = GetVisibleIdentityClasses(this.template);
 
-	if (this.GetPossiblePhenotypes().indexOf(this.phenotype) === -1)
-		if (this.template.Phenotype)
-			this.phenotype = pickRandom(this.GetPossiblePhenotypes());
-		else
-			this.phenotype = "default";
+	if (!this.template.Phenotype)
+		delete this.phenotype;
+	else if (this.GetPossiblePhenotypes().indexOf(this.phenotype) === -1)
+		this.phenotype = pickRandom(this.GetPossiblePhenotypes());
 
 	this.controllable = this.template.Controllable ? this.template.Controllable == "true" : true;
 
-	const cmpModifiersManager = Engine.QueryInterface(SYSTEM_ENTITY, IID_ModifiersManager);
-	if (cmpModifiersManager)
-		cmpModifiersManager.InvalidateForTemplateChange(this.entity, this.classesList, oldClasses);
+	Engine.PostMessage(this.entity, MT_IdentityClassesChanged, { "entity": this.entity, "from": oldClasses, "to": this.classesList });
 };
 
 

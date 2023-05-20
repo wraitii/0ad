@@ -24,7 +24,9 @@ VisionSharing.prototype.Init = function()
 };
 
 VisionSharing.prototype.Update = function(newTemplate) {
-	warn("VisionSharing.Update: not implemented");
+	this.template = newTemplate;
+	if (this.activated)
+		this.CheckVisionSharings();
 };
 
 /**

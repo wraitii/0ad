@@ -254,8 +254,12 @@ ModifiersManager.prototype.OnGlobalOwnershipChanged = function(msg)
 		Engine.PostMessage(msg.entity, MT_ValueModification, { "entities": [msg.entity], "component": component, "valueNames": modifiedComponents[component] });
 };
 
-ModifiersManager.prototype.InvalidateForTemplateChange = function(entity, newclasses, oldclasses)
+ModifiersManager.prototype.OnGlobalIdentityClassesChanged = function(msg)
 {
+	const entity = msg.entity;
+	const newclasses = msg.to;
+	const oldclasses = msg.from;
+
 	// Invalidate all caches.
 	for (let propName of this.cachedValues.keys())
 		this.InvalidateCache(propName, entity);

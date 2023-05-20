@@ -22,7 +22,26 @@ Capturable.prototype.Init = function()
 Capturable.prototype.Update = function(newTemplate)
 {
 	this.template = newTemplate;
-	warn("TODO update capturable");
+
+	if (!this.capturePoints.length)
+	{
+		this.UpdateCachedValues();
+		let numPlayers = Engine.QueryInterface(SYSTEM_ENTITY, IID_PlayerManager).GetNumPlayers();
+
+		const cmpOwnership = Engine.QueryInterface(this.entity, IID_Ownership);
+		// As a sanity fallback, assign the points to gaia if we don't have an owner.
+		const to = cmpOwnership ? cmpOwnership.GetOwner() : 0;
+		for (let i = 0; i < numPlayers; ++i)
+		{
+			if (i == to)
+				this.capturePoints[i] = this.maxCapturePoints;
+			else
+				this.capturePoints[i] = 0;
+		}
+		Engine.PostMessage(this.entity, MT_CapturePointsChanged, { "capturePoints": this.capturePoints });
+		this.CheckTimer();
+	} else
+		this.UpdateCachedValuesAndNotify();
 }
 
 // Interface functions

@@ -37,6 +37,12 @@ AIProxy.prototype.Init = function()
 	this.cmpAIInterface = Engine.QueryInterface(SYSTEM_ENTITY, IID_AIInterface);
 };
 
+AIProxy.prototype.Update = function()
+{
+	this.needsFullGet = true;
+	this.NotifyChange();
+};
+
 AIProxy.prototype.Serialize = null; // we have no dynamic state to save
 
 AIProxy.prototype.Deserialize = function()

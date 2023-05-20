@@ -2051,6 +2051,12 @@ GuiInterface.prototype.OnGlobalEntityRenamed = function(msg)
 	this.renamedEntities.push(msg);
 };
 
+GuiInterface.prototype.RefreshEntity = function(entity)
+{
+	this.renamedEntities.push({ entity: entity, newentity: entity });
+};
+
+
 /**
  * List the GuiInterface functions that can be safely called by GUI scripts.
  * (GUI scripts are non-deterministic and untrusted, so these functions must be

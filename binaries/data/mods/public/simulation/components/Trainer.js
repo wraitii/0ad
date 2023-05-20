@@ -22,8 +22,18 @@ Trainer.prototype.Schema =
 		"</element>" +
 	"</optional>";
 
-Trainer.prototype.Update = function() {
-	warn("Trainer.Update is not implemented")
+Trainer.prototype.Update = function(newTemplate) {
+	this.template = newTemplate;
+
+	// This also updates the queued production if necessary.
+	this.CalculateEntitiesMap();
+
+	// Inform the GUI that it'll need to recompute the selection panel.
+	// TODO: it would be better to only send the message if something actually changing
+	// for the current training queue.
+	const cmpPlayer = QueryOwnerInterface(this.entity);
+	if (cmpPlayer)
+		Engine.QueryInterface(SYSTEM_ENTITY, IID_GuiInterface).SetSelectionDirty(cmpPlayer.GetPlayerID());
 }
 
 /**

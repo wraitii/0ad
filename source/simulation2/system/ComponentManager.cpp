@@ -496,7 +496,8 @@ void CComponentManager::ResetState()
 		std::map<entity_id_t, IComponent*>::iterator eit = iit->second.begin();
 		for (; eit != iit->second.end(); ++eit)
 		{
-			eit->second->Deinit();
+			if (eit->second)
+				eit->second->Deinit();
 			m_ComponentTypesById[iit->first].dealloc(eit->second);
 		}
 	}
@@ -737,7 +738,7 @@ IComponent* CComponentManager::ConstructComponent(CEntityHandle ent, ComponentTy
 	ENSURE((size_t)ct.iid < m_ComponentsByInterface.size());
 
 	std::unordered_map<entity_id_t, IComponent*>& emap1 = m_ComponentsByInterface[ct.iid];
-	if (emap1.find(ent.GetId()) != emap1.end())
+	if (emap1.find(ent.GetId()) != emap1.end() && emap1.find(ent.GetId())->second)
 	{
 		LOGERROR("Multiple components for interface %d", ct.iid);
 		return NULL;
@@ -766,13 +767,11 @@ IComponent* CComponentManager::ConstructComponent(CEntityHandle ent, ComponentTy
 	component->SetSimContext(m_SimContext);
 
 	// Store a reference to the new component
-	emap1.insert(std::make_pair(ent.GetId(), component));
-	emap2.insert(std::make_pair(ent.GetId(), component));
-	// TODO: We need to more careful about this - if an entity is constructed by a component
-	// while we're iterating over all components, this will invalidate the iterators and everything
-	// will break.
-	// We probably need some kind of delayed addition, so they get pushed onto a queue and then
-	// inserted into the world later on. (Be careful about immediation deletion in that case, too.)
+	// NB: this requires that insertion does not invalidate iterators, as we might create components
+	// while iterating over all components.
+	// TODO: figure out if we want some kind of delayed addition like we have for destruction.
+	emap1.insert_or_assign(ent.GetId(), component);
+	emap2.insert_or_assign(ent.GetId(), component);
 
 	SEntityComponentCache* cache = ent.GetComponentCache();
 	ENSURE(cache != NULL && ct.iid < (int)cache->numInterfaces && cache->interfaces[ct.iid] == NULL);
@@ -905,7 +904,7 @@ bool CComponentManager::UpdateEntityTemplate(const std::wstring& templateName, e
 
 	const CParamNode::ChildrenMap& tmplChilds = newTemplate->GetChildren();
 
-	// Now pass through the new template and update the components
+	// Now pass through the new template and update / create new components
 	for (CParamNode::ChildrenMap::const_iterator it = tmplChilds.begin(); it != tmplChilds.end(); ++it)
 	{
 		// Ignore attributes on the root element
@@ -916,15 +915,53 @@ bool CComponentManager::UpdateEntityTemplate(const std::wstring& templateName, e
 		if (cid == CID__Invalid)
 		{
 			LOGERROR("Unrecognized component type name '%s' in entity template '%s'", it->first, utf8_from_wstring(templateName));
-			return INVALID_ENTITY;
+			return false;
 		}
 		IComponent* component = handle.GetComponentCache()->interfaces[m_ComponentTypesById[cid].iid];
 		if (!component)
 		{
-			LOGWARNING("TODO");
-			continue;
+			if (!AddComponent(handle, cid, it->second))
+			{
+				LOGERROR("Failed to construct component type name '%s' in entity template '%s'", it->first, utf8_from_wstring(templateName));
+				return false;
+			}
+			// TODO: make AddComponent return the component bruh.
+			component = handle.GetComponentCache()->interfaces[m_ComponentTypesById[cid].iid];
 		}
 		component->Update(it->second);
+	}
+
+	// Finally pass through existing templates and delete all outstanding components.
+	// This is the really tricky/hacky bit.
+	for (CParamNode::ChildrenMap::const_iterator it = oldTemplate->GetChildren().begin(); it != oldTemplate->GetChildren().end(); ++it) {
+		// Ignore attributes on the root element
+		if (it->first.length() && it->first[0] == '@')
+			continue;
+		CParamNode::ChildrenMap::const_iterator itOld = tmplChilds.find(it->first);
+		if (itOld != tmplChilds.end())
+			continue;
+
+		CComponentManager::ComponentTypeId cid = LookupCID(it->first);
+		std::map<ComponentTypeId, std::map<entity_id_t, IComponent*> >::iterator iit = m_ComponentsByTypeId.find(cid);
+		if (iit == m_ComponentsByTypeId.end())
+		{
+			LOGWARNING("Did not find expected component when updating template - %s", it->first);
+			continue;
+		}
+		std::map<entity_id_t, IComponent*>::iterator eit = iit->second.find(ent);
+		if (eit == iit->second.end())
+		{
+			LOGWARNING("Did not find expected component when updating template - %s", it->first);
+			continue;
+		}
+		// TODO -> should we de-init sooner / later ?
+		eit->second->Deinit();
+		RemoveComponentDynamicSubscriptions(eit->second);
+
+		// TODO: fix memory leak, and fix container leaks. Otherwise things crash down the line.
+		eit->second = nullptr;
+		handle.GetComponentCache()->interfaces[m_ComponentTypesById[iit->first].iid] = nullptr;
+		m_ComponentsByInterface[m_ComponentTypesById[iit->first].iid][ent] = nullptr;
 	}
 
 	// Update the cache
@@ -979,8 +1016,10 @@ void CComponentManager::FlushDestroyedComponents()
 				std::map<entity_id_t, IComponent*>::iterator eit = iit->second.find(ent);
 				if (eit != iit->second.end())
 				{
-					eit->second->Deinit();
-					RemoveComponentDynamicSubscriptions(eit->second);
+					if (eit->second) {
+						eit->second->Deinit();
+						RemoveComponentDynamicSubscriptions(eit->second);
+					}
 					m_ComponentTypesById[iit->first].dealloc(eit->second);
 					iit->second.erase(ent);
 					handle.GetComponentCache()->interfaces[m_ComponentTypesById[iit->first].iid] = NULL;
@@ -1070,7 +1109,7 @@ void CComponentManager::PostMessage(entity_id_t ent, const CMessage& msg)
 
 			// Send the message to all of them
 			std::map<entity_id_t, IComponent*>::const_iterator eit = emap->second.find(ent);
-			if (eit != emap->second.end())
+			if (eit != emap->second.end() && eit->second)
 				eit->second->HandleMessage(msg, false);
 		}
 	}
@@ -1096,7 +1135,8 @@ void CComponentManager::BroadcastMessage(const CMessage& msg)
 			// Send the message to all of them
 			std::map<entity_id_t, IComponent*>::const_iterator eit = emap->second.begin();
 			for (; eit != emap->second.end(); ++eit)
-				eit->second->HandleMessage(msg, false);
+				if (eit->second)
+					eit->second->HandleMessage(msg, false);
 		}
 	}
 
@@ -1135,7 +1175,8 @@ void CComponentManager::SendGlobalMessage(entity_id_t ent, const CMessage& msg)
 			// Send the message to all of them
 			std::map<entity_id_t, IComponent*>::const_iterator eit = emap->second.begin();
 			for (; eit != emap->second.end(); ++eit)
-				eit->second->HandleMessage(msg, true);
+				if (eit->second)
+					eit->second->HandleMessage(msg, true);
 		}
 	}
 

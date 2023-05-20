@@ -312,6 +312,7 @@ private:
 	// TODO: some of these should be vectors
 	std::map<ComponentTypeId, ComponentType> m_ComponentTypesById;
 	std::vector<CComponentManager::ComponentTypeId> m_ScriptedSystemComponents;
+	// TODO: the two containers below must guarantee stability when inserting for now, @see ConstructComponent
 	std::vector<std::unordered_map<entity_id_t, IComponent*> > m_ComponentsByInterface; // indexed by InterfaceId
 	std::map<ComponentTypeId, std::map<entity_id_t, IComponent*> > m_ComponentsByTypeId;
 	std::map<MessageTypeId, std::vector<ComponentTypeId> > m_LocalMessageSubscriptions;

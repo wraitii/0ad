@@ -33,7 +33,15 @@ Visibility.prototype.Init = function()
 };
 
 Visibility.prototype.Update = function(newTemplate) {
-	warn("Visibility.Update: not implemented");
+	this.template = newTemplate;
+
+	this.retainInFog = this.template.RetainInFog == "true";
+	this.alwaysVisible = this.template.AlwaysVisible == "true";
+	this.corpse = this.template.Corpse == "true";
+	this.preview = this.template.Preview == "true";
+
+	// Notify the range manager the visibility of this entity must be updated.
+	Engine.QueryInterface(SYSTEM_ENTITY, IID_RangeManager).RequestVisibilityUpdate(this.entity);
 };
 
 /**

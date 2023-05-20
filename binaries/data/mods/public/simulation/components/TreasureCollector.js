@@ -13,8 +13,9 @@ TreasureCollector.prototype.Init = function()
 {
 };
 
-TreasureCollector.prototype.Update = function() {
-	warn("TreasureCollector.Update is not implemented")
+TreasureCollector.prototype.Update = function(newTemplate)
+{
+	this.template = newTemplate;
 };
 
 /**

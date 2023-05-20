@@ -43,9 +43,12 @@ StatusBars.prototype.Init = function()
 	this.auraSources = new Map();
 };
 
-StatusBars.prototype.Update = function() {
-	warn("StatusBars.Update is not implemented")
-}
+StatusBars.prototype.Update = function(newTemplate) {
+	this.template = newTemplate;
+
+	if (this.enabled)
+		this.RegenerateSprites();
+};
 
 /**
  * Don't serialise this.enabled since it's modified by the GUI.

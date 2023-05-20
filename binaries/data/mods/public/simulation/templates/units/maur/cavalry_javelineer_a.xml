@@ -4,7 +4,7 @@
     <Rank>Advanced</Rank>
   </Identity>
   <Promotion>
-    <Entity>units/maur/cavalry_javelineer_e</Entity>
+    <Entity>units/maur/infantry_archer_e</Entity>
   </Promotion>
   <VisualActor>
     <Actor>units/mauryas/cavalry_javelinist_a_m.xml</Actor>

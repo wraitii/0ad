@@ -20,7 +20,8 @@ Repairable.prototype.Init = function()
 
 Repairable.prototype.Update = function(newTemplate)
 {
-	warn("Repairable.Update: not implemented");
+	this.template = newTemplate;
+	this.repairTimeRatio = +this.template.RepairTimeRatio;
 };
 
 /**

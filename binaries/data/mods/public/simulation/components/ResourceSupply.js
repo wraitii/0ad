@@ -115,9 +115,29 @@ ResourceSupply.prototype.Init = function()
 	}
 };
 
-ResourceSupply.prototype.Update = function()
+ResourceSupply.prototype.Update = function(newTemplate)
 {
-	warn("ResourceSupply.Update not implemented");
+	this.template = newTemplate;
+
+	// TODO: figure out what we want to do with the amount exactly.
+	let oldAmount = this.amount;
+	let oldType = this.cachedType;
+
+	this.amount = +(this.template.Initial || this.template.Max);
+
+	let [type, subtype] = this.template.Type.split('.');
+	this.cachedType = { "generic": type, "specific": subtype };
+
+	if (oldType.generic != type || oldType.specific != subtype) {
+		// TODO: send message.
+	} else if (oldAmount != this.amount) {
+		Engine.PostMessage(this.entity, MT_ResourceSupplyChanged, {
+			"from": oldAmount,
+			"to": this.amount
+		});
+	}
+
+	this.RecalculateValues();
 };
 
 ResourceSupply.prototype.IsInfinite = function()

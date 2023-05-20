@@ -78,7 +78,7 @@ Resistance.prototype.Init = function()
 
 Resistance.prototype.Update = function(newTemplate)
 {
-	warn("Repairable.Update: not implemented");
+	this.template = newTemplate;
 };
 
 Resistance.prototype.IsInvulnerable = function()

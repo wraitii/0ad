@@ -218,9 +218,13 @@ m.SharedScript.prototype.ApplyEntitiesDelta = function(state)
 
 	for (let evt of state.events.ConstructionFinished)
 	{
-		// metada are already moved by EntityRenamed when needed (i.e. construction, not repair)
-		if (evt.entity != evt.newentity)
-			foundationFinished[evt.entity] = true;
+		foundationFinished[evt.entity] = true;
+		for (let player of this._players)
+		{
+			this._entityMetadata[player][evt.newentity] = this._entityMetadata[player][evt.entity];
+			this._entityMetadata[player][evt.entity] = {};
+		}
+		state.entities[evt.newentity].foundationProgress = undefined;
 	}
 
 	for (let evt of state.events.AIMetadata)

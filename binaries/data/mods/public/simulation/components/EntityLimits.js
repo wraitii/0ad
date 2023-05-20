@@ -103,7 +103,6 @@ EntityLimits.prototype.Init = function()
 
 EntityLimits.prototype.Update = function(newTemplate)
 {
-	warn("Updating EntityLimits is not supported");
 }
 
 EntityLimits.prototype.ChangeCount = function(category, value)

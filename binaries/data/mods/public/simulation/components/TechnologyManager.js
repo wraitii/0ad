@@ -427,6 +427,32 @@ TechnologyManager.prototype.OnGlobalOwnershipChanged = function(msg)
 	}
 };
 
+TechnologyManager.prototype.OnGlobalIdentityClassesChanged = function(msg)
+{
+	warn("TODO: fix this");
+	var cmpTemplateManager = Engine.QueryInterface(SYSTEM_ENTITY, IID_TemplateManager);
+	var template = cmpTemplateManager.GetCurrentTemplateName(msg.entity);
+
+	var cmpIdentity = Engine.QueryInterface(msg.entity, IID_Identity);
+	if (!cmpIdentity)
+		return;
+
+	var classes = cmpIdentity.GetClassesList();
+	// don't use foundations for the class counts but check if techs apply (e.g. health increase)
+	if (!Engine.QueryInterface(msg.entity, IID_Foundation))
+	{
+		for (let cls of classes)
+		{
+			this.classCounts[cls] = this.classCounts[cls] || 0;
+			this.classCounts[cls] += 1;
+
+			this.typeCountsByClass[cls] = this.typeCountsByClass[cls] || {};
+			this.typeCountsByClass[cls][template] = this.typeCountsByClass[cls][template] || 0;
+			this.typeCountsByClass[cls][template] += 1;
+		}
+	}
+};
+
 /**
  * This does neither apply effects nor verify requirements.
  * @param {string} tech - The name of the technology to mark as researched.

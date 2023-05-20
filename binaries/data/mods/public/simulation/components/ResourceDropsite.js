@@ -20,7 +20,12 @@ ResourceDropsite.prototype.Init = function()
 
 ResourceDropsite.prototype.Update = function(newTemplate)
 {
-	warn("Repairable.Update: not implemented");
+	this.template = newTemplate;
+
+	let wasSharable = this.sharable;
+	this.sharable = this.template.Sharable == "true";
+	if (this.sharable && !wasSharable)
+		this.shared = this.sharable;
 };
 
 /**

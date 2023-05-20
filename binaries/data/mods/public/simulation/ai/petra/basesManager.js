@@ -200,13 +200,39 @@ PETRA.BasesManager.prototype.checkEvents = function(gameState, events)
 
 	for (const evt of events.ConstructionFinished)
 	{
-		if (evt.newentity == evt.entity)  // repaired building
-			continue;
+		//if (evt.newentity == evt.entity)  // repaired building
+			//continue;
 		const ent = gameState.getEntityById(evt.newentity);
 		if (!ent || ent.owner() != PlayerID)
 			continue;
 		if (ent.getMetadata(PlayerID, "base") === undefined)
-			continue;
+		{
+			if (ent.hasClass("Unit"))
+				PETRA.getBestBase(gameState, ent).assignEntity(gameState, ent);
+			else if (ent.hasClass("CivCentre"))   // build a new base around it
+			{
+				let newbase;
+				if (ent.foundationProgress() !== undefined)
+					newbase = this.createBase(gameState, ent, PETRA.BaseManager.STATE_UNCONSTRUCTED);
+				else
+				{
+					newbase = this.createBase(gameState, ent, PETRA.BaseManager.STATE_CAPTURED);
+					addBase = true;
+				}
+				newbase.assignEntity(gameState, ent);
+			}
+			else
+			{
+				let base;
+				// If dropsite on new island, create a base around it
+				if (!ent.decaying() && ent.resourceDropsiteTypes())
+					base = this.createBase(gameState, ent, PETRA.BaseManager.STATE_ANCHORLESS);
+				else
+					base = PETRA.getBestBase(gameState, ent) || this.noBase;
+				base.assignEntity(gameState, ent);
+			}
+		}
+
 		const base = this.getBaseByID(ent.getMetadata(PlayerID, "base"));
 		base.buildings.updateEnt(ent);
 		if (ent.resourceDropsiteTypes())

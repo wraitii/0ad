@@ -5,6 +5,10 @@ function ChangeEntityTemplate(oldEnt, newTemplate)
 {
 	// Done un/packing, copy our parameters to the final entity
 	Engine.UpdateEntityTemplate(newTemplate, oldEnt);
+	const cmpGuiInterface = Engine.QueryInterface(SYSTEM_ENTITY, IID_GuiInterface);
+	if (cmpGuiInterface)
+		cmpGuiInterface.RefreshEntity(oldEnt);
+
 	return oldEnt;
 
 	var newEnt = Engine.AddEntity(newTemplate);

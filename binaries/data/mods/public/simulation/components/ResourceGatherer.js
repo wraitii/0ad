@@ -54,8 +54,7 @@ ResourceGatherer.prototype.Update = function(newTemplate)
 	this.template = newTemplate;
 	this.RecalculateGatherRates();
 	this.RecalculateCapacities();
-	warn(uneval(this.carrying));
-	warn(uneval(this.capacities));
+
 	for (let type in this.carrying) {
 		if (!(type in this.capacities))
 			delete this.carrying[type];

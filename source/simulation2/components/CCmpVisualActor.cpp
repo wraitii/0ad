@@ -244,7 +244,6 @@ public:
 		m_SilhouetteOccluder = paramNode.GetChild("SilhouetteOccluder").ToBool();
 		m_DisableShadows = paramNode.GetChild("DisableShadows").ToBool();
 
-		delete m_ShapeDescriptor;
 		InitSelectionShapeDescriptor(paramNode);
 
 		RecomputeActorName();
@@ -677,6 +676,7 @@ void CCmpVisualActor::InitModel()
 void CCmpVisualActor::InitSelectionShapeDescriptor(const CParamNode& paramNode)
 {
 	// by default, we don't need a custom selection shape and we can just keep the default behaviour
+	// We don't need to delete the descriptor here, because the CModelAbstract holds it.
 	m_ShapeDescriptor = nullptr;
 
 	const CParamNode& shapeNode = paramNode.GetChild("SelectionShape");

@@ -52,8 +52,12 @@ Heal.prototype.Init = function()
 Heal.prototype.Update = function(newTemplate)
 {
 	this.template = newTemplate;
-	// TODO
-	warn("TODO: Heal component update");
+	// TODO: only do this if something changed
+	let cmpUnitAI = Engine.QueryInterface(this.entity, IID_UnitAI);
+	if (!cmpUnitAI)
+		return;
+
+	cmpUnitAI.UpdateRangeQueries();
 };
 
 Heal.prototype.GetTimers = function()

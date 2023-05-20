@@ -30,9 +30,11 @@ Builder.prototype.Init = function()
 Builder.prototype.Update = function(newTemplate)
 {
 	this.template = newTemplate;
-	if (this.target) {
-		warn("TODO Builder Update");
-	}
+
+	// Token changes may require selection updates.
+	let cmpPlayer = QueryOwnerInterface(this.entity, IID_Player);
+	if (cmpPlayer)
+		Engine.QueryInterface(SYSTEM_ENTITY, IID_GuiInterface).SetSelectionDirty(cmpPlayer.GetPlayerID());
 };
 
 Builder.prototype.GetEntitiesList = function()
