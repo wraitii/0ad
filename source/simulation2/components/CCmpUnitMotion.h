@@ -316,6 +316,32 @@ public:
 	{
 	}
 
+	void Update(const CParamNode& paramNode) override
+	{
+		m_IsFormationController = paramNode.GetChild("FormationController").ToBool();
+		m_WalkSpeed = m_TemplateWalkSpeed = m_Speed = paramNode.GetChild("WalkSpeed").ToFixed();
+
+		if (paramNode.GetChild("RunMultiplier").IsOk())
+			m_TemplateRunMultiplier = paramNode.GetChild("RunMultiplier").ToFixed();
+		else
+			m_TemplateRunMultiplier = fixed::FromInt(1);
+
+		m_InstantTurnAngle = paramNode.GetChild("InstantTurnAngle").ToFixed();
+		m_TemplateAcceleration = paramNode.GetChild("Acceleration").ToFixed();
+		m_TemplateWeight = paramNode.GetChild("Weight").ToFixed();
+
+		m_PassClassName = paramNode.GetChild("PassabilityClass").ToString();
+		SetPassabilityData(m_PassClassName);
+
+		CmpPtr<ICmpObstruction> cmpObstruction(GetEntityHandle());
+		if (cmpObstruction)
+			m_BlockMovement = cmpObstruction->GetBlockMovementFlag(false);
+
+		SetParticipateInPushing(!paramNode.GetChild("DisablePushing").IsOk() || !paramNode.GetChild("DisablePushing").ToBool());
+
+		OnValueModification();
+	}
+
 	template<typename S>
 	void SerializeCommon(S& serialize)
 	{

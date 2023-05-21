@@ -54,6 +54,10 @@ public:
 	{
 	}
 
+	void Update(const CParamNode& UNUSED(paramNode)) override
+	{
+	}
+
 	void Serialize(ISerializer& serialize) override
 	{
 		serialize.NumberI32_Unbounded("owner", m_Owner);

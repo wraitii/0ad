@@ -265,6 +265,22 @@ CMessage* CMessageTerritoryPositionChanged::FromJSVal(const ScriptInterface& scr
 
 ////////////////////////////////
 
+JS::Value CMessageTerritoryInfluenceChanged::ToJSVal(const ScriptInterface& scriptInterface) const
+{
+	TOJSVAL_SETUP();
+	SET_MSG_PROPERTY(entity);
+	return JS::ObjectValue(*obj);
+}
+
+CMessage* CMessageTerritoryInfluenceChanged::FromJSVal(const ScriptInterface& scriptInterface, JS::HandleValue val)
+{
+	FROMJSVAL_SETUP();
+	GET_MSG_PROPERTY(entity_id_t, entity);
+	return new CMessageTerritoryInfluenceChanged(entity);
+}
+
+////////////////////////////////
+
 const std::array<const char*, CMessageMotionUpdate::UpdateType::LENGTH> CMessageMotionUpdate::UpdateTypeStr = { {
 	"likelySuccess", "likelyFailure", "obstructed", "veryObstructed"
 } };

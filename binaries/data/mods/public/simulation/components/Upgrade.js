@@ -56,7 +56,18 @@ Upgrade.prototype.Init = function()
 };
 
 Upgrade.prototype.Update = function(newTemplate) {
-	warn("Upgrade.Update() is not implemented");
+	this.template = newTemplate;
+
+	const cmpOwnership = Engine.QueryInterface(this.entity, IID_Ownership);
+	if (!cmpOwnership) {
+		warn("Upgrade needs an Ownership component to work - updating template to for " + this.entity);
+		return;
+	}
+	this.owner = cmpOwnership.GetOwner();
+
+	if (!this.completed)
+		this.CancelUpgrade(this.owner);
+	this.DetermineUpgrades();
 };
 
 // This will also deal with the "OnDestroy" case.

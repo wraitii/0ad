@@ -302,4 +302,55 @@ EntityLimits.prototype.OnGlobalOwnershipChanged = function(msg)
 	this.UpdateLimitRemoval();
 };
 
+EntityLimits.prototype.OnGlobalIdentityClassesChanged = function(msg)
+{
+	const playerID = (Engine.QueryInterface(this.entity, IID_Player)).GetPlayerID();
+	const cmpOwnership = Engine.QueryInterface(msg.entity, IID_Ownership);
+	if (!cmpOwnership || cmpOwnership.GetOwner() != playerID)
+		return;
+
+		// foundations shouldn't change the entity limits until they're completed
+	if (Engine.QueryInterface(msg.entity, IID_Foundation))
+		return;
+
+	const oldClasses = msg.from;
+	const newClasses = msg.to;
+
+	for (const category in this.changers)
+		for (const cls in this.changers[category])
+		{
+			let inOld = oldClasses.indexOf(cls) !== -1;
+			let inNew = newClasses.indexOf(cls) !== -1;
+			// Change limit counts if there is a difference between the old and new classes
+			if (!inOld && inNew)
+			{
+				if (this.limit[category] !== undefined)
+					this.limit[category] += this.changers[category][cls];
+				if (this.removedLimit[category] !== undefined)
+					this.removedLimit[category] += this.changers[category][cls];
+			}
+			else if (inOld && !inNew)
+			{
+				if (this.limit[category] != undefined)
+					this.limit[category] -= this.changers[category][cls];
+				if (this.removedLimit[category] != undefined)
+					this.removedLimit[category] -= this.changers[category][cls];
+			}
+		}
+
+	for (const category in this.removers)
+		if ("RequiredClasses" in this.removers[category])
+			for (const cls of this.removers[category].RequiredClasses)
+			{
+				let inOld = oldClasses.indexOf(cls) >= 0;
+				let inNew = newClasses.indexOf(cls) >= 0;
+				if (!inOld && inNew)
+					this.classCount[cls]++;
+				else if (inOld && !inNew)
+					this.classCount[cls]--;
+			}
+
+	this.UpdateLimitRemoval();
+};
+
 Engine.RegisterComponentType(IID_EntityLimits, "EntityLimits", EntityLimits);

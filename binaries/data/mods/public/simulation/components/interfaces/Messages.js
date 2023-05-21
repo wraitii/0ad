@@ -12,6 +12,12 @@
 Engine.RegisterMessageType("EntityRenamed");
 
 /**
+ * Message of the form { "entity": number, "from": old, "to": new }
+ * sent when an entity changes template.
+ */
+Engine.RegisterMessageType("TemplateChanged");
+
+/**
  * Message of the form {}
  * sent from InitGame for component map-dependent initialization.
  */

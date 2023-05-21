@@ -20,6 +20,7 @@
 #include "simulation2/system/Component.h"
 #include "ICmpTerritoryInfluence.h"
 
+#include "simulation2/MessageTypes.h"
 #include "simulation2/components/ICmpOwnership.h"
 #include "simulation2/components/ICmpPlayerManager.h"
 #include "simulation2/components/ICmpValueModificationManager.h"
@@ -27,8 +28,10 @@
 class CCmpTerritoryInfluence final : public ICmpTerritoryInfluence
 {
 public:
-	static void ClassInit(CComponentManager& UNUSED(componentManager))
+	static void ClassInit(CComponentManager& componentManager)
 	{
+		componentManager.SubscribeToMessageType(MT_OwnershipChanged);
+		componentManager.SubscribeToMessageType(MT_ValueModification);
 	}
 
 	DEFAULT_COMPONENT_ALLOCATOR(TerritoryInfluence)
@@ -62,6 +65,14 @@ public:
 
 	void Deinit() override
 	{
+		OnChanged();
+	}
+
+	void Update(const CParamNode& paramNode) override
+	{
+		// TODO: only update on change
+		Init(paramNode);
+		OnChanged();
 	}
 
 	void Serialize(ISerializer& UNUSED(serialize)) override
@@ -71,6 +82,34 @@ public:
 	void Deserialize(const CParamNode& paramNode, IDeserializer& UNUSED(deserialize)) override
 	{
 		Init(paramNode);
+	}
+
+	void HandleMessage(const CMessage& msg, bool UNUSED(global)) override
+	{
+		switch (msg.GetType())
+		{
+		case MT_OwnershipChanged:
+			{
+				const CMessageOwnershipChanged& msgData = static_cast<const CMessageOwnershipChanged&> (msg);
+				// handled in DeInit();
+				if (msgData.to != INVALID_PLAYER)
+					OnChanged();
+				break;
+			}
+		case MT_ValueModification:
+			{
+				const CMessageValueModification& msgData = static_cast<const CMessageValueModification&> (msg);
+				if (msgData.component == L"TerritoryInfluence")
+					OnChanged();
+				break;
+			}
+		}
+	}
+
+	void OnChanged() const
+	{
+		CMessageTerritoryInfluenceChanged msg(GetEntityId());
+		GetSimContext().GetComponentManager().PostMessage(GetEntityId(), msg);
 	}
 
 	bool IsRoot() const override

@@ -72,6 +72,17 @@ public:
 	{
 	}
 
+	void Update(const CParamNode& paramNode) override
+	{
+		m_BaseRange = paramNode.GetChild("Range").ToFixed();
+
+		if (paramNode.GetChild("RevealShore").IsOk() && !m_RevealShore)
+			// Need to not be lazy and send a message
+			LOGWARNING("Updating to an entity that reveals the shore is unsupported");
+
+		ReloadRange();
+	}
+	
 	void Serialize(ISerializer& UNUSED(serialize)) override
 	{
 		// No dynamic state to serialize

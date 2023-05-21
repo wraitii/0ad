@@ -115,6 +115,15 @@ public:
 	{
 	}
 
+	void Update(const CParamNode& paramNode) override
+	{
+		m_Active = paramNode.GetChild("Active").ToBool();
+		m_ShipSink = paramNode.GetChild("SinkingAnim").ToBool();
+		m_DelayTime = paramNode.GetChild("DelayTime").ToFixed().ToFloat();
+		m_SinkRate = paramNode.GetChild("SinkRate").ToFixed().ToFloat();
+		m_SinkAccel = paramNode.GetChild("SinkAccel").ToFixed().ToFloat();
+	}
+
 	void Serialize(ISerializer& UNUSED(serialize)) override
 	{
 		// This component isn't network-synchronised, so don't serialize anything

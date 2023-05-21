@@ -275,6 +275,29 @@ public:
 
 	void Deinit() override
 	{
+		m_IsDestroyed = true;
+	}
+
+	void Update(const CParamNode& paramNode) override
+	{
+		bool active = m_Active;
+		bool moving = m_Moving;
+		entity_id_t cg1 = m_ControlGroup;
+		entity_id_t cg2 = m_ControlGroup2;
+
+		bool block_movement = m_Flags & ICmpObstructionManager::FLAG_BLOCK_MOVEMENT;
+		bool block_pathfinding = m_Flags & ICmpObstructionManager::FLAG_BLOCK_PATHFINDING;
+
+		SetActive(false);
+
+		Init(paramNode);
+		m_Active = false;
+
+		m_Moving = moving;
+		m_ControlGroup = cg1;
+		m_ControlGroup2 = cg2;
+
+		SetActive(active);
 	}
 
 	template<typename S>

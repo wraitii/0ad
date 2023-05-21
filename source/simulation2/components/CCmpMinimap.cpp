@@ -140,6 +140,36 @@ public:
 	{
 	}
 
+	void Update(const CParamNode& paramNode) override
+	{
+		const CParamNode& color = paramNode.GetChild("Color");
+		if (color.IsOk())
+		{
+			m_UsePlayerColor = false;
+			m_R = (u8)color.GetChild("@r").ToInt();
+			m_G = (u8)color.GetChild("@g").ToInt();
+			m_B = (u8)color.GetChild("@b").ToInt();
+		}
+		else
+		{
+			m_UsePlayerColor = true;
+			UpdateColor();
+		}
+
+		const CParamNode& iconNode = paramNode.GetChild("Icon");
+		if (iconNode.IsOk())
+		{
+			const CParamNode& iconSizeNode = iconNode.GetChild("@size");
+			if (iconSizeNode.IsOk())
+			{
+				m_HasIcon = true;
+				m_IconPath = "art/textures/ui/session/icons/minimap/" + iconNode.ToString();
+				m_IconSize = iconSizeNode.ToFloat();
+			}
+		} else
+			m_HasIcon = false;
+	}
+
 	template<typename S>
 	void SerializeCommon(S& serialize)
 	{

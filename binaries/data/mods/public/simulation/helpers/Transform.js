@@ -3,11 +3,11 @@
 // returns the ID of the new entity or INVALID_ENTITY.
 function ChangeEntityTemplate(oldEnt, newTemplate)
 {
-	// Done un/packing, copy our parameters to the final entity
+	const cmpTemplateManager = Engine.QueryInterface(SYSTEM_ENTITY, IID_TemplateManager);
+	const oldTemplate = cmpTemplateManager.GetCurrentTemplateName(oldEnt)
+
 	Engine.UpdateEntityTemplate(newTemplate, oldEnt);
-	const cmpGuiInterface = Engine.QueryInterface(SYSTEM_ENTITY, IID_GuiInterface);
-	if (cmpGuiInterface)
-		cmpGuiInterface.RefreshEntity(oldEnt);
+	Engine.PostMessage(oldEnt, MT_TemplateChanged, { "entity": oldEnt, "from": oldTemplate, "to": newTemplate });
 
 	return oldEnt;
 

@@ -23,8 +23,10 @@ TerritoryDecay.prototype.Init = function()
 	this.territoryOwnership = !isFinite(+this.template.DecayRate);
 };
 
-TerritoryDecay.prototype.Update = function() {
-	warn("TerritoryDecay.Update is not implemented")
+TerritoryDecay.prototype.Update = function(newTemplate) {
+	this.template = newTemplate;
+	this.territoryOwnership = !isFinite(+this.template.DecayRate);
+	this.UpdateDecayState();
 }
 
 TerritoryDecay.prototype.IsConnected = function()

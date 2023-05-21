@@ -429,27 +429,74 @@ TechnologyManager.prototype.OnGlobalOwnershipChanged = function(msg)
 
 TechnologyManager.prototype.OnGlobalIdentityClassesChanged = function(msg)
 {
-	warn("TODO: fix this");
+	const playerID = (Engine.QueryInterface(this.entity, IID_Player)).GetPlayerID();
+	const cmpOwnership = Engine.QueryInterface(msg.entity, IID_Ownership);
+	if (!cmpOwnership || cmpOwnership.GetOwner() != playerID)
+		return;
+
 	var cmpTemplateManager = Engine.QueryInterface(SYSTEM_ENTITY, IID_TemplateManager);
 	var template = cmpTemplateManager.GetCurrentTemplateName(msg.entity);
 
-	var cmpIdentity = Engine.QueryInterface(msg.entity, IID_Identity);
+	// don't use foundations for the class counts but check if techs apply (e.g. health increase)
+	if (Engine.QueryInterface(msg.entity, IID_Foundation))
+		return;
+
+	let oldClasses = msg.from;
+	let newClasses = msg.to;
+
+	// Add first so we don't delete the old class if it's the same as the new one
+	for (let cls of newClasses)
+	{
+		this.classCounts[cls] = this.classCounts[cls] || 0;
+		this.classCounts[cls] += 1;
+
+		this.typeCountsByClass[cls] = this.typeCountsByClass[cls] || {};
+		this.typeCountsByClass[cls][template] = this.typeCountsByClass[cls][template] || 0;
+		this.typeCountsByClass[cls][template] += 1;
+	}
+
+	for (let cls of oldClasses)
+	{
+		this.classCounts[cls] -= 1;
+		if (this.classCounts[cls] <= 0)
+			delete this.classCounts[cls];
+
+		this.typeCountsByClass[cls][template] -= 1;
+		if (this.typeCountsByClass[cls][template] <= 0)
+			delete this.typeCountsByClass[cls][template];
+	}
+};
+
+TechnologyManager.prototype.OnGlobalTemplateChanged = function(msg)
+{
+	const playerID = (Engine.QueryInterface(this.entity, IID_Player)).GetPlayerID();
+	const cmpOwnership = Engine.QueryInterface(msg.entity, IID_Ownership);
+	if (!cmpOwnership || cmpOwnership.GetOwner() != playerID)
+		return;
+
+	// don't use foundations for the class counts but check if techs apply (e.g. health increase)
+	if (Engine.QueryInterface(msg.entity, IID_Foundation))
+		return;
+
+	const cmpIdentity = Engine.QueryInterface(msg.entity, IID_Identity);
 	if (!cmpIdentity)
 		return;
 
-	var classes = cmpIdentity.GetClassesList();
-	// don't use foundations for the class counts but check if techs apply (e.g. health increase)
-	if (!Engine.QueryInterface(msg.entity, IID_Foundation))
-	{
-		for (let cls of classes)
-		{
-			this.classCounts[cls] = this.classCounts[cls] || 0;
-			this.classCounts[cls] += 1;
+	// We assume that the Identity changes are handled above.
+	const classes = cmpIdentity.GetClassesList();
 
-			this.typeCountsByClass[cls] = this.typeCountsByClass[cls] || {};
-			this.typeCountsByClass[cls][template] = this.typeCountsByClass[cls][template] || 0;
-			this.typeCountsByClass[cls][template] += 1;
-		}
+	// Add first so we don't delete the old class if it's the same as the new one
+	for (let cls of classes)
+	{
+		this.typeCountsByClass[cls] = this.typeCountsByClass[cls] || {};
+		this.typeCountsByClass[cls][msg.to] = this.typeCountsByClass[cls][msg.to] || 0;
+		this.typeCountsByClass[cls][msg.to] += 1;
+	}
+	for (let cls of classes)
+	{
+		this.typeCountsByClass[cls][msg.from] -= 1;
+		if (this.typeCountsByClass[cls][msg.from] <= 0)
+			delete this.typeCountsByClass[cls][msg.from];
 	}
 };
 

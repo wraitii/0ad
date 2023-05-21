@@ -175,6 +175,29 @@ public:
 	{
 	}
 
+	void Update(const CParamNode& paramNode) override
+	{
+		const std::string& anchor = paramNode.GetChild("Anchor").ToString();
+		if (anchor == "pitch")
+			m_AnchorType = PITCH;
+		else if (anchor == "pitch-roll")
+			m_AnchorType = PITCH_ROLL;
+		else if (anchor == "roll")
+			m_AnchorType = ROLL;
+		else
+			m_AnchorType = UPRIGHT;
+
+		if (m_RelativeToGround)
+			m_Y = paramNode.GetChild("Altitude").ToFixed();
+
+		m_Floating = paramNode.GetChild("Floating").ToBool();
+		m_FloatDepth = paramNode.GetChild("FloatDepth").ToFixed();
+
+		m_RotYSpeed = paramNode.GetChild("TurnRate").ToFixed();
+
+		AdvertiseInterpolatedPositionChanges();
+	}
+
 	void Serialize(ISerializer& serialize) override
 	{
 		serialize.Bool("in world", m_InWorld);
@@ -191,7 +214,6 @@ public:
 		serialize.NumberFixed_Unbounded("rot x", m_RotX);
 		serialize.NumberFixed_Unbounded("rot y", m_RotY);
 		serialize.NumberFixed_Unbounded("rot z", m_RotZ);
-		serialize.NumberFixed_Unbounded("rot y speed", m_RotYSpeed);
 		serialize.NumberFixed_Unbounded("altitude", m_Y);
 		serialize.Bool("relative", m_RelativeToGround);
 		serialize.Bool("floating", m_Floating);
@@ -250,7 +272,6 @@ public:
 		deserialize.NumberFixed_Unbounded("rot x", m_RotX);
 		deserialize.NumberFixed_Unbounded("rot y", m_RotY);
 		deserialize.NumberFixed_Unbounded("rot z", m_RotZ);
-		deserialize.NumberFixed_Unbounded("rot y speed", m_RotYSpeed);
 		deserialize.NumberFixed_Unbounded("altitude", m_Y);
 		deserialize.Bool("relative", m_RelativeToGround);
 		deserialize.Bool("floating", m_Floating);

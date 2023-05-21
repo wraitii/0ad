@@ -125,6 +125,11 @@ public:
 	{
 	}
 
+	void Update(const CParamNode& paramNode) override
+	{
+		Init(paramNode);
+	}
+
 	void Serialize(ISerializer& UNUSED(serialize)) override
 	{
 		// No dynamic state to serialize

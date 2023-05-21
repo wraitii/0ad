@@ -10,6 +10,10 @@
   <Obstruction>
     <Static width="9.0" depth="9.0"/>
   </Obstruction>
+  <Promotion>
+    <Entity>structures/maur/outpost</Entity>
+    <RequiredXp>1</RequiredXp>
+  </Promotion>
   <VisualActor>
     <Actor>structures/mauryas/house.xml</Actor>
   </VisualActor>

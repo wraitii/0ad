@@ -301,7 +301,9 @@ public:
 	CVector3D pos1;
 };
 
-/*Sent whenever the territory type (neutral,own,enemy) differs from the former type*/
+/**
+ * Sent whenever the territory type (neutral, own, enemy) under an entity differs from the former type
+ */
 class CMessageTerritoryPositionChanged final : public CMessage
 {
 public:
@@ -315,6 +317,25 @@ public:
 	entity_id_t entity;
 	player_id_t newTerritory;
 };
+
+
+/**
+ * Sent whenever the territory influence changes.
+ */
+class CMessageTerritoryInfluenceChanged final : public CMessage
+{
+public:
+	DEFAULT_MESSAGE_IMPL(TerritoryInfluenceChanged)
+
+	CMessageTerritoryInfluenceChanged(entity_id_t entity) :
+	entity(entity)
+	{
+	}
+
+	entity_id_t entity;
+};
+
+
 
 /**
  * Sent by CCmpUnitMotion during Update if an event happened that might interest other components.
@@ -491,7 +512,7 @@ public:
 };
 
 /**
- * Sent by aura manager when a value of a certain entity's component is changed
+ * Sent by techs / aura / ... when the value of a certain modified has changed.
  */
 class CMessageValueModification final : public CMessage
 {

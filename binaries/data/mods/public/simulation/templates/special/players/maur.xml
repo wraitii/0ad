@@ -3,6 +3,14 @@
   <Auras datatype="tokens">
     teambonuses/maur_player_teambonus
   </Auras>
+  <EntityLimits>
+    <LimitRemovers>
+      <CivilCentre>
+        <RequiredClasses datatype="tokens">Cavalry</RequiredClasses>
+        <RequiredTechs disable=""/>
+      </CivilCentre>
+    </LimitRemovers>
+  </EntityLimits>
   <Identity>
     <Civ>maur</Civ>
     <GenericName>Mauryas</GenericName>

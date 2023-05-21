@@ -954,14 +954,19 @@ bool CComponentManager::UpdateEntityTemplate(const std::wstring& templateName, e
 			LOGWARNING("Did not find expected component when updating template - %s", it->first);
 			continue;
 		}
+
+		// Make it inaccessible from outside
+		handle.GetComponentCache()->interfaces[m_ComponentTypesById[iit->first].iid] = nullptr;
+		m_ComponentsByInterface[m_ComponentTypesById[iit->first].iid][ent] = nullptr;
+
 		// TODO -> should we de-init sooner / later ?
 		eit->second->Deinit();
 		RemoveComponentDynamicSubscriptions(eit->second);
 
-		// TODO: fix memory leak, and fix container leaks. Otherwise things crash down the line.
+		m_ComponentTypesById[iit->first].dealloc(eit->second);
+
+		// TODO: it would be nice to clean up the null pointers before the entity gets destroyed.
 		eit->second = nullptr;
-		handle.GetComponentCache()->interfaces[m_ComponentTypesById[iit->first].iid] = nullptr;
-		m_ComponentsByInterface[m_ComponentTypesById[iit->first].iid][ent] = nullptr;
 	}
 
 	// Update the cache
@@ -1019,8 +1024,8 @@ void CComponentManager::FlushDestroyedComponents()
 					if (eit->second) {
 						eit->second->Deinit();
 						RemoveComponentDynamicSubscriptions(eit->second);
+						m_ComponentTypesById[iit->first].dealloc(eit->second);
 					}
-					m_ComponentTypesById[iit->first].dealloc(eit->second);
 					iit->second.erase(ent);
 					handle.GetComponentCache()->interfaces[m_ComponentTypesById[iit->first].iid] = NULL;
 				}
@@ -1071,7 +1076,8 @@ CComponentManager::InterfaceList CComponentManager::GetEntitiesWithInterface(Int
 
 	std::unordered_map<entity_id_t, IComponent*>::const_iterator it = m_ComponentsByInterface[iid].begin();
 	for (; it != m_ComponentsByInterface[iid].end(); ++it)
-		ret.push_back(*it);
+		if (it->second)
+			ret.push_back(*it);
 
 	std::sort(ret.begin(), ret.end()); // lexicographic pair comparison means this'll sort by entity ID
 

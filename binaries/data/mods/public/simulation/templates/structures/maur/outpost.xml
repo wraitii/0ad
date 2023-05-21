@@ -4,6 +4,10 @@
     <Civ>maur</Civ>
     <SpecificName>Uparaksana</SpecificName>
   </Identity>
+  <Promotion>
+    <Entity>structures/maur/house</Entity>
+    <RequiredXp>1</RequiredXp>
+  </Promotion>
   <VisualActor>
     <Actor>structures/mauryas/outpost.xml</Actor>
   </VisualActor>

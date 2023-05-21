@@ -25,6 +25,12 @@ Gate.prototype.Update = function(newTemplate)
 	this.template = newTemplate;
 	// We should have an owner, as we had one before the template change.
 	this.SetupRangeQuery(Engine.QueryInterface(this.entity, IID_Ownership).GetOwner());
+
+	if (!this.locked) {
+		// TODO: ordering dependency on cmpObstruction here...
+		let cmpObstruction = Engine.QueryInterface(this.entity, IID_Obstruction);
+		cmpObstruction.SetDisableBlockMovementPathfinding(this.opened, true, 0);
+	}
 };
 
 Gate.prototype.OnOwnershipChanged = function(msg)

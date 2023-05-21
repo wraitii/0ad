@@ -58,5 +58,6 @@ JS::Value IComponent::GetJSInstance() const
 }
 
 void IComponent::Update(const CParamNode& paramNode) {
+	LOGWARNING("Warn - Update for %s not implemented yet", GetSimContext().GetComponentManager().LookupComponentTypeName(GetComponentTypeId()));
 	// TODO: remove this, this is just a placeholder for compilation.
 }

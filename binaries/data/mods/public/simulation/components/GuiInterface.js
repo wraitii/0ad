@@ -2051,9 +2051,26 @@ GuiInterface.prototype.OnGlobalEntityRenamed = function(msg)
 	this.renamedEntities.push(msg);
 };
 
-GuiInterface.prototype.RefreshEntity = function(entity)
+GuiInterface.prototype.OnGlobalTemplateChanged = function(msg)
 {
-	this.renamedEntities.push({ entity: entity, newentity: entity });
+	this.renamedEntities.push({ entity: msg.entity, newentity: msg.entity });
+
+	const cmpOwnership = Engine.QueryInterface(msg.entity, IID_Ownership);
+	if (cmpOwnership && cmpOwnership.GetOwner()) {
+		this.templateModified[cmpOwnership.GetOwner()] = true;
+		this.selectionDirty[cmpOwnership.GetOwner()] = true;
+	}
+};
+
+GuiInterface.prototype.OnGlobalConstructionFinished = function(msg)
+{
+	this.renamedEntities.push({ entity: msg.entity, newentity: msg.entity });
+
+	const cmpOwnership = Engine.QueryInterface(msg.entity, IID_Ownership);
+	if (cmpOwnership && cmpOwnership.GetOwner()) {
+		this.templateModified[cmpOwnership.GetOwner()] = true;
+		this.selectionDirty[cmpOwnership.GetOwner()] = true;
+	}
 };
 
 

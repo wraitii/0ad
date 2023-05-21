@@ -60,10 +60,10 @@ class CCmpTerritoryManager : public ICmpTerritoryManager
 public:
 	static void ClassInit(CComponentManager& componentManager)
 	{
-		componentManager.SubscribeGloballyToMessageType(MT_OwnershipChanged);
+	
 		componentManager.SubscribeGloballyToMessageType(MT_PlayerColorChanged);
 		componentManager.SubscribeGloballyToMessageType(MT_PositionChanged);
-		componentManager.SubscribeGloballyToMessageType(MT_ValueModification);
+		componentManager.SubscribeGloballyToMessageType(MT_TerritoryInfluenceChanged);
 		componentManager.SubscribeToMessageType(MT_ObstructionMapShapeChanged);
 		componentManager.SubscribeToMessageType(MT_TerrainChanged);
 		componentManager.SubscribeToMessageType(MT_WaterChanged);
@@ -171,12 +171,6 @@ public:
 	{
 		switch (msg.GetType())
 		{
-		case MT_OwnershipChanged:
-		{
-			const CMessageOwnershipChanged& msgData = static_cast<const CMessageOwnershipChanged&> (msg);
-			MakeDirtyIfRelevantEntity(msgData.entity);
-			break;
-		}
 		case MT_PlayerColorChanged:
 		{
 			MakeDirty();
@@ -188,11 +182,9 @@ public:
 			MakeDirtyIfRelevantEntity(msgData.entity);
 			break;
 		}
-		case MT_ValueModification:
+		case MT_TerritoryInfluenceChanged:
 		{
-			const CMessageValueModification& msgData = static_cast<const CMessageValueModification&> (msg);
-			if (msgData.component == L"TerritoryInfluence")
-				MakeDirty();
+			MakeDirty();
 			break;
 		}
 		case MT_ObstructionMapShapeChanged:

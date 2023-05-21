@@ -45,6 +45,7 @@ MESSAGE(OwnershipChanged)
 MESSAGE(PositionChanged)
 MESSAGE(InterpolatedPositionChanged)
 MESSAGE(TerritoryPositionChanged)
+MESSAGE(TerritoryInfluenceChanged)
 MESSAGE(MotionUpdate)
 MESSAGE(RangeUpdate)
 MESSAGE(TerrainChanged)
@@ -184,11 +185,12 @@ COMPONENT(Terrain)
 INTERFACE(TerritoryDecayManager)
 COMPONENT(TerritoryDecayManagerScripted)
 
-INTERFACE(TerritoryInfluence)
-COMPONENT(TerritoryInfluence)
-
 INTERFACE(TerritoryManager)
 COMPONENT(TerritoryManager)
+
+// Must come after the manager
+INTERFACE(TerritoryInfluence)
+COMPONENT(TerritoryInfluence)
 
 INTERFACE(TurretHolder)
 COMPONENT(TurretHolderScripted)
